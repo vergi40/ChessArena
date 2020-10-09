@@ -34,12 +34,12 @@ message ClientMove {
     MoveCoordinates coordinates = 1;
 
     // For testing
-    optional string pieceType = 2;
+    string pieceType = 2;
 
     // Additional data about the move.
     // E.g. search depth, eval count, strategy...
     // TODO: change to list type
-    optional string diagnostics = 3;
+    string diagnostics = 3;
 }
 
 message OpponentMove {
@@ -49,7 +49,7 @@ message OpponentMove {
     bool gameEnd = 2;
     
     // For testing
-    optional string pieceType = 3;
+    string pieceType = 3;
     
 }
 
@@ -61,5 +61,5 @@ message MoveCoordinates {
     string endPosition = 2;
 
     // For testing. A piece was captured as result.
-    optional bool capture = 3;
+    bool capture = 3;
 }
