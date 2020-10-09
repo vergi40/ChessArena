@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace vergiBlue
+namespace TestServer
 {
     class Program
     {
@@ -13,7 +13,7 @@ namespace vergiBlue
         }
     }
 
-    class InterfaceImplementation : MovementStream.MovementStreamClient
+    class InterfaceImplementation : MovementStream.MovementStreamBase
     {
 
     }

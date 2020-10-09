@@ -1,0 +1,10 @@
+﻿Error on building with .proto property BuildAction as ProtoBuf
+Error		This file contains proto3 optional fields, but --experimental_allow_proto3_optional was not set.
+
+Will be fixed in mid 2020. For now just manually convert or remove optional properties.
+-> Removed optional parameters, all good.
+
+C:\Git\ChessArena\Clients\vergiBlue\packages\Grpc.Tools.2.32.0\tools\windows_x64\protoc.exe C:\Git\ChessArena\Server\interface.proto --csharp_out=C:\Git\ChessArena\Clients\vergiBlue\Interface\interface.cs --experimental_allow_proto3_optional
+
+https://github.com/protocolbuffers/protobuf/blob/master/docs/implementing_proto3_presence.md#satisfying-the-experimental-check
+https://github.com/grpc/grpc/issues/22975
