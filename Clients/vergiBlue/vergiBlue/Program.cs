@@ -4,45 +4,60 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Grpc.Core;
+using System.Configuration;
+using vergiBlue.Connection;
 
 namespace vergiBlue
 {
     class Program
     {
+        private static string _currentVersion = "v0.01";
+        private static string _aiName = "vergiBlue";
+
+        private static void Log(string message, bool writeToConsole = true) => Logger.Log(message, writeToConsole);
+
         static void Main(string[] args)
         {
-            Channel channel = new Channel("127.0.0.1:30052", ChannelCredentials.Insecure);
-            var client = new InterfaceImplementation(new MovementStream.MovementStreamClient(channel));
+            Log($"Chess ai vergiBlue [{_currentVersion}]");
+            var connection = new ConnectionModule(_aiName);
 
-            // YOUR CODE GOES HERE
-            client.Initialize();
-
-            channel.ShutdownAsync().Wait();
-            Console.ReadKey();
-        }
-    }
-
-    class InterfaceImplementation
-    {
-        readonly MovementStream.MovementStreamClient client;
-
-        public InterfaceImplementation(MovementStream.MovementStreamClient client)
-        {
-            this.client = client;
-        }
-
-        public async void Initialize()
-        {
-            var information = new ClientInformation()
+            while (true)
             {
-                Name = "vergiBlue"
-            };
+                Log("[1] Start game");
+                Log("[2] Exit");
 
-            Console.WriteLine("Initializing client... Getting start information from server.");
-            var startInformation = await client.InitializeAsync(information);
+                var input = Console.ReadKey();
+                if (input.KeyChar.ToString() == "1")
+                {
+                    Log(Environment.NewLine);
+                    // TODO async
+                    var startInformation = connection.Initialize(GetAddress());
 
-            Console.WriteLine($"Received info: start player: {startInformation.WhitePlayer}.");
+                    Log($"Received game start information.");
+                    if(startInformation.Result.WhitePlayer) Log($"{_aiName} starts the game.");
+                    else Log($"Opponent starts the game.");
 
+                    Log(Environment.NewLine);
+
+                    Log("Starting logic...");
+                    var ai = new Logic(startInformation.Result);
+                    
+                    Log("Start game loop");
+                    // TODO loop till end
+                    var nextMove = ai.CreateMove();
+
+                }
+                else break;
+
+                Log(Environment.NewLine);
+            }
+
+            connection.CloseConnection();
+        }
+
+        static string GetAddress()
+        {
+            return ConfigurationManager.AppSettings["Address"] + ":" + ConfigurationManager.AppSettings["Port"];
         }
     }
 }
