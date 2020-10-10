@@ -43,8 +43,9 @@ namespace vergiBlue
                     var ai = new Logic(startInformation.Result);
                     
                     Log("Start game loop");
-                    // TODO loop till end
-                    var nextMove = ai.CreateMove();
+
+                    // Inject ai to connection module and play game
+                    connection.Play(ai);
 
                 }
                 else break;

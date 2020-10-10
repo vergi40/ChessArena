@@ -17,5 +17,10 @@ namespace vergiBlue
         {
             return null;
         }
+
+        public void ReceiveMove(OpponentMove opponentMove)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

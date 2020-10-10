@@ -11,6 +11,7 @@ namespace vergiBlue.Connection
     {
         private string _aiName;
         private Channel _channel;
+        private ClientImplementation _client;
 
         public ConnectionModule(string aiName)
         {
@@ -25,12 +26,18 @@ namespace vergiBlue.Connection
         {
 
             _channel = new Channel(address, ChannelCredentials.Insecure);
-            var client = new ClientImplementation(new MovementStream.MovementStreamClient(_channel));
+            _client = new ClientImplementation(new MovementStream.MovementStreamClient(_channel));
 
             Logger.Log($"Opening gRPC channel to {address}");
 
-            var startInformation = await client.Initialize(_aiName);
+            var startInformation = await _client.Initialize(_aiName);
             return startInformation;
+        }
+
+        public async void Play(Logic ai)
+        {
+            // TODO handle exceptions and game end
+            await _client.CreateMovements(ai);
         }
 
         public void CloseConnection()
