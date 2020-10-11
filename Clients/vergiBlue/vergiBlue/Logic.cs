@@ -8,19 +8,35 @@ namespace vergiBlue
 {
     class Logic
     {
+        private int _index = 2;
+        public Move LatestOpponentMove { get; set; }
+
         public Logic(GameStartInformation startInformation)
         {
 
         }
 
-        public ClientMove CreateMove()
+        public PlayerMove CreateMove()
         {
-            return null;
+            // TODO testing
+            var move = new PlayerMove()
+            {
+                Move = new Move()
+                {
+                    StartPosition = $"a{_index}",
+                    EndPosition = $"a{_index--}",
+                    PromotionResult = Move.Types.PromotionPieceType.NoPromotion
+                },
+                Diagnostics = "Search depth = 0."
+            };
+
+            return move;
         }
 
-        public void ReceiveMove(OpponentMove opponentMove)
+        public void ReceiveMove(Move opponentMove)
         {
-            throw new NotImplementedException();
+            // TODO testing
+            LatestOpponentMove = opponentMove;
         }
     }
 }

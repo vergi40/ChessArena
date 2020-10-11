@@ -26,7 +26,7 @@ namespace vergiBlue.Connection
         {
 
             _channel = new Channel(address, ChannelCredentials.Insecure);
-            _client = new ClientImplementation(new MovementStream.MovementStreamClient(_channel));
+            _client = new ClientImplementation(new ChessArena.ChessArenaClient(_channel));
 
             Logger.Log($"Opening gRPC channel to {address}");
 

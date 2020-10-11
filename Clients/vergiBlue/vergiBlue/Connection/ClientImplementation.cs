@@ -10,16 +10,16 @@ namespace vergiBlue.Connection
 {
     class ClientImplementation
     {
-        readonly MovementStream.MovementStreamClient _client;
+        readonly ChessArena.ChessArenaClient _client;
 
-        public ClientImplementation(MovementStream.MovementStreamClient client)
+        public ClientImplementation(ChessArena.ChessArenaClient client)
         {
             this._client = client;
         }
 
         public async Task<GameStartInformation> Initialize(string clientName)
         {
-            var information = new ClientInformation()
+            var information = new PlayerInformation()
             {
                 Name = clientName
             };
@@ -47,7 +47,7 @@ namespace vergiBlue.Connection
                         while (await call.ResponseStream.MoveNext(CancellationToken.None))
                         {
                             var opponentMove = call.ResponseStream.Current;
-                            Logger.Log($"Received opponent move: {opponentMove.Coordinates.EndPosition}");
+                            Logger.Log($"Received opponent move: {opponentMove.EndPosition}");
 
                             // Analyze opponent move
                             ai.ReceiveMove(opponentMove);
