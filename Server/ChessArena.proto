@@ -13,7 +13,7 @@ service ChessArena {
     // A Bidirectional streaming RPC.
     //
     // Send player moves. Receive opponent moves.
-    rpc CreateMovements(stream PlayerMove) returns (stream OpponentMove) {}
+    rpc CreateMovements(stream PlayerMove) returns (stream Move) {}
 }
 
 // Initialize
@@ -25,44 +25,34 @@ message PlayerInformation {
 message GameStartInformation {
     // True if client is starting player.
     // If false, opponent move is also returned.
-    bool whitePlayer = 1;
-
-    MoveCoordinates opponentMove = 2;
+    bool white_player = 1;
+    Move opponent_move = 2;
 }
-
 
 // Create movements
 
 message PlayerMove {
-    MoveCoordinates coordinates = 1;
-
+    Move move = 1;
     // Any optional additional data about the move.
     // E.g. search depth, eval count, strategy...
     string diagnostics = 2;
 }
 
-message OpponentMove {
-    MoveCoordinates coordinates = 1;
-    
-    // Game ended after opponent move to either check-mate or draw
-    bool gameEnd = 2;    
-}
-
-message MoveCoordinates {
+message Move {
     // Standard chess notation (file, rank), e.g. "f5"
-    string startPosition = 1;
-
+    string start_position = 1;
     // Standard chess notation (file, rank) e.g. "f6"
-    string endPosition = 2;
-
+    string end_position = 2;
+    bool check = 3;    
+    bool check_mate = 4;
+    bool castling = 5;
     enum PromotionPieceType {
-        NOPROMOTION = 0;
+        NO_PROMOTION = 0;
         QUEEN = 1;
         ROOK = 2;
         KNIGHT = 3;
         BISHOP = 4;
     }
-
-    // Set if pawn has reached 8th rank.
-    PromotionPieceType promotionResult = 3;
+    // Set to non-zero if pawn has reached 8th rank.
+    PromotionPieceType promotion_result = 6;
 }
