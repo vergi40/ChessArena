@@ -1,21 +1,24 @@
 syntax = "proto3";
 
-service MovementStream {
+service ChessArena {
     // A simple RPC
     //
     // Inform server that the client is ready to start the game. 
-    // Returns either
-    rpc Initialize(ClientInformation) returns (GameStartInformation) {}
+    // Returns one of the following:
+    // 1. Player is starting player (white). Opponent move message not set.
+    // 2. Player is not starting player (black). Opponent move message provides opening
+    //    move coordinates. 
+    rpc Initialize(PlayerInformation) returns (GameStartInformation) {}
 
     // A Bidirectional streaming RPC.
     //
-    // Send client moves. Receive opponent moves.
-    rpc CreateMovements(stream ClientMove) returns (stream OpponentMove) {}
+    // Send player moves. Receive opponent moves.
+    rpc CreateMovements(stream PlayerMove) returns (stream OpponentMove) {}
 }
 
 // Initialize
 
-message ClientInformation {
+message PlayerInformation {
     string name = 1;    
 }
 
@@ -30,36 +33,36 @@ message GameStartInformation {
 
 // Create movements
 
-message ClientMove {
+message PlayerMove {
     MoveCoordinates coordinates = 1;
 
-    // For testing
-    string pieceType = 2;
-
-    // Additional data about the move.
+    // Any optional additional data about the move.
     // E.g. search depth, eval count, strategy...
-    // TODO: change to list type
-    string diagnostics = 3;
+    string diagnostics = 2;
 }
 
 message OpponentMove {
     MoveCoordinates coordinates = 1;
     
     // Game ended after opponent move to either check-mate or draw
-    bool gameEnd = 2;
-    
-    // For testing
-    string pieceType = 3;
-    
+    bool gameEnd = 2;    
 }
 
 message MoveCoordinates {
-    // (file, rank) e.g. "f5"
+    // Standard chess notation (file, rank), e.g. "f5"
     string startPosition = 1;
 
-    // (file, rank) e.g. "f6"
+    // Standard chess notation (file, rank) e.g. "f6"
     string endPosition = 2;
 
-    // For testing. A piece was captured as result.
-    bool capture = 3;
+    enum PromotionPieceType {
+        NOPROMOTION = 0;
+        QUEEN = 1;
+        ROOK = 2;
+        KNIGHT = 3;
+        BISHOP = 4;
+    }
+
+    // Set if pawn has reached 8th rank.
+    PromotionPieceType promotionResult = 3;
 }
