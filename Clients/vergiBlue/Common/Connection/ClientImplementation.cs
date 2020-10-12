@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 
-namespace vergiBlue.Connection
+namespace Common.Connection
 {
     class ClientImplementation
     {
@@ -32,7 +29,7 @@ namespace vergiBlue.Connection
 
         }
 
-        public async Task CreateMovements(Logic ai)
+        public async Task CreateMovements(LogicBase ai)
         {
             try
             {
@@ -42,7 +39,7 @@ namespace vergiBlue.Connection
                     await call.RequestStream.WriteAsync(ai.CreateMove());
 
                     // Continuos bidirectional streaming
-                    var responseReaderTask = Task.Run(async () =>
+                    var responseReaderTask = Task.Run((Func<Task>) (async () =>
                     {
                         while (await call.ResponseStream.MoveNext(CancellationToken.None))
                         {
@@ -55,7 +52,7 @@ namespace vergiBlue.Connection
                             // Create own move
                             await call.RequestStream.WriteAsync(ai.CreateMove());
                         }
-                    });
+                    }));
 
                     await responseReaderTask;
                     await call.RequestStream.CompleteAsync();

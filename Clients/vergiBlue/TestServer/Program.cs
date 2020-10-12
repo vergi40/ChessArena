@@ -22,7 +22,7 @@ namespace TestServer
             };
             server.Start();
 
-            Console.WriteLine("RouteGuide server listening on port " + Port);
+            Console.WriteLine("vergiBlue test server listening on port " + Port);
             Console.WriteLine("Press any key to stop the server...");
             Console.ReadKey();
 
@@ -106,8 +106,8 @@ namespace TestServer
         {
             var move = new Move()
             {
-                StartPosition = $"b{_index}",
-                EndPosition = $"b{_index--}",
+                StartPosition = $"b{_index--}",
+                EndPosition = $"b{_index}",
                 PromotionResult = Move.Types.PromotionPieceType.NoPromotion
             };
 

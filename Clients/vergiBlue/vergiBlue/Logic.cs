@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Common;
 
 namespace vergiBlue
 {
-    class Logic
+    class Logic : LogicBase
     {
         private int _index = 2;
         public Move LatestOpponentMove { get; set; }
@@ -16,15 +16,15 @@ namespace vergiBlue
 
         }
 
-        public PlayerMove CreateMove()
+        public override PlayerMove CreateMove()
         {
             // TODO testing
             var move = new PlayerMove()
             {
                 Move = new Move()
                 {
-                    StartPosition = $"a{_index}",
-                    EndPosition = $"a{_index--}",
+                    StartPosition = $"a{_index--}",
+                    EndPosition = $"a{_index}",
                     PromotionResult = Move.Types.PromotionPieceType.NoPromotion
                 },
                 Diagnostics = "Search depth = 0."
@@ -33,7 +33,7 @@ namespace vergiBlue
             return move;
         }
 
-        public void ReceiveMove(Move opponentMove)
+        public override void ReceiveMove(Move opponentMove)
         {
             // TODO testing
             LatestOpponentMove = opponentMove;

@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Grpc.Core;
 
-namespace vergiBlue.Connection
+namespace Common.Connection
 {
-    class ConnectionModule
+    /// <summary>
+    /// Reference this class to create and maintain new grpc connection.
+    /// 1. <see cref="Initialize"/> server that you are ready to start a game
+    /// 2. <see cref="Play"/> to start pingpong with <see cref="LogicBase.CreateMove"/> and <see cref="LogicBase.ReceiveMove"/>
+    /// </summary>
+    public class ConnectionModule
     {
         private string _aiName;
         private Channel _channel;
@@ -34,7 +35,7 @@ namespace vergiBlue.Connection
             return startInformation;
         }
 
-        public async void Play(Logic ai)
+        public async void Play(LogicBase ai)
         {
             // TODO handle exceptions and game end
             await _client.CreateMovements(ai);
@@ -42,6 +43,7 @@ namespace vergiBlue.Connection
 
         public void CloseConnection()
         {
+            // TODO implement dispose
             _channel.ShutdownAsync().Wait();
         }
     }
