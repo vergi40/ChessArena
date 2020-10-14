@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,69 +40,28 @@ namespace vergiBlue
             // TODO testing
             LatestOpponentMove = opponentMove;
         }
-    }
 
-    public class Board
-    {
-        /// <summary>
-        /// Pieces are storaged with (column,row) pair. On algebraic notation [0,0] corresponds to the "a1" notations.
-        /// Indexes start from 0
-        /// </summary>
-        public Dictionary<(int column, int row), Piece> Pieces { get; set; } = new Dictionary<(int, int), Piece>();
-
-        // Reference
-        public Dictionary<(int, int), Piece>.ValueCollection PieceList => Pieces.Values;
-        public Dictionary<(int, int), Piece>.KeyCollection OccupiedCoordinates => Pieces.Keys;
-
-        /// <summary>
-        /// Return piece at coordinates, null if empty.
-        /// </summary>
-        /// <returns>Can be null</returns>
-        public Piece ValueAt((int, int) target)
+        public static bool IsOutside((int, int) target)
         {
-            if (Pieces.ContainsKey(target)) return Pieces[target];
-            return null;
-        }
-
-        public void AddNew(Piece piece)
-        {
-            Pieces.Add((piece.CurrentPosition), piece);
-        }
-    }
-
-    public abstract class Piece
-    {
-        public bool IsOpponent { get; }
-        public bool IsWhite { get; }
-        public Board Board { get; }
-
-        public (int column, int row) CurrentPosition { get; set; }
-
-        protected Piece(bool isOpponent, bool isWhite, Board boardReference)
-        {
-            IsOpponent = isOpponent;
-            IsWhite = isWhite;
-            Board = boardReference;
-        }
-
-        public bool CanMoveTo((int, int) target)
-        {
-            // TODO
+            if (target.Item1 < 0 || target.Item1 > 7 || target.Item2 < 0 || target.Item2 > 7)
+                return true;
             return false;
         }
-        public void MoveTo((int column, int row) target)
+
+        /// <summary>
+        /// Returns (column, row) format as e.g. 'a1'
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public static string ToAlgebraic((int column, int row) position)
         {
-            Board.Pieces.Remove(CurrentPosition);
-            Board.Pieces.Add(target, this);
+            const int intToAlphabet = 65;
+            var move = $"{((char) (position.column + intToAlphabet)).ToString().ToLower()}{position.row + 1}";
+            return move;
         }
     }
 
-    public class Pawn : Piece
-    {
-        public Pawn(bool isOpponent, bool isWhite, Board boardReference) : base(isOpponent, isWhite, boardReference)
-        {
-        }
-    }
+    
 
     static class Diagnostics
     {
