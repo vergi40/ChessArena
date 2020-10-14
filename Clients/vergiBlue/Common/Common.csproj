@@ -70,8 +70,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Protobuf Include="..\..\..\Server\interface.proto">
-      <Link>interface.proto</Link>
+    <Protobuf Include="..\..\..\Server\ChessArena.proto">
+      <Link>ChessArena.proto</Link>
     </Protobuf>
     <None Include="app.config" />
     <None Include="packages.config" />
