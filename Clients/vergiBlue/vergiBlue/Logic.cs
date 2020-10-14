@@ -41,10 +41,10 @@ namespace vergiBlue
         }
     }
 
-    class Board
+    public class Board
     {
         /// <summary>
-        /// Pieces are storaged with (column,row) pair. On algebraic notation this corresponds to the "a1" notations.
+        /// Pieces are storaged with (column,row) pair. On algebraic notation [0,0] corresponds to the "a1" notations.
         /// Indexes start from 0
         /// </summary>
         public Dictionary<(int column, int row), Piece> Pieces { get; set; } = new Dictionary<(int, int), Piece>();
@@ -63,16 +63,21 @@ namespace vergiBlue
             return null;
         }
 
+        public void AddNew(Piece piece)
+        {
+            Pieces.Add((piece.CurrentPosition), piece);
+        }
     }
 
-    class Piece
+    public abstract class Piece
     {
         public bool IsOpponent { get; }
         public bool IsWhite { get; }
         public Board Board { get; }
-        public (int,int) CurrentPosition { get; set; }
 
-        public Piece(bool isOpponent, bool isWhite, Board boardReference)
+        public (int column, int row) CurrentPosition { get; set; }
+
+        protected Piece(bool isOpponent, bool isWhite, Board boardReference)
         {
             IsOpponent = isOpponent;
             IsWhite = isWhite;
@@ -84,10 +89,17 @@ namespace vergiBlue
             // TODO
             return false;
         }
-        public void MoveTo((int, int) target)
+        public void MoveTo((int column, int row) target)
         {
             Board.Pieces.Remove(CurrentPosition);
             Board.Pieces.Add(target, this);
+        }
+    }
+
+    public class Pawn : Piece
+    {
+        public Pawn(bool isOpponent, bool isWhite, Board boardReference) : base(isOpponent, isWhite, boardReference)
+        {
         }
     }
 
