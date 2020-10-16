@@ -19,6 +19,38 @@ namespace vergiBlue
         public Dictionary<(int, int), Piece>.KeyCollection OccupiedCoordinates => Pieces.Keys;
 
         /// <summary>
+        /// Start game initialization
+        /// </summary>
+        public Board(){}
+
+        /// <summary>
+        /// Create board setup after move
+        /// </summary>
+        /// <param name="previous"></param>
+        /// <param name="move"></param>
+        public Board(Board previous, SingleMove move)
+        {
+            InitializeFromReference(previous);
+
+            if (move.Capture)
+            {
+                Pieces.Remove(move.NewPos);
+            }
+
+            var piece = Pieces[move.PrevPos];
+            piece.MoveTo(move.NewPos);
+        }
+
+        private void InitializeFromReference(Board previous)
+        {
+            foreach (var oldPiece in previous.PieceList)
+            {
+                var newPiece = oldPiece.CreateCopy(this);
+                AddNew(newPiece);
+            }
+        }
+
+        /// <summary>
         /// Return piece at coordinates, null if empty.
         /// </summary>
         /// <returns>Can be null</returns>
@@ -31,6 +63,13 @@ namespace vergiBlue
         public void AddNew(Piece piece)
         {
             Pieces.Add((piece.CurrentPosition), piece);
+        }
+
+        public double Evaluate()
+        {
+            // TODO
+            Diagnostics.IncrementEvalCount();
+            return PieceList.Sum(p => p.RelativeStrength);
         }
     }
 }

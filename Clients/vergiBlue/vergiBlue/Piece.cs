@@ -11,8 +11,10 @@ namespace vergiBlue
         public bool IsOpponent { get; }
         public bool IsWhite { get; }
 
+        public abstract double RelativeStrength { get; }
+
         /// <summary>
-        /// Sign of general direction
+        /// Sign of general direction. Can also be used to classify white as positive and black as negative value.
         /// </summary>
         public int Direction
         {
@@ -48,13 +50,18 @@ namespace vergiBlue
         /// <returns></returns>
         public abstract IEnumerable<SingleMove> Moves();
 
+        public abstract Piece CreateCopy(Board newBoard);
     }
 
     public class Pawn : Piece
     {
+        public override double RelativeStrength { get; }
+
         public Pawn(bool isOpponent, bool isWhite, Board boardReference) : base(isOpponent, isWhite, boardReference)
         {
+            RelativeStrength = StrengthTable.Pawn * Direction;
         }
+
 
         /// <summary>
         /// Try if move can be made. Return outcome.
@@ -68,7 +75,7 @@ namespace vergiBlue
             if(Board.ValueAt(target) == null)
             {
                 var promotion = target.Item2 == 0 || target.Item2 == 7;
-                return new SingleMove(target, false, promotion);
+                return new SingleMove(CurrentPosition, target, false, promotion);
             }
             return null;
         }
@@ -79,7 +86,7 @@ namespace vergiBlue
             var diagonal = Board.ValueAt(target);
             if (diagonal != null && diagonal.IsOpponent)
             {
-                return new SingleMove(diagonal.CurrentPosition, true);
+                return new SingleMove(CurrentPosition, diagonal.CurrentPosition, true);
             }
 
             // En passant - opponent on side
@@ -114,6 +121,13 @@ namespace vergiBlue
             move = CanCapture((cur.column + 1, cur.row + Direction));
             if (move != null) yield return move;
         }
+
+        public override Piece CreateCopy(Board newBoard)
+        {
+            var piece = new Pawn(IsOpponent, IsWhite, newBoard);
+            piece.CurrentPosition = CurrentPosition;
+            return piece;
+        }
     }
 
     public class SingleMove
@@ -121,18 +135,20 @@ namespace vergiBlue
         public bool Capture { get; set; }
         public bool Promotion { get; set; }
 
-        public (int,int) NewPosition { get; set; }
+        public (int,int) PrevPos { get; set; }
+        public (int,int) NewPos { get; set; }
 
-        public SingleMove((int column, int row) newPosition, bool capture = false, bool promotion = false)
+        public SingleMove((int column, int row) previousPosition, (int column, int row) newPosition, bool capture = false, bool promotion = false)
         {
-            NewPosition = newPosition;
+            PrevPos = previousPosition;
+            NewPos = newPosition;
             Capture = capture;
             Promotion = promotion;
         }
 
         public string ToAlgebraic()
         {
-            return Logic.ToAlgebraic(NewPosition);
+            return Logic.ToAlgebraic(NewPos);
         }
     }
 }

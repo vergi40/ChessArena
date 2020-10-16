@@ -67,12 +67,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BoardTests.cs" />
+    <Compile Include="PlayerMoveTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{9EFDBA49-E54D-4F82-912F-BF883A25F441}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\vergiBlue\vergiBlue.csproj">
       <Project>{69f44283-aea6-450c-9cf4-12672440b9ea}</Project>
       <Name>vergiBlue</Name>
