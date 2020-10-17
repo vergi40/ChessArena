@@ -31,7 +31,15 @@ namespace vergiBlue
         public Board(Board previous, SingleMove move)
         {
             InitializeFromReference(previous);
+            ExecuteMove(move);
+        }
 
+        /// <summary>
+        /// Apply single move to board.
+        /// </summary>
+        /// <param name="move"></param>
+        public void ExecuteMove(SingleMove move)
+        {
             if (move.Capture)
             {
                 Pieces.Remove(move.NewPos);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
 using vergiBlue;
 
 namespace vergiBlueTests
@@ -39,7 +40,25 @@ namespace vergiBlueTests
             board.AddNew(pawn2);
 
             var moves = pawn1.Moves();
-            var coordinates = moves.Select(m => m.ToAlgebraic());
+            var coordinates = moves.Select(m => m.ToAlgebraic(m.NewPos));
+
+        }
+
+        [TestMethod]
+        public void TestAlgebraicToIntArrayConversions()
+        {
+            var startCorner = "a1";
+            var intArray = Logic.ToTuple(startCorner);
+            intArray.ShouldBe((0,0));
+
+            Logic.ToAlgebraic(intArray).ShouldBe("a1");
+
+            var endCorner = "h8";
+            intArray = Logic.ToTuple(endCorner);
+            intArray.ShouldBe((7, 7));
+
+            Logic.ToAlgebraic(intArray).ShouldBe("h8");
+
 
         }
     }

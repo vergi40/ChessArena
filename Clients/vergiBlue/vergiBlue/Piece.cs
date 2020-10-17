@@ -129,26 +129,4 @@ namespace vergiBlue
             return piece;
         }
     }
-
-    public class SingleMove
-    {
-        public bool Capture { get; set; }
-        public bool Promotion { get; set; }
-
-        public (int,int) PrevPos { get; set; }
-        public (int,int) NewPos { get; set; }
-
-        public SingleMove((int column, int row) previousPosition, (int column, int row) newPosition, bool capture = false, bool promotion = false)
-        {
-            PrevPos = previousPosition;
-            NewPos = newPosition;
-            Capture = capture;
-            Promotion = promotion;
-        }
-
-        public string ToAlgebraic()
-        {
-            return Logic.ToAlgebraic(NewPos);
-        }
-    }
 }
