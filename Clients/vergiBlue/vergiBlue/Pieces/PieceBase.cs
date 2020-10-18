@@ -4,7 +4,6 @@ namespace vergiBlue.Pieces
 {
     public abstract class PieceBase
     {
-        public bool IsOpponent { get; }
         public bool IsWhite { get; }
 
         public abstract double RelativeStrength { get; }
@@ -25,9 +24,8 @@ namespace vergiBlue.Pieces
 
         public (int column, int row) CurrentPosition { get; set; }
 
-        protected PieceBase(bool isOpponent, bool isWhite, Board boardReference)
+        protected PieceBase(bool isWhite, Board boardReference)
         {
-            IsOpponent = isOpponent;
             IsWhite = isWhite;
             Board = boardReference;
         }

@@ -14,10 +14,10 @@ namespace vergiBlueTests
         public void PawnAllowedMoves()
         {
             var board = new Board();
-            var pawn1 = new Pawn(false, true, board);
+            var pawn1 = new Pawn(true, board);
             pawn1.CurrentPosition = (0, 1);
 
-            var pawn2 = new Pawn(true, false, board);
+            var pawn2 = new Pawn(false, board);
             pawn2.CurrentPosition = (1, 2);
 
             board.AddNew(pawn1);

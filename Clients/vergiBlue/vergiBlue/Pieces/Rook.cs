@@ -10,7 +10,7 @@ namespace vergiBlue.Pieces
     {
         public override double RelativeStrength { get; }
         
-        public Rook(bool isOpponent, bool isWhite, Board boardReference) : base(isOpponent, isWhite, boardReference)
+        public Rook(bool isWhite, Board boardReference) : base(isWhite, boardReference)
         {
             RelativeStrength = StrengthTable.Rook * Direction;
         }
@@ -19,7 +19,7 @@ namespace vergiBlue.Pieces
         {
             if (Board.ValueAt(target) is PieceBase piece)
             {
-                if (piece.IsOpponent) return new SingleMove(CurrentPosition, target, true);
+                if (piece.IsWhite != IsWhite) return new SingleMove(CurrentPosition, target, true);
                 else return null;
             }
             else return new SingleMove(CurrentPosition, target);
@@ -34,7 +34,11 @@ namespace vergiBlue.Pieces
             for (int i = row + 1; i < 8; i++)
             {
                 var move = CanMoveTo((column, i));
-                if (move != null) yield return move;
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
                 else break;
             }
 
@@ -42,7 +46,11 @@ namespace vergiBlue.Pieces
             for (int i = row - 1; i >= 0; i--)
             {
                 var move = CanMoveTo((column, i));
-                if (move != null) yield return move;
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
                 else break;
             }
 
@@ -50,7 +58,11 @@ namespace vergiBlue.Pieces
             for (int i = column + 1; i < 8; i++)
             {
                 var move = CanMoveTo((i, row));
-                if (move != null) yield return move;
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
                 else break;
             }
 
@@ -58,14 +70,18 @@ namespace vergiBlue.Pieces
             for (int i = column - 1; i >= 0; i--)
             {
                 var move = CanMoveTo((i, row));
-                if (move != null) yield return move;
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
                 else break;
             }
         }
 
         public override PieceBase CreateCopy(Board newBoard)
         {
-            var piece = new Rook(IsOpponent, IsWhite, newBoard);
+            var piece = new Rook(IsWhite, newBoard);
             piece.CurrentPosition = CurrentPosition;
             return piece;
         }

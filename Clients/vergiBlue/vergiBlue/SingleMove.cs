@@ -51,5 +51,13 @@ namespace vergiBlue
             };
             return move;
         }
+
+        public override string ToString()
+        {
+            var info = $"{Logic.ToAlgebraic(PrevPos)} to ";
+            if (Capture) info += "x";
+            info += Logic.ToAlgebraic(NewPos);
+            return info;
+        }
     }
 }

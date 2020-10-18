@@ -86,7 +86,6 @@ namespace vergiBlue
 
         public IEnumerable<SingleMove> Moves(bool forWhite)
         {
-            // Evaluate each move and select best
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves())

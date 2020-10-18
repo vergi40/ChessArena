@@ -10,7 +10,7 @@ namespace vergiBlue.Pieces
     {
         public override double RelativeStrength { get; }
 
-        public Pawn(bool isOpponent, bool isWhite, Board boardReference) : base(isOpponent, isWhite, boardReference)
+        public Pawn( bool isWhite, Board boardReference) : base(isWhite, boardReference)
         {
             RelativeStrength = StrengthTable.Pawn * Direction;
         }
@@ -32,10 +32,10 @@ namespace vergiBlue.Pieces
             if(Logic.IsOutside(target)) return null;
 
             // Normal
-            var diagonal = Board.ValueAt(target);
-            if (diagonal != null && diagonal.IsOpponent)
+            var diagonalPiece = Board.ValueAt(target);
+            if (diagonalPiece != null && diagonalPiece.IsWhite != IsWhite)
             {
-                return new SingleMove(CurrentPosition, diagonal.CurrentPosition, true);
+                return new SingleMove(CurrentPosition, diagonalPiece.CurrentPosition, true);
             }
 
             // En passant - opponent on side
@@ -73,7 +73,7 @@ namespace vergiBlue.Pieces
 
         public override PieceBase CreateCopy(Board newBoard)
         {
-            var piece = new Pawn(IsOpponent, IsWhite, newBoard);
+            var piece = new Pawn(IsWhite, newBoard);
             piece.CurrentPosition = CurrentPosition;
             return piece;
         }

@@ -13,7 +13,7 @@ namespace vergiBlue
 {
     public class Logic : LogicBase
     {
-        public bool IsWhite { get; }
+        public bool IsPlayerWhite { get; }
 
         private int _index = 2;
         public Move LatestOpponentMove { get; set; }
@@ -28,9 +28,9 @@ namespace vergiBlue
         /// <summary>
         /// For tests
         /// </summary>
-        public Logic(bool isWhite)
+        public Logic(bool isPlayerWhite)
         {
-            IsWhite = isWhite;
+            IsPlayerWhite = isPlayerWhite;
             _testOverride = true;
         }
 
@@ -46,14 +46,14 @@ namespace vergiBlue
                 Diagnostics.StartMoveCalculations();
                 var bestValue = WorstValue();
                 SingleMove bestMove = null;
-                var isMaximizing = IsWhite;
+                var isMaximizing = IsPlayerWhite;
 
                 var allMoves = Board.Moves(isMaximizing).ToList();
 
                 foreach (var singleMove in allMoves)
                 {
                     var newBoard = new Board(Board, singleMove);
-                    var value = MiniMax(newBoard, 3, -100000, 100000, !isMaximizing);
+                    var value = MiniMax(newBoard, 4, -100000, 100000, !isMaximizing);
                     if (isMaximizing)
                     {
                         if (value > bestValue)
@@ -72,7 +72,7 @@ namespace vergiBlue
                     }
                 }
 
-                if(bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsWhite}].");
+                if(bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
 
                 var move = new PlayerMove()
                 {
@@ -164,7 +164,7 @@ namespace vergiBlue
                 if (Board.ValueAt(move.NewPos) is PieceBase targetPiece)
                 {
                     // Should be done elsewhere
-                    if (!targetPiece.IsOpponent) move.Capture = true;
+                    if (!targetPiece.IsWhite != IsPlayerWhite) move.Capture = true;
                     else throw new ArgumentException("Opponent captured own piece.");
                 }
 
@@ -174,13 +174,13 @@ namespace vergiBlue
 
         private double BestValue()
         {
-            if (IsWhite) return 1000000;
+            if (IsPlayerWhite) return 1000000;
             else return -1000000;
         }
 
         private double WorstValue()
         {
-            if (IsWhite) return -1000000;
+            if (IsPlayerWhite) return -1000000;
             else return 1000000;
         }
 

@@ -21,34 +21,34 @@ namespace vergiBlueTests
         /// </summary>
         /// <param name="isPlayerWhite"></param>
         /// <returns></returns>
-        private Board CreateMockPawnSetup(bool isPlayerWhite)
+        private Board CreateMockPawnSetup()
         {
             var board = new Board();
 
             // Lonely pawns, not very high eval
             for (int i = 1; i < 4; i++)
             {
-                var whitePawn = new Pawn(!isPlayerWhite, true, board);
+                var whitePawn = new Pawn(true, board);
                 whitePawn.CurrentPosition = (i, 1);
                 board.AddNew(whitePawn);
             }
 
             // e4
-            var whiteBattlePawn = new Pawn(!isPlayerWhite, true, board);
+            var whiteBattlePawn = new Pawn(true, board);
             whiteBattlePawn.CurrentPosition = Logic.ToTuple("e4");
             board.AddNew(whiteBattlePawn);
 
             // Diagonal relation (northwest)
 
             // f5
-            var blackBattlePawn = new Pawn(isPlayerWhite, false, board);
+            var blackBattlePawn = new Pawn(false, board);
             blackBattlePawn.CurrentPosition = Logic.ToTuple("f5");
             board.AddNew(blackBattlePawn);
 
             // Random opponent pawns to confuse
             for (int i = 1; i < 4; i++)
             {
-                var blackPawn = new Pawn(isPlayerWhite, false, board);
+                var blackPawn = new Pawn(false, board);
                 blackPawn.CurrentPosition = (i, 6);
                 board.AddNew(blackPawn);
             }
@@ -56,14 +56,14 @@ namespace vergiBlueTests
             return board;
         }
 
-        private Board CreateMockPawnRookSetup(bool isPlayerWhite)
+        private Board CreateMockPawnRookSetup()
         {
-            var board = CreateMockPawnSetup(isPlayerWhite);
-            var whiteRook = new Rook(!isPlayerWhite, true, board);
+            var board = CreateMockPawnSetup();
+            var whiteRook = new Rook(true, board);
             whiteRook.CurrentPosition = (0, 0);
             board.AddNew(whiteRook);
 
-            var blackRook = new Rook(isPlayerWhite, false, board);
+            var blackRook = new Rook(false, board);
             blackRook.CurrentPosition = (0, 7);
             board.AddNew(blackRook);
 
@@ -74,7 +74,7 @@ namespace vergiBlueTests
         public void PlayerWhitePawnShouldEatOpponent()
         {
             var logic = new Logic(true);
-            logic.Board = CreateMockPawnSetup(true);
+            logic.Board = CreateMockPawnSetup();
             var playerMove = logic.CreateMove();
 
             // Let's see if the best move selected
@@ -85,7 +85,7 @@ namespace vergiBlueTests
         public void PlayerBlackPawnShouldEatOpponent()
         {
             var logic = new Logic(false);
-            logic.Board = CreateMockPawnSetup(false);
+            logic.Board = CreateMockPawnSetup();
             var playerMove = logic.CreateMove();
 
             // Let's see if the best move selected
@@ -96,7 +96,7 @@ namespace vergiBlueTests
         public void PlayerWhiteRookShouldEatOpponentRook()
         {
             var logic = new Logic(true);
-            logic.Board = CreateMockPawnRookSetup(true);
+            logic.Board = CreateMockPawnRookSetup();
             var playerMove = logic.CreateMove();
 
             // Let's see if the best move selected
@@ -109,11 +109,56 @@ namespace vergiBlueTests
         public void PlayerBlackRookShouldEatOpponentRook()
         {
             var logic = new Logic(false);
-            logic.Board = CreateMockPawnRookSetup(false);
+            logic.Board = CreateMockPawnRookSetup();
             var playerMove = logic.CreateMove();
 
             // Let's see if the best move selected
             playerMove.Move.EndPosition.ShouldBe("a1");
+        }
+
+        [TestMethod]
+        public void PlayerWhiteRookShouldEatPawnNotDefended()
+        {
+            // Requires to calculate more than next move to spot
+
+            // 8   P
+            // 7  P P
+            // 6 P   P
+            // 5P  R  P
+            // 4
+            // 3
+            // 2
+            // 1
+            //  ABCDEFGH
+            var logic = new Logic(true);
+            logic.Board = new Board();
+
+            // Pawns
+            var pawnPositions = new List<string> { "a5", "b6", "c7", "d8", "e7", "f6", "g5" };
+            var asTuples = pawnPositions.Select(p => Logic.ToTuple(p)).ToList();
+            CreatePawns(asTuples, logic.Board, false);
+
+            // 
+            var whiteRook = new Rook(true, logic.Board);
+            whiteRook.CurrentPosition = Logic.ToTuple("d5");
+            logic.Board.AddNew(whiteRook);
+
+            var playerMove = logic.CreateMove();
+
+            // Let's see if the best move selected
+            // Seems like d7 and d8 would be equally good
+            playerMove.Move.EndPosition.ShouldBe("d7");
+            Logger.LogMessage($"Test: {nameof(PlayerWhiteRookShouldEatPawnNotDefended)}, diagnostics: {playerMove.Diagnostics}");
+        }
+
+        public void CreatePawns(IEnumerable<(int,int)> coordinateList, Board board, bool isWhite)
+        {
+            foreach(var coordinates in coordinateList)
+            {
+                var pawn = new Pawn(isWhite, board);
+                pawn.CurrentPosition = coordinates;
+                board.AddNew(pawn);
+            }
         }
     }
 }
