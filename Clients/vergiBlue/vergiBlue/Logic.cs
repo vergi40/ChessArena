@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -42,32 +43,31 @@ namespace vergiBlue
         {
             if (_testOverride)
             {
+                Diagnostics.StartMoveCalculations();
                 var bestValue = WorstValue();
                 SingleMove bestMove = null;
                 var isMaximizing = IsWhite;
 
-                // Evaluate each move and select best
-                foreach (var piece in Board.PieceList.Where(p => !p.IsOpponent))
+                var allMoves = Board.Moves(isMaximizing).ToList();
+
+                foreach (var singleMove in allMoves)
                 {
-                    foreach (var singleMove in piece.Moves())
+                    var newBoard = new Board(Board, singleMove);
+                    var value = MiniMax(newBoard, 3, -100000, 100000, !isMaximizing);
+                    if (isMaximizing)
                     {
-                        var newBoard = new Board(Board, singleMove);
-                        var value = newBoard.Evaluate();
-                        if(isMaximizing)
+                        if (value > bestValue)
                         {
-                            if (value > bestValue)
-                            {
-                                bestValue = value;
-                                bestMove = singleMove;
-                            }
+                            bestValue = value;
+                            bestMove = singleMove;
                         }
-                        else
+                    }
+                    else
+                    {
+                        if (value < bestValue)
                         {
-                            if (value < bestValue)
-                            {
-                                bestValue = value;
-                                bestMove = singleMove;
-                            }
+                            bestValue = value;
+                            bestMove = singleMove;
                         }
                     }
                 }
@@ -96,6 +96,57 @@ namespace vergiBlue
                 };
 
                 return move;
+            }
+        }
+
+        /// <summary>
+        /// Main game decision feature. Calculate player and opponent moves to certain depth. When
+        /// maximizing, return best move evaluation value for white player. When minimizing return best value for black.
+        /// </summary>
+        /// <param name="newBoard">Board setup to be evaluated</param>
+        /// <param name="depth">How many player and opponent moves by turns are calculated</param>
+        /// <param name="alpha">The highest known value at previous recursion level</param>
+        /// <param name="beta">The lowest known value at previous recursion level</param>
+        /// <param name="maximizingPlayer">Maximizing = white, minimizing = black</param>
+        /// <returns></returns>
+        private double MiniMax(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
+        {
+            var allMoves = newBoard.Moves(maximizingPlayer).ToList();
+
+            if (depth == 0 || !allMoves.Any()) return newBoard.Evaluate();
+            if (maximizingPlayer)
+            {
+                var value = -100000.0;
+                foreach (var move in allMoves)
+                {
+                    var nextBoard = new Board(newBoard, move);
+                    value = Math.Max(value, MiniMax(nextBoard, depth - 1, alpha, beta, false));
+                    alpha = Math.Max(alpha, value);
+                    if (alpha >= beta)
+                    {
+                        // Saved some time by noticing this branch is a dead end
+                        Diagnostics.IncrementAlpha();
+                        break;
+                    }
+                }
+                return value;
+            }
+            else
+            {
+                var value = 100000.0;
+                foreach (var move in allMoves)
+                {
+                    var nextBoard = new Board(newBoard, move);
+                    value = Math.Min(value, MiniMax(nextBoard, depth - 1, alpha, beta, true));
+                    beta = Math.Min(beta, value);
+                    if (beta < alpha)
+                    {
+                        // Saved some time by noticing this branch is a dead end
+                        Diagnostics.IncrementBeta();
+                        break;
+                    }
+                }
+                return value;
             }
         }
 
@@ -172,8 +223,20 @@ namespace vergiBlue
     static class Diagnostics
     {
         private static int EvaluationCount = 0;
+        private static int AlphaCutoffs = 0;
+        private static int BetaCutoffs = 0;
+
         private static List<string> Messages = new List<string>();
         private static readonly object messageLock = new object();
+        private static readonly Stopwatch _timeElapsed = new Stopwatch();
+        
+        /// <summary>
+        /// Call in start of each player turn
+        /// </summary>
+        public static void StartMoveCalculations()
+        {
+            _timeElapsed.Start();
+        }
 
         /// <summary>
         /// Atomic increment operation
@@ -181,6 +244,20 @@ namespace vergiBlue
         public static void IncrementEvalCount()
         {
             Interlocked.Increment(ref EvaluationCount);
+        }
+        /// <summary>
+        /// Atomic increment operation
+        /// </summary>
+        public static void IncrementAlpha()
+        {
+            Interlocked.Increment(ref AlphaCutoffs);
+        }
+        /// <summary>
+        /// Atomic increment operation
+        /// </summary>
+        public static void IncrementBeta()
+        {
+            Interlocked.Increment(ref BetaCutoffs);
         }
 
         /// <summary>
@@ -195,11 +272,21 @@ namespace vergiBlue
             }
         }
 
+        /// <summary>
+        /// Call in end of each player turn
+        /// </summary>
+        /// <returns></returns>
         public static string CollectAndClear()
         {
             lock(messageLock)
             {
-                var result = $"Board evaluations: {EvaluationCount}";
+                var result = $"Board evaluations: {EvaluationCount}. ";
+
+                _timeElapsed.Stop();
+                result += $"Time elapsed: {_timeElapsed.ElapsedMilliseconds} ms. ";
+                result += $"Alphas: {AlphaCutoffs}, betas: {BetaCutoffs}. ";
+                _timeElapsed.Reset();
+
                 foreach (var message in Messages)
                 {
                     result += message;
@@ -210,5 +297,6 @@ namespace vergiBlue
                 return result;
             }
         }
+
     }
 }

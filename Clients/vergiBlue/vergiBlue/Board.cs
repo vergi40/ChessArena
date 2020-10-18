@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Configuration;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.Pieces;
@@ -81,6 +82,18 @@ namespace vergiBlue
             // TODO
             Diagnostics.IncrementEvalCount();
             return PieceList.Sum(p => p.RelativeStrength);
+        }
+
+        public IEnumerable<SingleMove> Moves(bool forWhite)
+        {
+            // Evaluate each move and select best
+            foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves())
+                {
+                    yield return singleMove;
+                }
+            }
         }
     }
 }

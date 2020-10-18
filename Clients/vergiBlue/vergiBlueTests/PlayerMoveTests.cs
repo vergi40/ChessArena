@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
 using vergiBlue;
 using vergiBlue.Pieces;
@@ -99,7 +100,9 @@ namespace vergiBlueTests
             var playerMove = logic.CreateMove();
 
             // Let's see if the best move selected
+            // Diagnostics: time elapsed 12ms
             playerMove.Move.EndPosition.ShouldBe("a8");
+            Logger.LogMessage($"Test: {nameof(PlayerWhiteRookShouldEatOpponentRook)}, diagnostics: {playerMove.Diagnostics}");
         }
 
         [TestMethod]
