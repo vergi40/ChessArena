@@ -13,35 +13,50 @@ namespace vergiBlue
 {
     public class Logic : LogicBase
     {
-        public bool IsPlayerWhite { get; }
-
         private int _index = 2;
         public Move LatestOpponentMove { get; set; }
 
-        public Board Board { get; set; }
+        public Board Board { get; set; } = new Board();
 
         /// <summary>
-        /// Let test class handle initialization and board
+        /// Use dummy moves to test connection with server
         /// </summary>
-        private readonly bool _testOverride;
+        private readonly bool _connectionTestOverride;
 
         /// <summary>
-        /// For tests
+        /// For tests. Test environment will handle board initialization
         /// </summary>
-        public Logic(bool isPlayerWhite)
+        public Logic(bool isPlayerWhite) : base(isPlayerWhite)
         {
-            IsPlayerWhite = isPlayerWhite;
-            _testOverride = true;
+            _connectionTestOverride = false;
         }
 
-        public Logic(GameStartInformation startInformation)
+        public Logic(GameStartInformation startInformation, bool connectionTesting) : base(startInformation.WhitePlayer)
         {
-            _testOverride = false;
+            _connectionTestOverride = connectionTesting;
+            if (!connectionTesting) Board.InitializeEmptyBoard();
+            if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
         }
 
         public override PlayerMove CreateMove()
         {
-            if (_testOverride)
+            if (_connectionTestOverride)
+            {
+                // Dummy moves for connection testing
+                var move = new PlayerMove()
+                {
+                    Move = new Move()
+                    {
+                        StartPosition = $"a{_index--}",
+                        EndPosition = $"a{_index}",
+                        PromotionResult = Move.Types.PromotionPieceType.NoPromotion
+                    },
+                    Diagnostics = Diagnostics.CollectAndClear()
+                };
+
+                return move;
+            }
+            else
             {
                 Diagnostics.StartMoveCalculations();
                 var bestValue = WorstValue();
@@ -74,27 +89,14 @@ namespace vergiBlue
 
                 if(bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
 
+                // Update local
+                Board.ExecuteMove(bestMove);
+
                 var move = new PlayerMove()
                 {
                     Move = bestMove.ToInterfaceMove(),
                     Diagnostics = Diagnostics.CollectAndClear()
                 };
-                return move;
-            }
-            else
-            {
-                // Dummy moves for testserver
-                var move = new PlayerMove()
-                {
-                    Move = new Move()
-                    {
-                        StartPosition = $"a{_index--}",
-                        EndPosition = $"a{_index}",
-                        PromotionResult = Move.Types.PromotionPieceType.NoPromotion
-                    },
-                    Diagnostics = Diagnostics.CollectAndClear()
-                };
-
                 return move;
             }
         }
@@ -150,12 +152,12 @@ namespace vergiBlue
             }
         }
 
-        public override void ReceiveMove(Move opponentMove)
+        public sealed override void ReceiveMove(Move opponentMove)
         {
             // TODO testing
             LatestOpponentMove = opponentMove;
 
-            if (_testOverride)
+            if (!_connectionTestOverride)
             {
                 var move = new SingleMove(opponentMove);
 
@@ -164,7 +166,7 @@ namespace vergiBlue
                 if (Board.ValueAt(move.NewPos) is PieceBase targetPiece)
                 {
                     // Should be done elsewhere
-                    if (!targetPiece.IsWhite != IsPlayerWhite) move.Capture = true;
+                    if (targetPiece.IsWhite != IsPlayerWhite) move.Capture = true;
                     else throw new ArgumentException("Opponent captured own piece.");
                 }
 

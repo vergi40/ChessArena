@@ -14,28 +14,28 @@ namespace Common.Connection
         private Channel _channel;
         private ClientImplementation _client;
 
-        public ConnectionModule(string aiName)
+        public ConnectionModule()
         {
-            _aiName = aiName;
         }
 
         /// <summary>
-        /// 
+        /// Open channel and send initialization request
         /// </summary>
         /// <param name="address">ip:port</param>
-        public async Task<GameStartInformation> Initialize(string address)
+        /// <param name="playerName"></param>
+        public async Task<GameStartInformation> Initialize(string address, string playerName)
         {
-
+            _aiName = playerName;
             _channel = new Channel(address, ChannelCredentials.Insecure);
             _client = new ClientImplementation(new ChessArena.ChessArenaClient(_channel));
 
             Logger.Log($"Opening gRPC channel to {address}");
 
-            var startInformation = await _client.Initialize(_aiName);
+            var startInformation = await _client.Initialize(playerName);
             return startInformation;
         }
 
-        public async void Play(LogicBase ai)
+        public async Task Play(LogicBase ai)
         {
             // TODO handle exceptions and game end
             await _client.CreateMovements(ai);

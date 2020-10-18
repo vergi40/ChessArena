@@ -35,8 +35,18 @@ namespace Common.Connection
             {
                 using (var call = _client.CreateMovements())
                 {
-                    // Stream start
+
+                    //if(ai.IsPlayerWhite)
+                    //{
+                    //    // Player starts
+                    //    await call.RequestStream.WriteAsync(ai.CreateMove());
+                    //}
+
+
                     await call.RequestStream.WriteAsync(ai.CreateMove());
+                    //var startMove =  call.RequestStream.WriteAsync(ai.CreateMove());
+                    //startMove.Wait();
+
 
                     // Continuos bidirectional streaming
                     var responseReaderTask = Task.Run((Func<Task>) (async () =>
@@ -44,7 +54,7 @@ namespace Common.Connection
                         while (await call.ResponseStream.MoveNext(CancellationToken.None))
                         {
                             var opponentMove = call.ResponseStream.Current;
-                            Logger.Log($"Received opponent move: {opponentMove.EndPosition}");
+                            Logger.Log($"Received opponent move: {opponentMove.StartPosition} to {opponentMove.EndPosition}");
 
                             // Analyze opponent move
                             ai.ReceiveMove(opponentMove);

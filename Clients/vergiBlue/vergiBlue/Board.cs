@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Configuration;
 using System.Text;
 using System.Threading.Tasks;
+using Common;
 using vergiBlue.Pieces;
 
 namespace vergiBlue
@@ -93,6 +94,40 @@ namespace vergiBlue
                     yield return singleMove;
                 }
             }
+        }
+
+        public void InitializeEmptyBoard()
+        {
+            // Pawns
+            for (int i = 0; i < 8; i++)
+            {
+                var whitePawn = new Pawn(true, this);
+                whitePawn.CurrentPosition = (i, 1);
+                AddNew(whitePawn);
+
+                var blackPawn = new Pawn(false, this);
+                blackPawn.CurrentPosition = (i, 6);
+                AddNew(blackPawn);
+            }
+
+            // Rooks
+            var rook = new Rook(true, this);
+            rook.CurrentPosition = (0,0);
+            AddNew(rook);
+
+            rook = new Rook(true, this);
+            rook.CurrentPosition = (7, 0);
+            AddNew(rook);
+
+            rook = new Rook(false, this);
+            rook.CurrentPosition = (0, 7);
+            AddNew(rook);
+
+            rook = new Rook(false, this);
+            rook.CurrentPosition = (7, 7);
+            AddNew(rook);
+
+            Logger.Log("Board initialized.");
         }
     }
 }
