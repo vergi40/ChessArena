@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using vergiBlue.Pieces;
 
 namespace vergiBlue
 {
@@ -109,7 +110,7 @@ namespace vergiBlue
 
                 // TODO intelligent analyzing what actually happened
 
-                if (Board.ValueAt(move.NewPos) is Piece targetPiece)
+                if (Board.ValueAt(move.NewPos) is PieceBase targetPiece)
                 {
                     // Should be done elsewhere
                     if (!targetPiece.IsOpponent) move.Capture = true;

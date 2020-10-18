@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using vergiBlue;
+using vergiBlue.Pieces;
 
 namespace vergiBlueTests
 {
@@ -53,6 +55,20 @@ namespace vergiBlueTests
             return board;
         }
 
+        private Board CreateMockPawnRookSetup(bool isPlayerWhite)
+        {
+            var board = CreateMockPawnSetup(isPlayerWhite);
+            var whiteRook = new Rook(!isPlayerWhite, true, board);
+            whiteRook.CurrentPosition = (0, 0);
+            board.AddNew(whiteRook);
+
+            var blackRook = new Rook(isPlayerWhite, false, board);
+            blackRook.CurrentPosition = (0, 7);
+            board.AddNew(blackRook);
+
+            return board;
+        }
+
         [TestMethod]
         public void PlayerWhitePawnShouldEatOpponent()
         {
@@ -73,6 +89,28 @@ namespace vergiBlueTests
 
             // Let's see if the best move selected
             playerMove.Move.EndPosition.ShouldBe("e4");
+        }
+
+        [TestMethod]
+        public void PlayerWhiteRookShouldEatOpponentRook()
+        {
+            var logic = new Logic(true);
+            logic.Board = CreateMockPawnRookSetup(true);
+            var playerMove = logic.CreateMove();
+
+            // Let's see if the best move selected
+            playerMove.Move.EndPosition.ShouldBe("a8");
+        }
+
+        [TestMethod]
+        public void PlayerBlackRookShouldEatOpponentRook()
+        {
+            var logic = new Logic(false);
+            logic.Board = CreateMockPawnRookSetup(false);
+            var playerMove = logic.CreateMove();
+
+            // Let's see if the best move selected
+            playerMove.Move.EndPosition.ShouldBe("a1");
         }
     }
 }
