@@ -153,7 +153,7 @@ namespace vergiBlue
                 SearchDepth = 3;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}");
             }
-            else if (LastTurnElapsed.TotalMilliseconds > 6000)
+            else if (LastTurnElapsed.TotalMilliseconds > 2000)
             {
                 SearchDepth--;
                 Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}");

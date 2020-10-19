@@ -202,7 +202,8 @@ namespace TestServer
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    _logger.Error(e, $"Game loop ended to exception {e.Message}");
+                    return;
                 }
 
                 await Task.Delay(100);
