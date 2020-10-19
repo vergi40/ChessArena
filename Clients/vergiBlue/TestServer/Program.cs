@@ -11,6 +11,7 @@ namespace TestServer
 {
     class Program
     {
+        private static readonly Logger _logger = new Logger(typeof(Program));
         static void Main(string[] args)
         {
             const int Port = 30052;
@@ -22,8 +23,8 @@ namespace TestServer
             };
             server.Start();
 
-            Console.WriteLine("vergiBlue test server listening on port " + Port);
-            Console.WriteLine("Press any key to stop the server...");
+            _logger.Info("vergiBlue test server listening on port " + Port);
+            _logger.Info("Press any key to stop the server...");
             Console.ReadKey();
 
             server.ShutdownAsync().Wait();
@@ -35,6 +36,7 @@ namespace TestServer
     /// </summary>
     class TestServer : ChessArena.ChessArenaBase
     {
+        private static readonly Logger _logger = new Logger(typeof(TestServer));
         public PlayerClass Player1 { get; set; }
         public PlayerClass Player2 { get; set; }
         public MockClass MockPlayer { get; set; }
@@ -52,7 +54,7 @@ namespace TestServer
         
         public override Task<GameStartInformation> Initialize(PlayerInformation request, ServerCallContext context)
         {
-            Console.WriteLine($"Client {request.Name} requested initialize.");
+            _logger.Info($"Client {request.Name} requested initialize.");
             bool connectionTest = request.Name.Contains("test");
             GameStartInformation response;
 
@@ -154,7 +156,7 @@ namespace TestServer
                     {
                         if (Player2 == null || !Player2.StreamOpened)
                         {
-                            Console.WriteLine("Waiting for second player to initialize");
+                            _logger.Info("Waiting for second player to initialize");
                             while (Player2 == null)
                             {
                                 await Task.Delay(50);
@@ -165,8 +167,8 @@ namespace TestServer
                     {
                         await _p1ReqStream.MoveNext();
                         Player1.LatestMove = _p1ReqStream.Current;
-                        Console.WriteLine($"Received move [{Player1.Information.Name}]: {Player1.PrintLatest()}");
-                        Console.WriteLine($"{Player1.LatestMove.Diagnostics}");
+                        _logger.Info($"{(Player1.Information.Name + ":").PadRight(12)} Received move {Player1.PrintLatest()}");
+                        _logger.Info($"{(Player1.Information.Name + ":").PadRight(12)} {Player1.LatestMove.Diagnostics}");
 
                         if (Player2 == null || !Player2.StreamOpened)
                         {
@@ -180,21 +182,21 @@ namespace TestServer
                     else if (_nextState == GameState.P2Res)
                     {
                         await _p2ResStream.WriteAsync(Player1.LatestMove.Move);
-                        Console.WriteLine($"Sent p1 move to p2");
+                        _logger.Info($"Sent p1 move to p2");
                         lock (_stateLock) _nextState = GameState.P2Req;
                     }
                     else if (_nextState == GameState.P2Req)
                     {
                         await _p2ReqStream.MoveNext();
                         Player2.LatestMove = _p2ReqStream.Current;
-                        Console.WriteLine($"Received move [{Player2.Information.Name}]: {Player2.PrintLatest()}");
-                        Console.WriteLine($"{Player2.LatestMove.Diagnostics}");
+                        _logger.Info($"{(Player2.Information.Name + ":").PadRight(12)} Received move {Player2.PrintLatest()}");
+                        _logger.Info($"{(Player2.Information.Name + ":").PadRight(12)} {Player2.LatestMove.Diagnostics}");
                         lock (_stateLock) _nextState = GameState.P1Res;
                     }
                     else if (_nextState == GameState.P1Res)
                     {
                         await _p1ResStream.WriteAsync(Player2.LatestMove.Move);
-                        Console.WriteLine($"Sent p2 move to p1");
+                        _logger.Info($"Sent p2 move to p1");
                         lock (_stateLock) _nextState = GameState.P1Req;
                     }
                 }
