@@ -11,9 +11,45 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue
 {
+    public enum GamePhase
+    {
+        /// <summary>
+        /// Openings and initial
+        /// </summary>
+        Start,
+        Middle,
+        EndGame
+    }
+
     public class Logic : LogicBase
     {
-        private int _index = 2;
+        // Game strategic variables
+
+        public GamePhase Phase { get; set; } = GamePhase.Start;
+        public int SearchDepth { get; set; } = 4;
+
+        /// <summary>
+        /// Total game turn count
+        /// </summary>
+        public int TurnCount { get; set; } = 0;
+
+        /// <summary>
+        /// Starts from 0
+        /// </summary>
+        public int PlayerTurnCount
+        {
+            get
+            {
+                if (IsPlayerWhite) return TurnCount / 2;
+                return (TurnCount - 1) / 2;
+            }
+        }
+
+        public static TimeSpan LastTurnElapsed { get; set; } = TimeSpan.Zero;
+
+
+
+        private int _connectionTestIndex = 2;
         public Move LatestOpponentMove { get; set; }
 
         public Board Board { get; set; } = new Board();
@@ -40,6 +76,7 @@ namespace vergiBlue
 
         public override PlayerMove CreateMove()
         {
+
             if (_connectionTestOverride)
             {
                 // Dummy moves for connection testing
@@ -47,8 +84,8 @@ namespace vergiBlue
                 {
                     Move = new Move()
                     {
-                        StartPosition = $"a{_index--}",
-                        EndPosition = $"a{_index}",
+                        StartPosition = $"a{_connectionTestIndex--}",
+                        EndPosition = $"a{_connectionTestIndex}",
                         PromotionResult = Move.Types.PromotionPieceType.NoPromotion
                     },
                     Diagnostics = Diagnostics.CollectAndClear()
@@ -64,11 +101,12 @@ namespace vergiBlue
                 var isMaximizing = IsPlayerWhite;
 
                 var allMoves = Board.Moves(isMaximizing).ToList();
+                AnalyzeGamePhase(allMoves.Count);
 
                 foreach (var singleMove in allMoves)
                 {
                     var newBoard = new Board(Board, singleMove);
-                    var value = MiniMax(newBoard, 4, -100000, 100000, !isMaximizing);
+                    var value = MiniMax(newBoard, 3, -100000, 100000, !isMaximizing);
                     if (isMaximizing)
                     {
                         if (value > bestValue)
@@ -91,6 +129,7 @@ namespace vergiBlue
 
                 // Update local
                 Board.ExecuteMove(bestMove);
+                TurnCount++;
 
                 var move = new PlayerMove()
                 {
@@ -99,6 +138,32 @@ namespace vergiBlue
                 };
                 return move;
             }
+        }
+
+        private void AnalyzeGamePhase(int movePossibilities)
+        {
+            if (PlayerTurnCount == 0)
+            {
+                Phase = GamePhase.Start;
+                SearchDepth = 4;
+            }
+            else if(PlayerTurnCount == 4)
+            {
+                Phase = GamePhase.Middle;
+                SearchDepth = 3;
+                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}");
+            }
+            else if (LastTurnElapsed.TotalMilliseconds > 6000)
+            {
+                SearchDepth--;
+                Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}");
+            }
+            else if (LastTurnElapsed.TotalMilliseconds < 200)
+            {
+                SearchDepth++;
+                Diagnostics.AddMessage($"Increased search depth to {SearchDepth}");
+            }
+
         }
 
         /// <summary>
@@ -154,23 +219,37 @@ namespace vergiBlue
 
         public sealed override void ReceiveMove(Move opponentMove)
         {
-            // TODO testing
+            TurnCount++;
             LatestOpponentMove = opponentMove;
 
             if (!_connectionTestOverride)
             {
+                // Basic validation
                 var move = new SingleMove(opponentMove);
+                if (Board.ValueAt(move.PrevPos) == null)
+                {
+                    throw new ArgumentException($"Player [isWhite={!IsPlayerWhite}] Tried to move a from position that is empty");
+                }
+
+                if (Board.ValueAt(move.PrevPos) is PieceBase opponentPiece)
+                {
+                    if (opponentPiece.IsWhite == IsPlayerWhite)
+                    {
+                        throw new ArgumentException($"Opponent tried to move player piece");
+                    }
+                }
 
                 // TODO intelligent analyzing what actually happened
 
-                if (Board.ValueAt(move.NewPos) is PieceBase targetPiece)
+                if (Board.ValueAt(move.NewPos) is PieceBase playerPiece)
                 {
-                    // Should be done elsewhere
-                    if (targetPiece.IsWhite != IsPlayerWhite) move.Capture = true;
-                    else throw new ArgumentException("Opponent captured own piece.");
+                    // Opponent captures player targetpiece
+                    if (playerPiece.IsWhite == IsPlayerWhite) move.Capture = true;
+                    else throw new ArgumentException("Opponent tried to capture own piece.");
                 }
 
                 Board.ExecuteMove(move);
+                TurnCount++;
             }
         }
 
@@ -191,32 +270,6 @@ namespace vergiBlue
             if (target.Item1 < 0 || target.Item1 > 7 || target.Item2 < 0 || target.Item2 > 7)
                 return true;
             return false;
-        }
-
-        private const int _intToAlphabet = 65;
-
-        /// <summary>
-        /// Transforms (column, row) format to e.g. 'a1'
-        /// </summary>
-        /// <param name="position"></param>
-        /// <returns></returns>
-        public static string ToAlgebraic((int column, int row) position)
-        {
-            var move = $"{((char) (position.column + _intToAlphabet)).ToString().ToLower()}{position.row + 1}";
-            return move;
-        }
-
-        /// <summary>
-        /// Transforms algebraic format e.g. 'a1' to (column, row) format
-        /// </summary>
-        /// <param name="position"></param>
-        /// <returns></returns>
-        public static (int column, int row) ToTuple(string position)
-        {
-            char columnChar = char.ToUpper(position[0]);
-            var column = columnChar - _intToAlphabet;
-            var row = int.Parse(position[1].ToString());
-            return (column, row - 1);
         }
     }
     
@@ -285,6 +338,7 @@ namespace vergiBlue
                 var result = $"Board evaluations: {EvaluationCount}. ";
 
                 _timeElapsed.Stop();
+                Logic.LastTurnElapsed = _timeElapsed.Elapsed;
                 result += $"Time elapsed: {_timeElapsed.ElapsedMilliseconds} ms. ";
                 result += $"Alphas: {AlphaCutoffs}, betas: {BetaCutoffs}. ";
                 _timeElapsed.Reset();

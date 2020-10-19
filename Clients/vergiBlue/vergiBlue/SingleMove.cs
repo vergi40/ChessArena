@@ -29,15 +29,10 @@ namespace vergiBlue
         /// <param name="capture"></param>
         public SingleMove(Move interfaceMove, bool capture = false)
         {
-            PrevPos = Logic.ToTuple(interfaceMove.StartPosition);
-            NewPos = Logic.ToTuple(interfaceMove.EndPosition);
+            PrevPos = interfaceMove.StartPosition.ToTuple();
+            NewPos = interfaceMove.EndPosition.ToTuple();
             Capture = capture;
             Promotion = interfaceMove.PromotionResult != Move.Types.PromotionPieceType.NoPromotion;
-        }
-
-        public string ToAlgebraic((int, int) position)
-        {
-            return Logic.ToAlgebraic(position);
         }
 
         public Move ToInterfaceMove()
@@ -45,8 +40,8 @@ namespace vergiBlue
             // TODO checks etc.
             var move = new Move()
             {
-                StartPosition = ToAlgebraic(PrevPos),
-                EndPosition = ToAlgebraic(NewPos),
+                StartPosition = PrevPos.ToAlgebraic(),
+                EndPosition = NewPos.ToAlgebraic(),
                 PromotionResult = Move.Types.PromotionPieceType.NoPromotion
             };
             return move;
@@ -54,9 +49,9 @@ namespace vergiBlue
 
         public override string ToString()
         {
-            var info = $"{Logic.ToAlgebraic(PrevPos)} to ";
+            var info = $"{PrevPos.ToAlgebraic()} to ";
             if (Capture) info += "x";
-            info += Logic.ToAlgebraic(NewPos);
+            info += NewPos.ToAlgebraic();
             return info;
         }
     }

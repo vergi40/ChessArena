@@ -35,14 +35,14 @@ namespace vergiBlueTests
 
             // e4
             var whiteBattlePawn = new Pawn(true, board);
-            whiteBattlePawn.CurrentPosition = Logic.ToTuple("e4");
+            whiteBattlePawn.CurrentPosition = "e4".ToTuple();
             board.AddNew(whiteBattlePawn);
 
             // Diagonal relation (northwest)
 
             // f5
             var blackBattlePawn = new Pawn(false, board);
-            blackBattlePawn.CurrentPosition = Logic.ToTuple("f5");
+            blackBattlePawn.CurrentPosition = "f5".ToTuple();
             board.AddNew(blackBattlePawn);
 
             // Random opponent pawns to confuse
@@ -135,12 +135,12 @@ namespace vergiBlueTests
 
             // Pawns
             var pawnPositions = new List<string> { "a5", "b6", "c7", "d8", "e7", "f6", "g5" };
-            var asTuples = pawnPositions.Select(p => Logic.ToTuple(p)).ToList();
+            var asTuples = pawnPositions.Select(p => p.ToTuple()).ToList();
             CreatePawns(asTuples, logic.Board, false);
 
             // 
             var whiteRook = new Rook(true, logic.Board);
-            whiteRook.CurrentPosition = Logic.ToTuple("d5");
+            whiteRook.CurrentPosition = "d5".ToTuple();
             logic.Board.AddNew(whiteRook);
 
             var playerMove = logic.CreateMove();

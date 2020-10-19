@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Board.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Logic.cs" />
     <Compile Include="Pieces\Pawn.cs" />
     <Compile Include="Pieces\PieceBase.cs" />

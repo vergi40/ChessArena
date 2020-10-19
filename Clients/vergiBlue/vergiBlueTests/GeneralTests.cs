@@ -24,7 +24,7 @@ namespace vergiBlueTests
             board.AddNew(pawn2);
 
             var moves = pawn1.Moves();
-            var coordinates = moves.Select(m => m.ToAlgebraic(m.NewPos));
+            var coordinates = moves.Select(m => m.NewPos.ToAlgebraic());
 
         }
 
@@ -32,16 +32,16 @@ namespace vergiBlueTests
         public void TestAlgebraicToIntArrayConversions()
         {
             var startCorner = "a1";
-            var intArray = Logic.ToTuple(startCorner);
+            var intArray = startCorner.ToTuple();
             intArray.ShouldBe((0,0));
 
-            Logic.ToAlgebraic(intArray).ShouldBe("a1");
+            intArray.ToAlgebraic().ShouldBe("a1");
 
             var endCorner = "h8";
-            intArray = Logic.ToTuple(endCorner);
+            intArray = endCorner.ToTuple();
             intArray.ShouldBe((7, 7));
 
-            Logic.ToAlgebraic(intArray).ShouldBe("h8");
+            intArray.ToAlgebraic().ShouldBe("h8");
 
 
         }
