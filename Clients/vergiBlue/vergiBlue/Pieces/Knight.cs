@@ -11,7 +11,7 @@ namespace vergiBlue.Pieces
         public override double RelativeStrength { get; }
         public Knight(bool isWhite, Board boardReference) : base(isWhite, boardReference)
         {
-            RelativeStrength = StrengthTable.Knight;
+            RelativeStrength = StrengthTable.Knight * Direction;
         }
 
         protected override SingleMove CanMoveTo((int, int) target, bool validateBorders = false)

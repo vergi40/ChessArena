@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net.Configuration;
 using System.Text;
@@ -22,9 +23,24 @@ namespace vergiBlue
         public Dictionary<(int, int), PieceBase>.KeyCollection OccupiedCoordinates => Pieces.Keys;
 
         /// <summary>
+        /// Track kings for whole game
+        /// </summary>
+        public (King white, King black) Kings { get; set; }
+
+        /// <summary>
         /// Start game initialization
         /// </summary>
         public Board(){}
+
+        /// <summary>
+        /// Create board clone for testing purposes. Set kings explicitly
+        /// </summary>
+        /// <param name="previous"></param>
+        public Board(Board previous)
+        {
+            InitializeFromReference(previous);
+            InitializeKingsFromReference(previous.Kings);
+        }
 
         /// <summary>
         /// Create board setup after move
@@ -34,7 +50,19 @@ namespace vergiBlue
         public Board(Board previous, SingleMove move)
         {
             InitializeFromReference(previous);
+            InitializeKingsFromReference(previous.Kings);
             ExecuteMove(move);
+        }
+
+        private void InitializeKingsFromReference((King white, King black) previousKings)
+        {
+            // Need to ensure kings in board are same as these
+            // A bit code smell but works for now
+            King newWhite = previousKings.white?.CreateKingCopy(this);
+            if (newWhite != null) Pieces[newWhite.CurrentPosition] = newWhite;
+            King newBlack = previousKings.black?.CreateKingCopy(this);
+            if (newBlack != null) Pieces[newBlack.CurrentPosition] = newBlack;
+            Kings = (newWhite, newBlack);
         }
 
         /// <summary>
@@ -61,6 +89,11 @@ namespace vergiBlue
                 var newPiece = oldPiece.CreateCopy(this);
                 AddNew(newPiece);
             }
+        }
+
+        public void InitializeForTesting(Board board)
+        {
+
         }
 
         /// <summary>
@@ -127,7 +160,80 @@ namespace vergiBlue
             rook.CurrentPosition = (7, 7);
             AddNew(rook);
 
+            var whiteKing = new King(true, this);
+            whiteKing.CurrentPosition = "d1".ToTuple();
+            AddNew(whiteKing);
+
+            var blackKing = new King(false, this);
+            blackKing.CurrentPosition = "d8".ToTuple();
+            AddNew(blackKing);
+            Kings = (whiteKing, blackKing);
+
             Logger.Log("Board initialized.");
+        }
+
+        /// <summary>
+        /// King location should be known at all times
+        /// </summary>
+        /// <param name="whiteKing"></param>
+        /// <returns></returns>
+        private King KingLocation(bool whiteKing)
+        {
+            if (whiteKing) return Kings.white;
+            else return Kings.black;
+        }
+
+        /// <summary>
+        /// If any player move could eat other player king, and opponent has zero
+        /// moves to stop this, it is checkmate
+        /// </summary>
+        /// <param name="isWhiteOffensive"></param>
+        /// <param name="currentBoardKnownToBeInCheck">If already calculated, save some processing overhead</param>
+        /// <returns></returns>
+        public bool IsCheckMate(bool isWhiteOffensive, bool currentBoardKnownToBeInCheck)
+        {
+            if(!currentBoardKnownToBeInCheck)
+            {
+                if (!IsCheck(isWhiteOffensive)) return false;
+            }
+
+            // Iterate all opponent moves and check is there any that doesn't have check when next player moves
+            var opponentMoves = Moves(!isWhiteOffensive);
+            foreach (var singleMove in opponentMoves)
+            {
+                var newBoard = new Board(this, singleMove);
+                if (!newBoard.IsCheck(isWhiteOffensive))
+                {
+                    // Found possible move
+                    // TODO should this be saved for some deep analyzing?
+                    return false;
+                }
+            }
+
+            // Didn't find any counter moves
+            return true;
+        }
+
+        /// <summary>
+        /// If any player move could eat other player king with current board setup, it is check.
+        /// </summary>
+        /// <param name="isWhiteOffensive">Which player moves are analyzed against others king checking</param>
+        /// <returns></returns>
+        public bool IsCheck(bool isWhiteOffensive)
+        {
+            var opponentKing = KingLocation(!isWhiteOffensive);
+            if (opponentKing == null) return false; // Test override, don't always have kings on board
+
+            var playerMoves = Moves(isWhiteOffensive);
+            foreach (var singleMove in playerMoves)
+            {
+                if (singleMove.NewPos == opponentKing.CurrentPosition)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

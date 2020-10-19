@@ -35,14 +35,17 @@ namespace vergiBlue
             Promotion = interfaceMove.PromotionResult != Move.Types.PromotionPieceType.NoPromotion;
         }
 
-        public Move ToInterfaceMove()
+        public Move ToInterfaceMove(bool castling, bool check, bool checkMate)
         {
             // TODO checks etc.
             var move = new Move()
             {
                 StartPosition = PrevPos.ToAlgebraic(),
                 EndPosition = NewPos.ToAlgebraic(),
-                PromotionResult = Move.Types.PromotionPieceType.NoPromotion
+                PromotionResult = Move.Types.PromotionPieceType.NoPromotion,
+                Castling = castling,
+                Check = check,
+                CheckMate = checkMate
             };
             return move;
         }

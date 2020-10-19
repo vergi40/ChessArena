@@ -11,7 +11,7 @@ namespace vergiBlue.Pieces
         public override double RelativeStrength { get; }
         public King(bool isWhite, Board boardReference) : base(isWhite, boardReference)
         {
-            RelativeStrength = StrengthTable.King;
+            RelativeStrength = StrengthTable.King * Direction;
         }
 
         protected override SingleMove CanMoveTo((int, int) target, bool validateBorders = false)
@@ -59,6 +59,13 @@ namespace vergiBlue.Pieces
         }
 
         public override PieceBase CreateCopy(Board newBoard)
+        {
+            var piece = new King(IsWhite, newBoard);
+            piece.CurrentPosition = CurrentPosition;
+            return piece;
+        }
+
+        public King CreateKingCopy(Board newBoard)
         {
             var piece = new King(IsWhite, newBoard);
             piece.CurrentPosition = CurrentPosition;

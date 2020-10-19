@@ -51,6 +51,7 @@ namespace vergiBlue
 
         private int _connectionTestIndex = 2;
         public Move LatestOpponentMove { get; set; }
+        public IList<Move> GameHistory { get; set; } = new List<Move>();
 
         public Board Board { get; set; } = new Board();
 
@@ -106,7 +107,7 @@ namespace vergiBlue
                 foreach (var singleMove in allMoves)
                 {
                     var newBoard = new Board(Board, singleMove);
-                    var value = MiniMax(newBoard, 3, -100000, 100000, !isMaximizing);
+                    var value = MiniMax(newBoard, SearchDepth, -100000, 100000, !isMaximizing);
                     if (isMaximizing)
                     {
                         if (value > bestValue)
@@ -125,17 +126,24 @@ namespace vergiBlue
                     }
                 }
 
-                if(bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
+                if (bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
 
                 // Update local
                 Board.ExecuteMove(bestMove);
                 TurnCount++;
 
+                // Endgame checks
+                var castling = false;
+                var check = Board.IsCheck(IsPlayerWhite);
+                var checkMate = false;
+                if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
+
                 var move = new PlayerMove()
                 {
-                    Move = bestMove.ToInterfaceMove(),
+                    Move = bestMove.ToInterfaceMove(castling, check, checkMate),
                     Diagnostics = Diagnostics.CollectAndClear()
                 };
+                GameHistory.Add(move.Move);
                 return move;
             }
         }
@@ -158,7 +166,7 @@ namespace vergiBlue
                 SearchDepth--;
                 Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}");
             }
-            else if (LastTurnElapsed.TotalMilliseconds < 200)
+            else if (LastTurnElapsed.TotalMilliseconds < 200 && SearchDepth < 5)
             {
                 SearchDepth++;
                 Diagnostics.AddMessage($"Increased search depth to {SearchDepth}");
@@ -249,6 +257,7 @@ namespace vergiBlue
                 }
 
                 Board.ExecuteMove(move);
+                GameHistory.Add(opponentMove);
                 TurnCount++;
             }
         }
