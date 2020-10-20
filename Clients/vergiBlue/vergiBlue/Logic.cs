@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
 namespace vergiBlue
@@ -97,34 +98,11 @@ namespace vergiBlue
             else
             {
                 Diagnostics.StartMoveCalculations();
-                var bestValue = WorstValue();
-                SingleMove bestMove = null;
                 var isMaximizing = IsPlayerWhite;
 
                 var allMoves = Board.Moves(isMaximizing).ToList();
                 AnalyzeGamePhase(allMoves.Count);
-
-                foreach (var singleMove in allMoves)
-                {
-                    var newBoard = new Board(Board, singleMove);
-                    var value = MiniMax(newBoard, SearchDepth, -100000, 100000, !isMaximizing);
-                    if (isMaximizing)
-                    {
-                        if (value > bestValue)
-                        {
-                            bestValue = value;
-                            bestMove = singleMove;
-                        }
-                    }
-                    else
-                    {
-                        if (value < bestValue)
-                        {
-                            bestValue = value;
-                            bestMove = singleMove;
-                        }
-                    }
-                }
+                var bestMove = AnalyzeBestMove(allMoves);
 
                 if (bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
 
@@ -146,6 +124,61 @@ namespace vergiBlue
                 GameHistory.Add(move.Move);
                 return move;
             }
+        }
+
+        private SingleMove AnalyzeBestMove(IList<SingleMove> allMoves)
+        {
+            var isMaximizing = IsPlayerWhite;
+            AnalyzeGamePhase(allMoves.Count);
+
+            if (Phase == GamePhase.EndGame)
+            {
+                // Brute search checkmate
+                foreach (var singleMove in allMoves)
+                {
+                    var newBoard = new Board(Board, singleMove);
+                    if (newBoard.IsCheckMate(isMaximizing, false))
+                    {
+                        return singleMove;
+                    }
+                }
+                foreach (var singleMove in allMoves)
+                {
+                    var newBoard = new Board(Board, singleMove);
+                    if (CheckMate.InTwoTurns(newBoard, isMaximizing))
+                    {
+                        return singleMove;
+                    }
+                }
+            }
+
+            // TODO separate logic to different layers. e.g. player depth at 2, 4 and when to use simple isCheckMate
+            var bestValue = WorstValue(IsPlayerWhite);
+            SingleMove bestMove = null;
+            foreach (var singleMove in allMoves)
+            {
+                var newBoard = new Board(Board, singleMove);
+                var value = MiniMax.ToDepth(newBoard, SearchDepth, -100000, 100000, !isMaximizing);
+                
+                if (isMaximizing)
+                {
+                    if (value > bestValue)
+                    {
+                        bestValue = value;
+                        bestMove = singleMove;
+                    }
+                }
+                else
+                {
+                    if (value < bestValue)
+                    {
+                        bestValue = value;
+                        bestMove = singleMove;
+                    }
+                }
+            }
+
+            return bestMove;
         }
 
         private void AnalyzeGamePhase(int movePossibilities)
@@ -172,57 +205,14 @@ namespace vergiBlue
                 Diagnostics.AddMessage($"Increased search depth to {SearchDepth}");
             }
 
-        }
-
-        /// <summary>
-        /// Main game decision feature. Calculate player and opponent moves to certain depth. When
-        /// maximizing, return best move evaluation value for white player. When minimizing return best value for black.
-        /// </summary>
-        /// <param name="newBoard">Board setup to be evaluated</param>
-        /// <param name="depth">How many player and opponent moves by turns are calculated</param>
-        /// <param name="alpha">The highest known value at previous recursion level</param>
-        /// <param name="beta">The lowest known value at previous recursion level</param>
-        /// <param name="maximizingPlayer">Maximizing = white, minimizing = black</param>
-        /// <returns></returns>
-        private double MiniMax(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
-        {
-            var allMoves = newBoard.Moves(maximizingPlayer).ToList();
-
-            if (depth == 0 || !allMoves.Any()) return newBoard.Evaluate();
-            if (maximizingPlayer)
+            if(Phase != GamePhase.Start)
             {
-                var value = -100000.0;
-                foreach (var move in allMoves)
-                {
-                    var nextBoard = new Board(newBoard, move);
-                    value = Math.Max(value, MiniMax(nextBoard, depth - 1, alpha, beta, false));
-                    alpha = Math.Max(alpha, value);
-                    if (alpha >= beta)
-                    {
-                        // Saved some time by noticing this branch is a dead end
-                        Diagnostics.IncrementAlpha();
-                        break;
-                    }
-                }
-                return value;
+                // Endgame - opponent has max 3 non-pawns left
+                var powerPieces = Board.PieceList.Count(p =>
+                    p.IsWhite != IsPlayerWhite && Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+                if (powerPieces < 4) Phase = GamePhase.EndGame;
             }
-            else
-            {
-                var value = 100000.0;
-                foreach (var move in allMoves)
-                {
-                    var nextBoard = new Board(newBoard, move);
-                    value = Math.Min(value, MiniMax(nextBoard, depth - 1, alpha, beta, true));
-                    beta = Math.Min(beta, value);
-                    if (beta < alpha)
-                    {
-                        // Saved some time by noticing this branch is a dead end
-                        Diagnostics.IncrementBeta();
-                        break;
-                    }
-                }
-                return value;
-            }
+
         }
 
         public sealed override void ReceiveMove(Move opponentMove)
@@ -262,15 +252,15 @@ namespace vergiBlue
             }
         }
 
-        private double BestValue()
+        private double BestValue(bool isMaximizing)
         {
-            if (IsPlayerWhite) return 1000000;
+            if (isMaximizing) return 1000000;
             else return -1000000;
         }
 
-        private double WorstValue()
+        private double WorstValue(bool isMaximizing)
         {
-            if (IsPlayerWhite) return -1000000;
+            if (isMaximizing) return -1000000;
             else return 1000000;
         }
 

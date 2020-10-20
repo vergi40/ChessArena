@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Algorithms\CheckMate.cs" />
+    <Compile Include="Algorithms\MiniMax.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Logic.cs" />

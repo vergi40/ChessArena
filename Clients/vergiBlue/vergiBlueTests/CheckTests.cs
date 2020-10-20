@@ -34,11 +34,6 @@ namespace vergiBlueTests
             player.TurnCount = 20;
             player.SearchDepth = 4;
 
-            var opponent = new Logic(false);
-            opponent.Phase = GamePhase.EndGame;
-            opponent.TurnCount = 20;
-            opponent.SearchDepth = 4;
-
             var board = new Board();
             // 
             var rookPositions = new List<string> { "a8", "b7" };
@@ -55,11 +50,60 @@ namespace vergiBlueTests
             player.Board.IsCheckMate(true, false).ShouldBeTrue();
 
         }
-
         [TestMethod]
-        public void WhiteRooksShouldCheckMate()
+        public void WhiteRooksShouldCheckMateInOneTurn()
         {
             // Easy double rook checkmate
+
+            // 8      K
+            // 7 R
+            // 6R
+            // 5 
+            // 4
+            // 3
+            // 2
+            // 1
+            //  ABCDEFGH
+            var player = new Logic(true);
+            player.Phase = GamePhase.EndGame;
+            player.TurnCount = 20;
+            player.SearchDepth = 4;
+
+            var opponent = new Logic(false);
+            opponent.Phase = GamePhase.EndGame;
+            opponent.TurnCount = 20;
+            opponent.SearchDepth = 4;
+
+            var board = new Board();
+            // 
+            var rookPositions = new List<string> { "a6", "b7" };
+            var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
+            CreateRooks(asTuples, board, true);
+
+            // 
+            var blackKing = new King(false, board);
+            blackKing.CurrentPosition = "g8".ToTuple();
+            board.AddNew(blackKing);
+
+            var whiteKing = new King(true, board);
+            whiteKing.CurrentPosition = "a5".ToTuple();
+            board.AddNew(whiteKing);
+
+            board.Kings = (whiteKing, blackKing);
+
+            player.Board = new Board(board);
+            opponent.Board = new Board(board);
+
+            var playerMove = player.CreateMove();
+            playerMove.Move.CheckMate.ShouldBeTrue();
+            Logger.LogMessage($"Test: {nameof(WhiteRooksShouldCheckMateInOneTurn)}, diagnostics: {playerMove.Diagnostics}");
+        }
+
+        [TestMethod]
+        public void WhiteRooksShouldCheckMateInTwoTurns()
+        {
+            // Easy double rook checkmate
+            // There are 4 variations resulting to checkmate in 2 turns
 
             // 8      K
             // 7
@@ -87,10 +131,15 @@ namespace vergiBlueTests
             CreateRooks(asTuples, board, true);
 
             // 
-            var king = new King(false, board);
-            king.CurrentPosition = "g8".ToTuple();
-            board.AddNew(king);
-            board.Kings = (null, king);
+            var blackKing = new King(false, board);
+            blackKing.CurrentPosition = "g8".ToTuple();
+            board.AddNew(blackKing);
+
+            var whiteKing = new King(true, board);
+            whiteKing.CurrentPosition = "a5".ToTuple();
+            board.AddNew(whiteKing);
+
+            board.Kings = (whiteKing, blackKing);
 
             player.Board = new Board(board);
             opponent.Board = new Board(board);
@@ -102,17 +151,9 @@ namespace vergiBlueTests
             player.ReceiveMove(opponentMove.Move);
 
 
-            var playerMove2 = player.CreateMove();//Should do checkmate here
+            var playerMove2 = player.CreateMove();
             playerMove2.Move.CheckMate.ShouldBe(true);
-            //opponent.ReceiveMove(playerMove2.Move);
-
-            //var opponentMove2 = opponent.CreateMove();
-            //player.ReceiveMove(opponentMove2.Move);
-
-            //var playerMove3 = player.CreateMove();
-
-
-            Logger.LogMessage($"Test: {nameof(WhiteRooksShouldCheckMate)}, diagnostics: {playerMove2.Diagnostics}");
+            Logger.LogMessage($"Test: {nameof(WhiteRooksShouldCheckMateInTwoTurns)}, diagnostics: {playerMove2.Diagnostics}");
         }
 
         public void CreateRooks(IEnumerable<(int, int)> coordinateList, Board board, bool isWhite)

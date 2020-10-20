@@ -111,15 +111,34 @@ namespace vergiBlue
             Pieces.Add((piece.CurrentPosition), piece);
         }
 
-        public double Evaluate()
+        private int Direction(bool isWhite)
+        {
+            if (isWhite) return 1;
+            return -1;
+        }
+
+        public double Evaluate(bool isMaximizing, int currentSearchDepth)
         {
             // TODO
             Diagnostics.IncrementEvalCount();
-            return PieceList.Sum(p => p.RelativeStrength);
+            var evalScore = PieceList.Sum(p => p.RelativeStrength);
+
+            // Checkmate (in good or bad) should have more priority the sooner it occurs
+            if (evalScore > StrengthTable.King / 2)
+            {
+                evalScore += 10 * currentSearchDepth;
+            }
+            else if (evalScore < -StrengthTable.King / 2)
+            {
+                evalScore -= 10 * currentSearchDepth;
+            }
+
+            return evalScore;
         }
 
         public IEnumerable<SingleMove> Moves(bool forWhite)
         {
+            // TODO: Sort moves on end. Priority to moves with capture
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves())
@@ -202,6 +221,7 @@ namespace vergiBlue
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = new Board(this, singleMove);
+                Diagnostics.IncrementEvalCount();
                 if (!newBoard.IsCheck(isWhiteOffensive))
                 {
                     // Found possible move
