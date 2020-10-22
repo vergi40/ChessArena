@@ -73,13 +73,31 @@ namespace vergiBlue
         {
             if (move.Capture)
             {
-                Pieces.Remove(move.NewPos);
+                // Ensure validation ends if king is eaten
+                var isWhite = ValueAt(move.PrevPos).IsWhite;
+                if (KingLocation(!isWhite).CurrentPosition == move.NewPos)
+                {
+                    RemovePieces(!isWhite);
+                }
+                else
+                {
+                    Pieces.Remove(move.NewPos);
+                }
             }
 
             var piece = Pieces[move.PrevPos];
             Pieces.Remove(move.PrevPos);
             Pieces.Add(move.NewPos, piece);
             piece.CurrentPosition = move.NewPos;
+        }
+
+        private void RemovePieces(bool isWhite)
+        {
+            var positions = PieceList.Where(p => p.IsWhite == isWhite).Select(p => p.CurrentPosition).ToList();
+            foreach (var position in positions)
+            {
+                Pieces.Remove(position);
+            }
         }
 
         private void InitializeFromReference(Board previous)
@@ -126,23 +144,29 @@ namespace vergiBlue
             // Checkmate (in good or bad) should have more priority the sooner it occurs
             if (evalScore > StrengthTable.King / 2)
             {
-                evalScore += 10 * currentSearchDepth;
+                evalScore += 10 * (currentSearchDepth + 1);
             }
             else if (evalScore < -StrengthTable.King / 2)
             {
-                evalScore -= 10 * currentSearchDepth;
+                evalScore -= 10 * (currentSearchDepth + 1);
             }
 
             return evalScore;
         }
 
-        public IEnumerable<SingleMove> Moves(bool forWhite)
+        public IEnumerable<SingleMove> Moves(bool forWhite, bool kingInDanger = false)
         {
             // TODO: Sort moves on end. Priority to moves with capture
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves())
                 {
+                    if (kingInDanger)
+                    {
+                        // Only allow moves that don't result in check
+                        var newBoard = new Board(this, singleMove);
+                        if (newBoard.IsCheck(!forWhite)) continue;
+                    }
                     yield return singleMove;
                 }
             }

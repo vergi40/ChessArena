@@ -54,6 +54,19 @@ namespace vergiBlue
         public Move LatestOpponentMove { get; set; }
         public IList<Move> GameHistory { get; set; } = new List<Move>();
 
+        private bool _kingInDanger
+        {
+            get
+            {
+                if (LatestOpponentMove?.Check == true)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
         public Board Board { get; set; } = new Board();
 
         /// <summary>
@@ -101,7 +114,7 @@ namespace vergiBlue
             {
                 var isMaximizing = IsPlayerWhite;
 
-                var allMoves = Board.Moves(isMaximizing).ToList();
+                var allMoves = Board.Moves(isMaximizing, _kingInDanger).ToList();
                 AnalyzeGamePhase(allMoves.Count);
 
                 Diagnostics.StartMoveCalculations();
@@ -117,14 +130,14 @@ namespace vergiBlue
                 // TODO should be now read from singlemove
                 var castling = false;
                 var check = Board.IsCheck(IsPlayerWhite);
-                var checkMate = false;
-                if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
+                //var checkMate = false;
+                //if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
 
                 var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed);
                 _lastTurnElapsed = timeElapsed;
                 var move = new PlayerMove()
                 {
-                    Move = bestMove.ToInterfaceMove(castling, check, checkMate),
+                    Move = bestMove.ToInterfaceMove(castling, check),
                     Diagnostics = diagnostics
                 };
                 GameHistory.Add(move.Move);
@@ -135,6 +148,8 @@ namespace vergiBlue
         private SingleMove AnalyzeBestMove(IList<SingleMove> allMoves)
         {
             var isMaximizing = IsPlayerWhite;
+
+
             if (Phase == GamePhase.EndGame)
             {
                 // Brute search checkmate
@@ -143,7 +158,7 @@ namespace vergiBlue
                     var newBoard = new Board(Board, singleMove);
                     if (newBoard.IsCheckMate(isMaximizing, false))
                     {
-                        // TODO set bool checkmate
+                        singleMove.CheckMate = true;
                         return singleMove;
                     }
                 }
@@ -152,7 +167,6 @@ namespace vergiBlue
                     var newBoard = new Board(Board, singleMove);
                     if (CheckMate.InTwoTurns(newBoard, isMaximizing))
                     {
-                        // TODO set bool checkmate
                         return singleMove;
                     }
                 }
@@ -358,6 +372,8 @@ namespace vergiBlue
                 }
 
                 EvaluationCount = 0;
+                AlphaCutoffs = 0;
+                BetaCutoffs = 0;
                 Messages = new List<string>();
                 return result;
             }

@@ -30,6 +30,7 @@ namespace vergiBlue
 
         static void Main(string[] args)
         {
+            Console.SetWindowSize(180, 40);
             var handle = GetStdHandle(-11);
             int mode;
             GetConsoleMode(handle, out mode);
@@ -129,15 +130,20 @@ namespace vergiBlue
                     var move = player2.CreateMove();
                     PrintMove(move, "player2");
                     PrintBoardAfterMove(move, "", board);
+                    if (move.Move.CheckMate) break;
                     player1.ReceiveMove(move.Move);
                     Thread.Sleep(minDelayInMs);
 
                     move = player1.CreateMove();
                     PrintMove(move, "player1");
                     PrintBoardAfterMove(move, "", board);
+                    if (move.Move.CheckMate) break;
                     player2.ReceiveMove(move.Move);
                     Thread.Sleep(minDelayInMs);
                 }
+
+                Log("Checkmate");
+                Console.Read();
             }
             catch (Exception e)
             {

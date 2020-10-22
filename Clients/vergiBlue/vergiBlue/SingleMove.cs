@@ -10,6 +10,7 @@ namespace vergiBlue
     {
         public bool Capture { get; set; }
         public bool Promotion { get; set; }
+        public bool CheckMate { get; set; }
 
         public (int, int) PrevPos { get; }
         public (int, int) NewPos { get; }
@@ -35,7 +36,7 @@ namespace vergiBlue
             Promotion = interfaceMove.PromotionResult != Move.Types.PromotionPieceType.NoPromotion;
         }
 
-        public Move ToInterfaceMove(bool castling, bool check, bool checkMate)
+        public Move ToInterfaceMove(bool castling, bool check)
         {
             // TODO checks etc.
             var move = new Move()
@@ -45,7 +46,7 @@ namespace vergiBlue
                 PromotionResult = Move.Types.PromotionPieceType.NoPromotion,
                 Castling = castling,
                 Check = check,
-                CheckMate = checkMate
+                CheckMate = CheckMate
             };
             return move;
         }

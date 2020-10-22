@@ -69,11 +69,6 @@ namespace vergiBlueTests
             player.TurnCount = 20;
             player.SearchDepth = 4;
 
-            var opponent = new Logic(false);
-            opponent.Phase = GamePhase.EndGame;
-            opponent.TurnCount = 20;
-            opponent.SearchDepth = 4;
-
             var board = new Board();
             // 
             var rookPositions = new List<string> { "a6", "b7" };
@@ -92,7 +87,6 @@ namespace vergiBlueTests
             board.Kings = (whiteKing, blackKing);
 
             player.Board = new Board(board);
-            opponent.Board = new Board(board);
 
             var playerMove = player.CreateMove();
             playerMove.Move.CheckMate.ShouldBeTrue();
@@ -154,6 +148,60 @@ namespace vergiBlueTests
             var playerMove2 = player.CreateMove();
             playerMove2.Move.CheckMate.ShouldBe(true);
             Logger.LogMessage($"Test: {nameof(WhiteRooksShouldCheckMateInTwoTurns)}, diagnostics: {playerMove2.Diagnostics}");
+        }
+
+        [TestMethod]
+        public void KingShouldMoveAwayFromEaten()
+        {
+            // King can only go to southeast
+
+            // 8R     K
+            // 7R     P
+            // 6
+            // 5
+            // 4
+            // 3
+            // 2
+            // 1
+            //  ABCDEFGH
+            var player = new Logic(true);
+            player.Phase = GamePhase.EndGame;
+            player.TurnCount = 21;
+            player.SearchDepth = 4;
+
+            var opponent = new Logic(false);
+            opponent.Phase = GamePhase.EndGame;
+            opponent.TurnCount = 21;
+            opponent.SearchDepth = 4;
+            opponent.LatestOpponentMove = new Move(){Check = true};
+
+            var board = new Board();
+            // 
+            var rookPositions = new List<string> { "a7", "a8" };
+            var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
+            CreateRooks(asTuples, board, true);
+
+            var pawn = new Pawn(true, board);
+            pawn.CurrentPosition = "f7".ToTuple();
+            board.AddNew(pawn);
+
+            // 
+            var blackKing = new King(false, board);
+            blackKing.CurrentPosition = "f8".ToTuple();
+            board.AddNew(blackKing);
+
+            var whiteKing = new King(true, board);
+            whiteKing.CurrentPosition = "a5".ToTuple();
+            board.AddNew(whiteKing);
+
+            board.Kings = (whiteKing, blackKing);
+
+            player.Board = new Board(board);
+            opponent.Board = new Board(board);
+
+            var opponentMove = opponent.CreateMove();
+            opponentMove.Move.EndPosition.ShouldBe("g7");
+            Logger.LogMessage($"Test: {nameof(KingShouldMoveAwayFromEaten)}, diagnostics: {opponentMove.Diagnostics}");
         }
 
         public void CreateRooks(IEnumerable<(int, int)> coordinateList, Board board, bool isWhite)
