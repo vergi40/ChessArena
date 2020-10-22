@@ -111,12 +111,14 @@ namespace vergiBlue
         {
             Log(Environment.NewLine);
             // TODO async
+            var moveHistory = new List<PlayerMove>();
             var info1 = new GameStartInformation() {WhitePlayer = true};
 
             var player1 = new Logic(info1, false);
             var board = new SimpleBoard(player1.Board);
             
             var firstMove = player1.CreateMove();
+            moveHistory.Add(firstMove);
             PrintMove(firstMove, "player1");
             PrintBoardAfterMove(firstMove, "", board);
 
@@ -128,27 +130,74 @@ namespace vergiBlue
                 while (true)
                 {
                     var move = player2.CreateMove();
+                    moveHistory.Add(move);
                     PrintMove(move, "player2");
                     PrintBoardAfterMove(move, "", board);
-                    if (move.Move.CheckMate) break;
+                    if (move.Move.CheckMate)
+                    {
+                        Log("Checkmate");
+                        break;
+                    }
+                    if (IsDraw(moveHistory))
+                    {
+                        Log("Draw");
+                        break;
+                    }
                     player1.ReceiveMove(move.Move);
                     Thread.Sleep(minDelayInMs);
 
                     move = player1.CreateMove();
+                    moveHistory.Add(move);
                     PrintMove(move, "player1");
                     PrintBoardAfterMove(move, "", board);
-                    if (move.Move.CheckMate) break;
+                    if (move.Move.CheckMate)
+                    {
+                        Log("Checkmate");
+                        break;
+                    }
+                    if (IsDraw(moveHistory))
+                    {
+                        Log("Draw");
+                        break;
+                    }
                     player2.ReceiveMove(move.Move);
                     Thread.Sleep(minDelayInMs);
                 }
 
-                Log("Checkmate");
                 Console.Read();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
+        }
+
+        private static bool IsDraw(IList<PlayerMove> moves)
+        {
+            if (moves.Count > 15)
+            {
+                var count = moves.Count;
+                if (!MovesMatch(moves, count - 1, count - 5)) return false;
+                if (!MovesMatch(moves, count - 3, count - 7)) return false;
+                if (!MovesMatch(moves, count - 5, count - 9)) return false;
+                if (!MovesMatch(moves, count - 7, count - 11)) return false;
+                if (!MovesMatch(moves, count - 9, count - 13)) return false;
+                if (!MovesMatch(moves, count - 11, count - 15)) return false;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool MovesMatch(IList<PlayerMove> allMoves, int firstIndex, int secondIndex)
+        {
+            if (allMoves[firstIndex].Move.StartPosition == allMoves[secondIndex].Move.StartPosition
+                && allMoves[firstIndex].Move.EndPosition == allMoves[secondIndex].Move.EndPosition)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         static void PrintMove(PlayerMove move, string playerName)
@@ -167,6 +216,11 @@ namespace vergiBlue
         static void PrintBoardAfterMove(PlayerMove move, string playerName, SimpleBoard board)
         {
             var piece = board.Get(move.Move.StartPosition.ToTuple());
+            if (move.Move.PromotionResult != Move.Types.PromotionPieceType.NoPromotion)
+            {
+                // TODO strength coupled
+                piece = piece * 5;
+            }
 
             // Clear previous move
             for (int i = 0; i < 8; i++)

@@ -87,6 +87,12 @@ namespace vergiBlue
 
             var piece = Pieces[move.PrevPos];
             Pieces.Remove(move.PrevPos);
+
+            if (move.Promotion)
+            {
+                // Substitute pawn with upgrade
+                piece = new Rook(piece.IsWhite, this);
+            }
             Pieces.Add(move.NewPos, piece);
             piece.CurrentPosition = move.NewPos;
         }
