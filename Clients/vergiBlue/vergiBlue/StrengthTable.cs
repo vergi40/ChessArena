@@ -8,11 +8,11 @@ namespace vergiBlue
 {
     static class StrengthTable
     {
-        public static double Pawn = 1;
-        public static double Bishop = 3;
-        public static double Knight = 3;
-        public static double Rook = 5;
-        public static double Queen = 9;
-        public static double King = 2000;
+        public static int Pawn = 1;
+        public static int Bishop = 3;
+        public static int Knight = 3;
+        public static int Rook = 5;
+        public static int Queen = 9;
+        public static int King = 2000;
     }
 }

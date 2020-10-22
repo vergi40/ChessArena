@@ -114,6 +114,7 @@ namespace vergiBlue
                 TurnCount++;
 
                 // Endgame checks
+                // TODO should be now read from singlemove
                 var castling = false;
                 var check = Board.IsCheck(IsPlayerWhite);
                 var checkMate = false;
@@ -142,6 +143,7 @@ namespace vergiBlue
                     var newBoard = new Board(Board, singleMove);
                     if (newBoard.IsCheckMate(isMaximizing, false))
                     {
+                        // TODO set bool checkmate
                         return singleMove;
                     }
                 }
@@ -150,6 +152,7 @@ namespace vergiBlue
                     var newBoard = new Board(Board, singleMove);
                     if (CheckMate.InTwoTurns(newBoard, isMaximizing))
                     {
+                        // TODO set bool checkmate
                         return singleMove;
                     }
                 }
