@@ -46,7 +46,7 @@ namespace vergiBlue
             }
         }
 
-        public static TimeSpan LastTurnElapsed { get; set; } = TimeSpan.Zero;
+        private TimeSpan _lastTurnElapsed { get; set; } = TimeSpan.Zero;
 
 
 
@@ -81,6 +81,8 @@ namespace vergiBlue
 
             if (_connectionTestOverride)
             {
+                var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed);
+                _lastTurnElapsed = timeElapsed;
                 // Dummy moves for connection testing
                 var move = new PlayerMove()
                 {
@@ -90,18 +92,19 @@ namespace vergiBlue
                         EndPosition = $"a{_connectionTestIndex}",
                         PromotionResult = Move.Types.PromotionPieceType.NoPromotion
                     },
-                    Diagnostics = Diagnostics.CollectAndClear()
+                    Diagnostics = diagnostics
                 };
 
                 return move;
             }
             else
             {
-                Diagnostics.StartMoveCalculations();
                 var isMaximizing = IsPlayerWhite;
 
                 var allMoves = Board.Moves(isMaximizing).ToList();
                 AnalyzeGamePhase(allMoves.Count);
+
+                Diagnostics.StartMoveCalculations();
                 var bestMove = AnalyzeBestMove(allMoves);
 
                 if (bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
@@ -116,10 +119,12 @@ namespace vergiBlue
                 var checkMate = false;
                 if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
 
+                var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed);
+                _lastTurnElapsed = timeElapsed;
                 var move = new PlayerMove()
                 {
                     Move = bestMove.ToInterfaceMove(castling, check, checkMate),
-                    Diagnostics = Diagnostics.CollectAndClear()
+                    Diagnostics = diagnostics
                 };
                 GameHistory.Add(move.Move);
                 return move;
@@ -129,8 +134,6 @@ namespace vergiBlue
         private SingleMove AnalyzeBestMove(IList<SingleMove> allMoves)
         {
             var isMaximizing = IsPlayerWhite;
-            AnalyzeGamePhase(allMoves.Count);
-
             if (Phase == GamePhase.EndGame)
             {
                 // Brute search checkmate
@@ -192,25 +195,29 @@ namespace vergiBlue
             {
                 Phase = GamePhase.Middle;
                 SearchDepth = 3;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}");
+                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
             }
-            else if (LastTurnElapsed.TotalMilliseconds > 2000)
+            else if (_lastTurnElapsed.TotalMilliseconds > 2000 && SearchDepth > 2)
             {
                 SearchDepth--;
-                Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}");
+                Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
             }
-            else if (LastTurnElapsed.TotalMilliseconds < 200 && SearchDepth < 5)
+            else if (_lastTurnElapsed.TotalMilliseconds < 200 && SearchDepth < 5)
             {
                 SearchDepth++;
-                Diagnostics.AddMessage($"Increased search depth to {SearchDepth}");
+                Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
             }
 
-            if(Phase != GamePhase.Start)
+            if(Phase != GamePhase.Start && Phase != GamePhase.EndGame)
             {
                 // Endgame - opponent has max 3 non-pawns left
                 var powerPieces = Board.PieceList.Count(p =>
                     p.IsWhite != IsPlayerWhite && Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
-                if (powerPieces < 4) Phase = GamePhase.EndGame;
+                if (powerPieces < 4)
+                {
+                    Phase = GamePhase.EndGame;
+                    Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
+                }
             }
 
         }
@@ -330,14 +337,14 @@ namespace vergiBlue
         /// Call in end of each player turn
         /// </summary>
         /// <returns></returns>
-        public static string CollectAndClear()
+        public static string CollectAndClear(out TimeSpan timeElapsed)
         {
             lock(messageLock)
             {
                 var result = $"Board evaluations: {EvaluationCount}. ";
 
                 _timeElapsed.Stop();
-                Logic.LastTurnElapsed = _timeElapsed.Elapsed;
+                timeElapsed = _timeElapsed.Elapsed;
                 result += $"Time elapsed: {_timeElapsed.ElapsedMilliseconds} ms. ";
                 result += $"Alphas: {AlphaCutoffs}, betas: {BetaCutoffs}. ";
                 _timeElapsed.Reset();

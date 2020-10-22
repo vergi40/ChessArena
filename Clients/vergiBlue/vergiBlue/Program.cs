@@ -24,8 +24,9 @@ namespace vergiBlue
             {
                 Log("[1] Start game");
                 Log("[2] Edit player name and start game");
-                Log("[3] Connection testing game");
-                Log("[4] Exit");
+                Log("[3] Start local game with two vergiBlues against each other");
+                Log("[4] Connection testing game");
+                Log("[5] Exit");
 
                 Console.Write(" > ");
                 var input = Console.ReadKey();
@@ -43,6 +44,10 @@ namespace vergiBlue
                     StartGame(connection, playerName, false);
                 }
                 else if (input.KeyChar.ToString() == "3")
+                {
+                    StartLocalGame();
+                }
+                else if (input.KeyChar.ToString() == "4")
                 {
                     StartGame(connection, "Connection test AI", true);
                 }
@@ -75,6 +80,51 @@ namespace vergiBlue
             // Inject ai to connection module and play game
             var playTask = connection.Play(ai);
             playTask.Wait();
+        }
+
+        static void StartLocalGame()
+        {
+            Log(Environment.NewLine);
+            // TODO async
+            var info1 = new GameStartInformation() {WhitePlayer = true};
+
+            var player1 = new Logic(info1, false);
+            var firstMove = player1.CreateMove();
+            PrintMove(firstMove, "player1");
+
+            var info2 = new GameStartInformation() {WhitePlayer = false, OpponentMove = firstMove.Move};
+            var player2 = new Logic(info2, false);
+            try
+            {
+
+                while (true)
+                {
+                    var move = player2.CreateMove();
+                    PrintMove(move, "player2");
+                    player1.ReceiveMove(move.Move);
+
+                    move = player1.CreateMove();
+                    PrintMove(move, "player1");
+                    player2.ReceiveMove(move.Move);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        static void PrintMove(PlayerMove move, string playerName)
+        {
+            var message = $"{playerName.PadRight(10)}- {move.Move.StartPosition} to ";
+            //if (move.Move.Capture) info += "x";
+            message += $"{move.Move.EndPosition}";
+            if (move.Move.Check) message += "+";
+            if (move.Move.CheckMate) message += "#";
+            message += ". ";
+            //message += Environment.NewLine;
+            message += $"{move.Diagnostics}";
+            Log( message);
         }
 
         static string GetAddress()
