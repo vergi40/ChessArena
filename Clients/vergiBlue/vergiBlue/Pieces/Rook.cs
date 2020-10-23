@@ -8,85 +8,30 @@ namespace vergiBlue.Pieces
 {
     public class Rook : PieceBase
     {
+        public override char Identity { get; }
         public override double RelativeStrength { get; }
         
         public Rook(bool isWhite) : base(isWhite)
         {
+            Identity = 'R';
             RelativeStrength = StrengthTable.Rook * Direction;
         }
 
         public Rook(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
+            Identity = 'R';
             RelativeStrength = StrengthTable.Rook * Direction;
         }
 
         public Rook(bool isWhite, string position) : base(isWhite, position)
         {
+            Identity = 'R';
             RelativeStrength = StrengthTable.Rook * Direction;
-        }
-
-        private SingleMove CanMoveTo((int, int) target, Board board, bool validateBorders = false)
-        {
-            if (board.ValueAt(target) is PieceBase piece)
-            {
-                if (piece.IsWhite != IsWhite) return new SingleMove(CurrentPosition, target, true);
-                else return null;
-            }
-            else return new SingleMove(CurrentPosition, target);
         }
 
         public override IEnumerable<SingleMove> Moves(Board board)
         {
-            var column = CurrentPosition.column;
-            var row = CurrentPosition.row;
-
-            // Up
-            for (int i = row + 1; i < 8; i++)
-            {
-                var move = CanMoveTo((column, i), board);
-                if (move != null)
-                {
-                    yield return move;
-                    if (move.Capture) break;
-                }
-                else break;
-            }
-
-            // Down
-            for (int i = row - 1; i >= 0; i--)
-            {
-                var move = CanMoveTo((column, i), board);
-                if (move != null)
-                {
-                    yield return move;
-                    if (move.Capture) break;
-                }
-                else break;
-            }
-
-            // Right
-            for (int i = column + 1; i < 8; i++)
-            {
-                var move = CanMoveTo((i, row), board);
-                if (move != null)
-                {
-                    yield return move;
-                    if (move.Capture) break;
-                }
-                else break;
-            }
-
-            // Left
-            for (int i = column - 1; i >= 0; i--)
-            {
-                var move = CanMoveTo((i, row), board);
-                if (move != null)
-                {
-                    yield return move;
-                    if (move.Capture) break;
-                }
-                else break;
-            }
+            return RookMoves(board);
         }
 
         public override PieceBase CreateCopy()

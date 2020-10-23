@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace vergiBlue.Pieces
 {
@@ -6,6 +7,10 @@ namespace vergiBlue.Pieces
     {
         public bool IsWhite { get; }
 
+        /// <summary>
+        /// Upper case K, Q, R, N, B, P
+        /// </summary>
+        public abstract char Identity { get; }
         public abstract double RelativeStrength { get; }
 
         /// <summary>
@@ -26,6 +31,7 @@ namespace vergiBlue.Pieces
         /// If using this, need to set position explicitly
         /// </summary>
         /// <param name="isWhite"></param>
+        [Obsolete("Use constructor with position instead")]
         protected PieceBase(bool isWhite)
         {
             IsWhite = isWhite;
@@ -44,6 +50,28 @@ namespace vergiBlue.Pieces
         }
 
         /// <summary>
+        /// If target position is empty or has opponent piece, return SingleMove. If own piece or outside board, return null.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="board"></param>
+        /// <param name="validateBorders"></param>
+        /// <returns></returns>
+        protected virtual SingleMove CanMoveTo((int, int) target, Board board, bool validateBorders = false)
+        {
+            if (validateBorders && Logic.IsOutside(target)) return null;
+
+            if (board.ValueAt(target) == null)
+            {
+                return new SingleMove(CurrentPosition, target);
+            }
+            else if (board.ValueAt(target).IsWhite != IsWhite)
+            {
+                return new SingleMove(CurrentPosition, target, true);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Each move the piece can make in current board setting
         /// </summary>
         /// <returns></returns>
@@ -54,5 +82,113 @@ namespace vergiBlue.Pieces
         /// </summary>
         /// <returns></returns>
         public abstract PieceBase CreateCopy();
+
+        protected IEnumerable<SingleMove> RookMoves(Board board)
+        {
+            var column = CurrentPosition.column;
+            var row = CurrentPosition.row;
+
+            // Up
+            for (int i = row + 1; i < 8; i++)
+            {
+                var move = CanMoveTo((column, i), board);
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
+                else break;
+            }
+
+            // Down
+            for (int i = row - 1; i >= 0; i--)
+            {
+                var move = CanMoveTo((column, i), board);
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
+                else break;
+            }
+
+            // Right
+            for (int i = column + 1; i < 8; i++)
+            {
+                var move = CanMoveTo((i, row), board);
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
+                else break;
+            }
+
+            // Left
+            for (int i = column - 1; i >= 0; i--)
+            {
+                var move = CanMoveTo((i, row), board);
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
+                else break;
+            }
+        }
+
+        protected IEnumerable<SingleMove> BishopMoves(Board board)
+        {
+            var column = CurrentPosition.column;
+            var row = CurrentPosition.row;
+
+            // NE
+            for (int i = 1; i < 8; i++)
+            {
+                var move = CanMoveTo((column + i, row + i), board, true);
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
+                else break;
+            }
+
+            // SE
+            for (int i = 1; i < 8; i++)
+            {
+                var move = CanMoveTo((column + i, row - i), board, true);
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
+                else break;
+            }
+
+            // SW
+            for (int i = 1; i < 8; i++)
+            {
+                var move = CanMoveTo((column - i, row - i), board, true);
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
+                else break;
+            }
+
+            // NW
+            for (int i = 1; i < 8; i++)
+            {
+                var move = CanMoveTo((column - i, row + i), board, true);
+                if (move != null)
+                {
+                    yield return move;
+                    if (move.Capture) break;
+                }
+                else break;
+            }
+        }
     }
 }

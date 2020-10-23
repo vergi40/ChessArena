@@ -8,37 +8,21 @@ namespace vergiBlue.Pieces
 {
     public class King : PieceBase
     {
+        public override char Identity { get; }
         public override double RelativeStrength { get; }
-        public King(bool isWhite) : base(isWhite)
-        {
-            RelativeStrength = StrengthTable.King * Direction;
-        }
 
         public King(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
+            Identity = 'K';
             RelativeStrength = StrengthTable.King * Direction;
         }
 
         public King(bool isWhite, string position) : base(isWhite, position)
         {
+            Identity = 'K';
             RelativeStrength = StrengthTable.King * Direction;
         }
-
-        private SingleMove CanMoveTo((int, int) target, Board board, bool validateBorders = false)
-        {
-            if (validateBorders && Logic.IsOutside(target)) return null;
-
-            if (board.ValueAt(target) == null)
-            {
-                return new SingleMove(CurrentPosition, target);
-            }
-            else if (board.ValueAt(target).IsWhite != IsWhite)
-            {
-                return new SingleMove(CurrentPosition, target, true);
-            }
-            return null;
-        }
-
+        
         public override IEnumerable<SingleMove> Moves(Board board)
         {
             var cur = CurrentPosition;
@@ -70,16 +54,12 @@ namespace vergiBlue.Pieces
 
         public override PieceBase CreateCopy()
         {
-            var piece = new King(IsWhite);
-            piece.CurrentPosition = CurrentPosition;
-            return piece;
+            return new King(IsWhite, CurrentPosition);
         }
 
         public King CreateKingCopy()
         {
-            var piece = new King(IsWhite);
-            piece.CurrentPosition = CurrentPosition;
-            return piece;
+            return new King(IsWhite, CurrentPosition);
         }
     }
 }

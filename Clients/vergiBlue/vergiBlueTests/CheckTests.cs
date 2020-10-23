@@ -41,8 +41,7 @@ namespace vergiBlueTests
             CreateRooks(asTuples, board, true);
 
             // 
-            var king = new King(false);
-            king.CurrentPosition = "g8".ToTuple();
+            var king = new King(false, "g8");
             board.AddNew(king);
             board.Kings = (null, king);
 
@@ -76,12 +75,10 @@ namespace vergiBlueTests
             CreateRooks(asTuples, board, true);
 
             // 
-            var blackKing = new King(false);
-            blackKing.CurrentPosition = "g8".ToTuple();
+            var blackKing = new King(false, "g8");
             board.AddNew(blackKing);
 
-            var whiteKing = new King(true);
-            whiteKing.CurrentPosition = "a5".ToTuple();
+            var whiteKing = new King(true, "a5");
             board.AddNew(whiteKing);
 
             board.Kings = (whiteKing, blackKing);
@@ -125,12 +122,10 @@ namespace vergiBlueTests
             CreateRooks(asTuples, board, true);
 
             // 
-            var blackKing = new King(false);
-            blackKing.CurrentPosition = "g8".ToTuple();
+            var blackKing = new King(false, "g8");
             board.AddNew(blackKing);
 
-            var whiteKing = new King(true);
-            whiteKing.CurrentPosition = "a5".ToTuple();
+            var whiteKing = new King(true, "a5");
             board.AddNew(whiteKing);
 
             board.Kings = (whiteKing, blackKing);
@@ -186,12 +181,10 @@ namespace vergiBlueTests
             board.AddNew(pawn);
 
             // 
-            var blackKing = new King(false);
-            blackKing.CurrentPosition = "f8".ToTuple();
+            var blackKing = new King(false, "f8");
             board.AddNew(blackKing);
 
-            var whiteKing = new King(true);
-            whiteKing.CurrentPosition = "a5".ToTuple();
+            var whiteKing = new King(true, "a5");
             board.AddNew(whiteKing);
 
             board.Kings = (whiteKing, blackKing);

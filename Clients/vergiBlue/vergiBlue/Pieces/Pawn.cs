@@ -8,24 +8,28 @@ namespace vergiBlue.Pieces
 {
     public class Pawn : PieceBase
     {
+        public override char Identity { get; }
         public override double RelativeStrength { get; }
 
         public Pawn( bool isWhite) : base(isWhite)
         {
+            Identity = 'P';
             RelativeStrength = StrengthTable.Pawn * Direction;
         }
 
         public Pawn(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
+            Identity = 'P';
             RelativeStrength = StrengthTable.Pawn * Direction;
         }
 
         public Pawn(bool isWhite, string position) : base(isWhite, position)
         {
+            Identity = 'P';
             RelativeStrength = StrengthTable.Pawn * Direction;
         }
 
-        private SingleMove CanMoveTo((int, int) target, Board board, bool validateBorders = false)
+        protected  override SingleMove CanMoveTo((int, int) target, Board board, bool validateBorders = false)
         {
             if (validateBorders && Logic.IsOutside(target)) return null;
 

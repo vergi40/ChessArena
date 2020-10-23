@@ -86,15 +86,15 @@ namespace vergiBlue
             }
 
             var piece = Pieces[move.PrevPos];
+            piece.CurrentPosition = move.NewPos;
             Pieces.Remove(move.PrevPos);
 
             if (move.Promotion)
             {
                 // Substitute pawn with upgrade
-                piece = new Rook(piece.IsWhite);
+                piece = new Queen(piece.IsWhite, move.NewPos);
             }
             Pieces.Add(move.NewPos, piece);
-            piece.CurrentPosition = move.NewPos;
         }
 
         private void RemovePieces(bool isWhite)
@@ -216,10 +216,26 @@ namespace vergiBlue
             };
             AddNew(knights);
 
-            var whiteKing = new King(true, "d1");
+            var bishops = new List<Bishop>
+            {
+                new Bishop(true, "c1"),
+                new Bishop(true, "f1"),
+                new Bishop(false, "c8"),
+                new Bishop(false, "f8")
+            };
+            AddNew(bishops);
+
+            var queens = new List<Queen>
+            {
+                new Queen(true, "d1"),
+                new Queen(false, "d8")
+            };
+            AddNew(queens);
+
+            var whiteKing = new King(true, "e1");
             AddNew(whiteKing);
 
-            var blackKing = new King(false, "d8");
+            var blackKing = new King(false, "e8");
             AddNew(blackKing);
             Kings = (whiteKing, blackKing);
 

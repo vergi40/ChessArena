@@ -221,8 +221,8 @@ namespace vergiBlue
             var piece = board.Get(move.Move.StartPosition.ToTuple());
             if (move.Move.PromotionResult != Move.Types.PromotionPieceType.NoPromotion)
             {
-                // TODO strength coupled
-                piece = piece * 5;
+                if (piece.Contains("w")) piece = "wQ ";
+                else piece = "bQ ";
             }
 
             // Clear previous move
@@ -230,9 +230,9 @@ namespace vergiBlue
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    if (board.Get((i, j)) == 666)
+                    if (board.Get((i, j)) == SimpleBoard.PreviousTileValue)
                     {
-                        board.Set((i, j), 0);
+                        board.Set((i, j), "   ");
                         break;
                     }
                 }
@@ -252,26 +252,28 @@ namespace vergiBlue
 
     class SimpleBoard
     {
-        public const int PreviousTileValue = 666;
+        public const string PreviousTileValue = "[ ]";
 
-        public int[,] Tiles { get; set; }
+        public string[,] Tiles { get; set; }
         public SimpleBoard(Board board)
         {
-            Tiles = new int[8,8];
+            Tiles = new string[8,8];
             foreach (var piece in board.PieceList)
             {
-                Set(piece.CurrentPosition, (int)piece.RelativeStrength);
+                var color = 'w';
+                if (!piece.IsWhite) color = 'b';
+                Set(piece.CurrentPosition, color.ToString() + piece.Identity.ToString() + " ");
             }
         }
 
-        public int Get((int, int) target)
+        public string Get((int, int) target)
         {
             return Tiles[target.Item1, target.Item2];
         }
 
-        public void Set((int, int) target, int strength)
+        public void Set((int, int) target, string identity)
         {
-            Tiles[target.Item1, target.Item2] = strength;
+            Tiles[target.Item1, target.Item2] = identity;
         }
 
         public void Print()
@@ -293,54 +295,30 @@ namespace vergiBlue
             Logger.Log("    A  B  C  D  E  F  G  H ");
         }
 
-        private string DrawPiece(int value)
+        private string DrawPiece(string value)
         {
-            if (value == 0) return "   ";
-
-            var icon = "";
-            if (Math.Abs(value) == StrengthTable.Pawn)
+            if (string.IsNullOrEmpty(value)) return "   ";
+            if (value == PreviousTileValue)
             {
-                icon += "P";
-            }
-            else if (Math.Abs(value) == StrengthTable.Knight)
-            {
-                icon += "N";
-            }
-            else if (Math.Abs(value) == StrengthTable.Bishop)
-            {
-                icon += "B";
-            }
-            else if (Math.Abs(value) == StrengthTable.Rook)
-            {
-                icon += "R";
-            }
-            else if (Math.Abs(value) == StrengthTable.King)
-            {
-                icon += "K";
-            }
-            else if (Math.Abs(value) == StrengthTable.Queen)
-            {
-                icon += "Q";
-            }
-            else if (value == PreviousTileValue)
-            {
-                return "[ ]";
+                return value;
             }
 
-            if (value > 0)
+            // Console coloring magic
+            // https://stackoverflow.com/questions/7937256/custom-text-color-in-c-sharp-console-application
+            if (value.Contains("w"))
             {
                 // 0-255
                 var whiteBackground = "\x1b[48;5;255m";
                 var blackForeground = "\x1b[38;5;0m";
-                icon = whiteBackground + blackForeground + " w" + icon;
+                value = whiteBackground + blackForeground + value;
             }
             else
             {
                 var blackBackground = "\x1b[48;5;0m";
                 var whiteForeground = "\x1b[38;5;255m";
-                icon = blackBackground + whiteForeground + " b" + icon;
+                value = blackBackground + whiteForeground + value;
             }
-            return icon;
+            return value;
         }
     }
 }
