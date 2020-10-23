@@ -20,41 +20,39 @@ namespace vergiBlue.Pieces
             }
         }
 
-        public Board Board { get; }
-
         public (int column, int row) CurrentPosition { get; set; }
 
-        protected PieceBase(bool isWhite, Board boardReference)
+        /// <summary>
+        /// If using this, need to set position explicitly
+        /// </summary>
+        /// <param name="isWhite"></param>
+        protected PieceBase(bool isWhite)
         {
             IsWhite = isWhite;
-            Board = boardReference;
         }
 
-        /// <summary>
-        /// Try if move can be made. Return outcome.
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="validateBorders"></param>
-        /// <returns>Null if not possible</returns>
-        protected abstract SingleMove CanMoveTo((int, int) target, bool validateBorders = false);
-
-        public void MoveTo((int column, int row) target)
+        protected PieceBase(bool isWhite, (int column, int row) position)
         {
-            var move = new SingleMove(CurrentPosition, target);
-            Board.ExecuteMove(move);
+            IsWhite = isWhite;
+            CurrentPosition = position;
+        }
+
+        protected PieceBase(bool isWhite, string position)
+        {
+            IsWhite = isWhite;
+            CurrentPosition = position.ToTuple();
         }
 
         /// <summary>
         /// Each move the piece can make in current board setting
         /// </summary>
         /// <returns></returns>
-        public abstract IEnumerable<SingleMove> Moves();
+        public abstract IEnumerable<SingleMove> Moves(Board board);
 
         /// <summary>
         /// Copy needs to be made with the derived class constructor so type matches
         /// </summary>
-        /// <param name="newBoard"></param>
         /// <returns></returns>
-        public abstract PieceBase CreateCopy(Board newBoard);
+        public abstract PieceBase CreateCopy();
     }
 }

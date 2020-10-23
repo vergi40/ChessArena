@@ -28,27 +28,27 @@ namespace vergiBlueTests
             // Lonely pawns, not very high eval
             for (int i = 1; i < 4; i++)
             {
-                var whitePawn = new Pawn(true, board);
+                var whitePawn = new Pawn(true);
                 whitePawn.CurrentPosition = (i, 1);
                 board.AddNew(whitePawn);
             }
 
             // e4
-            var whiteBattlePawn = new Pawn(true, board);
+            var whiteBattlePawn = new Pawn(true);
             whiteBattlePawn.CurrentPosition = "e4".ToTuple();
             board.AddNew(whiteBattlePawn);
 
             // Diagonal relation (northwest)
 
             // f5
-            var blackBattlePawn = new Pawn(false, board);
+            var blackBattlePawn = new Pawn(false);
             blackBattlePawn.CurrentPosition = "f5".ToTuple();
             board.AddNew(blackBattlePawn);
 
             // Random opponent pawns to confuse
             for (int i = 1; i < 4; i++)
             {
-                var blackPawn = new Pawn(false, board);
+                var blackPawn = new Pawn(false);
                 blackPawn.CurrentPosition = (i, 6);
                 board.AddNew(blackPawn);
             }
@@ -59,11 +59,11 @@ namespace vergiBlueTests
         private Board CreateMockPawnRookSetup()
         {
             var board = CreateMockPawnSetup();
-            var whiteRook = new Rook(true, board);
+            var whiteRook = new Rook(true);
             whiteRook.CurrentPosition = (0, 0);
             board.AddNew(whiteRook);
 
-            var blackRook = new Rook(false, board);
+            var blackRook = new Rook(false);
             blackRook.CurrentPosition = (0, 7);
             board.AddNew(blackRook);
 
@@ -139,7 +139,7 @@ namespace vergiBlueTests
             CreatePawns(asTuples, logic.Board, false);
 
             // 
-            var whiteRook = new Rook(true, logic.Board);
+            var whiteRook = new Rook(true);
             whiteRook.CurrentPosition = "d5".ToTuple();
             logic.Board.AddNew(whiteRook);
 
@@ -155,7 +155,7 @@ namespace vergiBlueTests
         {
             foreach(var coordinates in coordinateList)
             {
-                var pawn = new Pawn(isWhite, board);
+                var pawn = new Pawn(isWhite);
                 pawn.CurrentPosition = coordinates;
                 board.AddNew(pawn);
             }

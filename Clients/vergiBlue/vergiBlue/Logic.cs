@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Common;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
@@ -47,7 +42,8 @@ namespace vergiBlue
         }
 
         private TimeSpan _lastTurnElapsed { get; set; } = TimeSpan.Zero;
-
+        private int _lastTurnEvals { get; set; } = 0;
+        private int _lastTurnCheckEvals { get; set; } = 0;
 
 
         private int _connectionTestIndex = 2;
@@ -94,7 +90,7 @@ namespace vergiBlue
 
             if (_connectionTestOverride)
             {
-                var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed);
+                var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed, out int evals, out int checkEvals);
                 _lastTurnElapsed = timeElapsed;
                 // Dummy moves for connection testing
                 var move = new PlayerMove()
@@ -114,7 +110,9 @@ namespace vergiBlue
             {
                 var isMaximizing = IsPlayerWhite;
 
-                var allMoves = Board.Moves(isMaximizing, _kingInDanger).ToList();
+                // Start to validate indirect checkmates also. Filter out moves that result to check
+                var allMoves = Board.Moves(isMaximizing, true).ToList();
+                Diagnostics.AddMessage($"Available moves found: {allMoves.Count}. ");
                 AnalyzeGamePhase(allMoves.Count);
 
                 Diagnostics.StartMoveCalculations();
@@ -132,9 +130,13 @@ namespace vergiBlue
                 var check = Board.IsCheck(IsPlayerWhite);
                 //var checkMate = false;
                 //if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
+                if(bestMove.Promotion) Diagnostics.AddMessage($"Promotion occured at {bestMove.NewPos.ToAlgebraic()}. ");
 
-                var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed);
+                var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed, out int evals, out int checkEvals);
                 _lastTurnElapsed = timeElapsed;
+                _lastTurnEvals = evals;
+                _lastTurnCheckEvals = checkEvals;
+
                 var move = new PlayerMove()
                 {
                     Move = bestMove.ToInterfaceMove(castling, check),
@@ -203,6 +205,10 @@ namespace vergiBlue
 
         private void AnalyzeGamePhase(int movePossibilities)
         {
+            // TODO as start parameters
+            const int MaxDepth = 5;
+            const int MinDepth = 2;
+
             if (PlayerTurnCount == 0)
             {
                 Phase = GamePhase.Start;
@@ -214,34 +220,45 @@ namespace vergiBlue
                 SearchDepth = 3;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
             }
-            else if (_lastTurnElapsed.TotalMilliseconds > 2000 && SearchDepth > 2)
+            else if ((_lastTurnElapsed.TotalMilliseconds > 1500 || _lastTurnEvals > 600000) && SearchDepth > MinDepth)
             {
                 SearchDepth--;
                 Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
             }
-            else if (_lastTurnElapsed.TotalMilliseconds < 200 && SearchDepth < 5)
+            else if ((_lastTurnElapsed.TotalMilliseconds < 200 || _lastTurnEvals < 50000) && SearchDepth < MaxDepth)
             {
-                SearchDepth++;
-                Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
+                // Only raise to max depth if possibilities are low enough
+                if(SearchDepth < MaxDepth - 1 || movePossibilities < 21)
+                {
+                    SearchDepth++;
+                    Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
+                }
             }
 
-            if(Phase != GamePhase.Start && Phase != GamePhase.EndGame)
+            if(Phase == GamePhase.Middle && _lastTurnCheckEvals >= 800)
             {
                 // Endgame - opponent has max 3 non-pawns left
-                var powerPieces = Board.PieceList.Count(p =>
-                    p.IsWhite != IsPlayerWhite && Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
-                if (powerPieces < 4)
-                {
-                    Phase = GamePhase.EndGame;
-                    Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
-                }
+                //var powerPieces = Board.PieceList.Count(p =>
+                //    p.IsWhite != IsPlayerWhite && Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+                //if (powerPieces < 4)
+                //{
+                //    Phase = GamePhase.EndGame;
+                //    Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
+                //}
+
+                Phase = GamePhase.EndGame;
+                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
+            }
+            else if (Phase == GamePhase.EndGame && _lastTurnCheckEvals < 800)
+            {
+                Phase = GamePhase.Middle;
+                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
             }
 
         }
 
         public sealed override void ReceiveMove(Move opponentMove)
         {
-            TurnCount++;
             LatestOpponentMove = opponentMove;
 
             if (!_connectionTestOverride)
@@ -294,90 +311,5 @@ namespace vergiBlue
                 return true;
             return false;
         }
-    }
-    
-    
-
-    static class Diagnostics
-    {
-        private static int EvaluationCount = 0;
-        private static int AlphaCutoffs = 0;
-        private static int BetaCutoffs = 0;
-
-        private static List<string> Messages = new List<string>();
-        private static readonly object messageLock = new object();
-        private static readonly Stopwatch _timeElapsed = new Stopwatch();
-        
-        /// <summary>
-        /// Call in start of each player turn
-        /// </summary>
-        public static void StartMoveCalculations()
-        {
-            _timeElapsed.Start();
-        }
-
-        /// <summary>
-        /// Atomic increment operation
-        /// </summary>
-        public static void IncrementEvalCount()
-        {
-            Interlocked.Increment(ref EvaluationCount);
-        }
-        /// <summary>
-        /// Atomic increment operation
-        /// </summary>
-        public static void IncrementAlpha()
-        {
-            Interlocked.Increment(ref AlphaCutoffs);
-        }
-        /// <summary>
-        /// Atomic increment operation
-        /// </summary>
-        public static void IncrementBeta()
-        {
-            Interlocked.Increment(ref BetaCutoffs);
-        }
-
-        /// <summary>
-        /// Thread-safe message operation. Slow
-        /// </summary>
-        public static void AddMessage(string message)
-        {
-            // TODO
-            lock (messageLock)
-            {
-                Messages.Add(message);
-            }
-        }
-
-        /// <summary>
-        /// Call in end of each player turn
-        /// </summary>
-        /// <returns></returns>
-        public static string CollectAndClear(out TimeSpan timeElapsed)
-        {
-            lock(messageLock)
-            {
-                var result = $"Board evaluations: {EvaluationCount}. ";
-
-                _timeElapsed.Stop();
-                timeElapsed = _timeElapsed.Elapsed;
-                result += $"Time elapsed: {_timeElapsed.ElapsedMilliseconds} ms. ";
-                result += $"Alphas: {AlphaCutoffs}, betas: {BetaCutoffs}. ";
-                _timeElapsed.Reset();
-
-                foreach (var message in Messages)
-                {
-                    result += message;
-                }
-
-                EvaluationCount = 0;
-                AlphaCutoffs = 0;
-                BetaCutoffs = 0;
-                Messages = new List<string>();
-                return result;
-            }
-        }
-
     }
 }

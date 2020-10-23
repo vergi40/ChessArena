@@ -58,9 +58,9 @@ namespace vergiBlue
         {
             // Need to ensure kings in board are same as these
             // A bit code smell but works for now
-            King newWhite = previousKings.white?.CreateKingCopy(this);
+            King newWhite = previousKings.white?.CreateKingCopy();
             if (newWhite != null) Pieces[newWhite.CurrentPosition] = newWhite;
-            King newBlack = previousKings.black?.CreateKingCopy(this);
+            King newBlack = previousKings.black?.CreateKingCopy();
             if (newBlack != null) Pieces[newBlack.CurrentPosition] = newBlack;
             Kings = (newWhite, newBlack);
         }
@@ -91,7 +91,7 @@ namespace vergiBlue
             if (move.Promotion)
             {
                 // Substitute pawn with upgrade
-                piece = new Rook(piece.IsWhite, this);
+                piece = new Rook(piece.IsWhite);
             }
             Pieces.Add(move.NewPos, piece);
             piece.CurrentPosition = move.NewPos;
@@ -110,7 +110,7 @@ namespace vergiBlue
         {
             foreach (var oldPiece in previous.PieceList)
             {
-                var newPiece = oldPiece.CreateCopy(this);
+                var newPiece = oldPiece.CreateCopy();
                 AddNew(newPiece);
             }
         }
@@ -133,6 +133,14 @@ namespace vergiBlue
         public void AddNew(PieceBase piece)
         {
             Pieces.Add((piece.CurrentPosition), piece);
+        }
+
+        public void AddNew(IEnumerable<PieceBase> pieces)
+        {
+            foreach (var piece in pieces)
+            {
+                AddNew(piece);
+            }
         }
 
         private int Direction(bool isWhite)
@@ -165,7 +173,7 @@ namespace vergiBlue
             // TODO: Sort moves on end. Priority to moves with capture
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
-                foreach (var singleMove in piece.Moves())
+                foreach (var singleMove in piece.Moves(this))
                 {
                     if (kingInDanger)
                     {
@@ -183,38 +191,35 @@ namespace vergiBlue
             // Pawns
             for (int i = 0; i < 8; i++)
             {
-                var whitePawn = new Pawn(true, this);
-                whitePawn.CurrentPosition = (i, 1);
+                var whitePawn = new Pawn(true, (i, 1));
                 AddNew(whitePawn);
 
-                var blackPawn = new Pawn(false, this);
-                blackPawn.CurrentPosition = (i, 6);
+                var blackPawn = new Pawn(false, (i, 6));
                 AddNew(blackPawn);
             }
 
-            // Rooks
-            var rook = new Rook(true, this);
-            rook.CurrentPosition = (0,0);
-            AddNew(rook);
+            var rooks = new List<Rook>
+            {
+                new Rook(true, "a1"),
+                new Rook(true, "h1"),
+                new Rook(false, "a8"),
+                new Rook(false, "h8")
+            };
+            AddNew(rooks);
 
-            rook = new Rook(true, this);
-            rook.CurrentPosition = (7, 0);
-            AddNew(rook);
+            var knights = new List<Knight>
+            {
+                new Knight(true, "b1"),
+                new Knight(true, "g1"),
+                new Knight(false, "b8"),
+                new Knight(false, "g8")
+            };
+            AddNew(knights);
 
-            rook = new Rook(false, this);
-            rook.CurrentPosition = (0, 7);
-            AddNew(rook);
-
-            rook = new Rook(false, this);
-            rook.CurrentPosition = (7, 7);
-            AddNew(rook);
-
-            var whiteKing = new King(true, this);
-            whiteKing.CurrentPosition = "d1".ToTuple();
+            var whiteKing = new King(true, "d1");
             AddNew(whiteKing);
 
-            var blackKing = new King(false, this);
-            blackKing.CurrentPosition = "d8".ToTuple();
+            var blackKing = new King(false, "d8");
             AddNew(blackKing);
             Kings = (whiteKing, blackKing);
 
@@ -251,7 +256,6 @@ namespace vergiBlue
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = new Board(this, singleMove);
-                Diagnostics.IncrementEvalCount();
                 if (!newBoard.IsCheck(isWhiteOffensive))
                 {
                     // Found possible move
@@ -277,6 +281,7 @@ namespace vergiBlue
             var playerMoves = Moves(isWhiteOffensive);
             foreach (var singleMove in playerMoves)
             {
+                Diagnostics.IncrementCheckCount();
                 if (singleMove.NewPos == opponentKing.CurrentPosition)
                 {
                     return true;

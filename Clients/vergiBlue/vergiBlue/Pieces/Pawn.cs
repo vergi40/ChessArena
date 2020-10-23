@@ -10,16 +10,26 @@ namespace vergiBlue.Pieces
     {
         public override double RelativeStrength { get; }
 
-        public Pawn( bool isWhite, Board boardReference) : base(isWhite, boardReference)
+        public Pawn( bool isWhite) : base(isWhite)
         {
             RelativeStrength = StrengthTable.Pawn * Direction;
         }
 
-        protected override SingleMove CanMoveTo((int, int) target, bool validateBorders = false)
+        public Pawn(bool isWhite, (int column, int row) position) : base(isWhite, position)
+        {
+            RelativeStrength = StrengthTable.Pawn * Direction;
+        }
+
+        public Pawn(bool isWhite, string position) : base(isWhite, position)
+        {
+            RelativeStrength = StrengthTable.Pawn * Direction;
+        }
+
+        private SingleMove CanMoveTo((int, int) target, Board board, bool validateBorders = false)
         {
             if (validateBorders && Logic.IsOutside(target)) return null;
 
-            if (Board.ValueAt(target) == null)
+            if (board.ValueAt(target) == null)
             {
                 var promotion = target.Item2 == 0 || target.Item2 == 7;
                 return new SingleMove(CurrentPosition, target, false, promotion);
@@ -27,15 +37,16 @@ namespace vergiBlue.Pieces
             return null;
         }
 
-        private SingleMove CanCapture((int, int) target)
+        private SingleMove CanCapture((int, int) target, Board board)
         {
             if(Logic.IsOutside(target)) return null;
 
             // Normal
-            var diagonalPiece = Board.ValueAt(target);
+            var diagonalPiece = board.ValueAt(target);
             if (diagonalPiece != null && diagonalPiece.IsWhite != IsWhite)
             {
-                return new SingleMove(CurrentPosition, diagonalPiece.CurrentPosition, true);
+                var promotion = target.Item2 == 0 || target.Item2 == 7;
+                return new SingleMove(CurrentPosition, diagonalPiece.CurrentPosition, true, promotion);
             }
 
             // En passant - opponent on side
@@ -50,30 +61,30 @@ namespace vergiBlue.Pieces
         /// List all allowed
         /// </summary>
         /// <returns></returns>
-        public override IEnumerable<SingleMove> Moves()
+        public override IEnumerable<SingleMove> Moves(Board board)
         {
             var cur = CurrentPosition;
 
             // Basic
-            var move = CanMoveTo((cur.column, cur.row + Direction), true);
+            var move = CanMoveTo((cur.column, cur.row + Direction), board, true);
             if (move != null) yield return move;
 
             // Start possibility
             if (cur.row == 1 || cur.row == 6)
             {
-                move = CanMoveTo((cur.column, cur.row + (Direction * 2)), true);
+                move = CanMoveTo((cur.column, cur.row + (Direction * 2)), board, true);
                 if (move != null) yield return move;
             }
 
-            move = CanCapture((cur.column - 1, cur.row + Direction));
+            move = CanCapture((cur.column - 1, cur.row + Direction), board);
             if (move != null) yield return move;
-            move = CanCapture((cur.column + 1, cur.row + Direction));
+            move = CanCapture((cur.column + 1, cur.row + Direction), board);
             if (move != null) yield return move;
         }
 
-        public override PieceBase CreateCopy(Board newBoard)
+        public override PieceBase CreateCopy()
         {
-            var piece = new Pawn(IsWhite, newBoard);
+            var piece = new Pawn(IsWhite);
             piece.CurrentPosition = CurrentPosition;
             return piece;
         }

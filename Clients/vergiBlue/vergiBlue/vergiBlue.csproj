@@ -48,6 +48,7 @@
     <Compile Include="Algorithms\CheckMate.cs" />
     <Compile Include="Algorithms\MiniMax.cs" />
     <Compile Include="Board.cs" />
+    <Compile Include="Diagnostics.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Logic.cs" />
     <Compile Include="Pieces\King.cs" />
@@ -71,6 +72,9 @@
       <Project>{9efdba49-e54d-4f82-912f-bf883a25f441}</Project>
       <Name>Common</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Game situations\King moved to be captured.png" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

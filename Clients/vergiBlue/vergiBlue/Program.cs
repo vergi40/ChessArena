@@ -38,7 +38,6 @@ namespace vergiBlue
 
 
             Log($"Chess ai {_aiName} [{_currentVersion}]");
-            var connection = new ConnectionModule();
 
             while (true)
             {
@@ -53,7 +52,9 @@ namespace vergiBlue
                 var input = Console.ReadKey();
                 if (input.KeyChar.ToString() == "1")
                 {
+                    var connection = new ConnectionModule();
                     StartGame(connection, _aiName, false);
+                    connection.CloseConnection();
                 }
                 else if (input.KeyChar.ToString() == "2")
                 {
@@ -62,7 +63,9 @@ namespace vergiBlue
                     Console.Write(" > "); 
                     var playerName = Console.ReadLine();
                     Log($"Chess ai {playerName} [{_currentVersion}]");
+                    var connection = new ConnectionModule();
                     StartGame(connection, playerName, false);
+                    connection.CloseConnection();
                 }
                 else if (input.KeyChar.ToString() == "3")
                 {
@@ -74,14 +77,15 @@ namespace vergiBlue
                 }
                 else if (input.KeyChar.ToString() == "5")
                 {
+                    var connection = new ConnectionModule();
                     StartGame(connection, "Connection test AI", true);
+                    connection.CloseConnection();
                 }
                 else break;
 
                 Log(Environment.NewLine);
             }
 
-            connection.CloseConnection();
         }
 
         static void StartGame(ConnectionModule connection, string playerName, bool connectionTesting)
@@ -163,13 +167,12 @@ namespace vergiBlue
                     player2.ReceiveMove(move.Move);
                     Thread.Sleep(minDelayInMs);
                 }
-
-                Console.Read();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
+            Console.Read();
         }
 
         private static bool IsDraw(IList<PlayerMove> moves)
@@ -299,6 +302,10 @@ namespace vergiBlue
             {
                 icon += "P";
             }
+            else if (Math.Abs(value) == StrengthTable.Knight)
+            {
+                icon += "N";
+            }
             else if (Math.Abs(value) == StrengthTable.Bishop)
             {
                 icon += "B";
@@ -306,10 +313,6 @@ namespace vergiBlue
             else if (Math.Abs(value) == StrengthTable.Rook)
             {
                 icon += "R";
-            }
-            else if (Math.Abs(value) == StrengthTable.Knight)
-            {
-                icon += "N";
             }
             else if (Math.Abs(value) == StrengthTable.King)
             {

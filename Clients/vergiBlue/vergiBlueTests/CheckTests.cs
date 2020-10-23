@@ -41,7 +41,7 @@ namespace vergiBlueTests
             CreateRooks(asTuples, board, true);
 
             // 
-            var king = new King(false, board);
+            var king = new King(false);
             king.CurrentPosition = "g8".ToTuple();
             board.AddNew(king);
             board.Kings = (null, king);
@@ -76,11 +76,11 @@ namespace vergiBlueTests
             CreateRooks(asTuples, board, true);
 
             // 
-            var blackKing = new King(false, board);
+            var blackKing = new King(false);
             blackKing.CurrentPosition = "g8".ToTuple();
             board.AddNew(blackKing);
 
-            var whiteKing = new King(true, board);
+            var whiteKing = new King(true);
             whiteKing.CurrentPosition = "a5".ToTuple();
             board.AddNew(whiteKing);
 
@@ -125,11 +125,11 @@ namespace vergiBlueTests
             CreateRooks(asTuples, board, true);
 
             // 
-            var blackKing = new King(false, board);
+            var blackKing = new King(false);
             blackKing.CurrentPosition = "g8".ToTuple();
             board.AddNew(blackKing);
 
-            var whiteKing = new King(true, board);
+            var whiteKing = new King(true);
             whiteKing.CurrentPosition = "a5".ToTuple();
             board.AddNew(whiteKing);
 
@@ -181,16 +181,16 @@ namespace vergiBlueTests
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
             CreateRooks(asTuples, board, true);
 
-            var pawn = new Pawn(true, board);
+            var pawn = new Pawn(true);
             pawn.CurrentPosition = "f7".ToTuple();
             board.AddNew(pawn);
 
             // 
-            var blackKing = new King(false, board);
+            var blackKing = new King(false);
             blackKing.CurrentPosition = "f8".ToTuple();
             board.AddNew(blackKing);
 
-            var whiteKing = new King(true, board);
+            var whiteKing = new King(true);
             whiteKing.CurrentPosition = "a5".ToTuple();
             board.AddNew(whiteKing);
 
@@ -204,13 +204,68 @@ namespace vergiBlueTests
             Logger.LogMessage($"Test: {nameof(KingShouldMoveAwayFromEaten)}, diagnostics: {opponentMove.Diagnostics}");
         }
 
+        /// <summary>
+        /// Game situations/King moved to be captured.png
+        /// </summary>
+        [TestMethod]
+        public void KingShouldNotMoveToBeCaptured()
+        {
+            // In local game king moved to f6 and was captured
+
+            // 8    | K
+            // 7   N|
+            // 6    |
+            // 5 PP |  K
+            // 4  > |RN
+            // 3    |
+            // 2   R|
+            // 1    |
+            //  ABCD EFGH
+            var player = new Logic(true);
+            player.Phase = GamePhase.EndGame;
+            player.TurnCount = 20;
+            player.SearchDepth = 3;
+
+            var previousMove = new Move()
+            {
+                StartPosition = "c4",
+                EndPosition = "e4"
+            };
+            player.LatestOpponentMove = previousMove;
+            player.GameHistory.Add(previousMove);
+
+            var board = new Board();
+            var pieces = new List<PieceBase>
+            {
+                new Pawn(true, "b5"),
+                new Pawn(false, "c5"),
+                new Rook(true, "d2"),
+                new Rook(false, "e4"),
+                new Knight(true, "f4"),
+                new Knight(false, "d7")
+            };
+            board.AddNew(pieces);
+            // 
+            var blackKing = new King(false, "f8");
+            board.AddNew(blackKing);
+
+            var whiteKing = new King(true, "g5");
+            board.AddNew(whiteKing);
+
+            board.Kings = (whiteKing, blackKing);
+
+            player.Board = new Board(board);
+
+            var playerMove = player.CreateMove();
+            playerMove.Move.EndPosition.ShouldNotBe("f6");
+        }
+
         public void CreateRooks(IEnumerable<(int, int)> coordinateList, Board board, bool isWhite)
         {
             foreach (var coordinates in coordinateList)
             {
-                var pawn = new Rook(isWhite, board);
-                pawn.CurrentPosition = coordinates;
-                board.AddNew(pawn);
+                var rook = new Rook(isWhite, coordinates);
+                board.AddNew(rook);
             }
         }
     }
