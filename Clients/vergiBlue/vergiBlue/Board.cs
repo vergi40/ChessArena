@@ -168,9 +168,9 @@ namespace vergiBlue
             return evalScore;
         }
 
-        public IEnumerable<SingleMove> Moves(bool forWhite, bool kingInDanger = false)
+        public IList<SingleMove> Moves(bool forWhite, bool kingInDanger = false)
         {
-            // TODO: Sort moves on end. Priority to moves with capture
+            var list = new List<SingleMove>();
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(this))
@@ -181,9 +181,12 @@ namespace vergiBlue
                         var newBoard = new Board(this, singleMove);
                         if (newBoard.IsCheck(!forWhite)) continue;
                     }
-                    yield return singleMove;
+                    list.Add(singleMove);
                 }
             }
+
+            // Sort moves with capture first
+            return list.OrderByDescending(m => m.Capture).ToList();
         }
 
         public void InitializeEmptyBoard()

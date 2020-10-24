@@ -44,7 +44,7 @@ namespace vergiBlueTests
 
             var data = new DiagnosticsData()
             {
-                OverrideSearchDepth = 4
+                OverrideSearchDepth = 5
             };
 
             var player = new Logic(false);
@@ -61,13 +61,22 @@ namespace vergiBlueTests
 
             var playerMove = player.CreateMove();
             var diagnostics = playerMove.Diagnostics;
-            Logger.LogMessage($"Test: {nameof(RuyLopez_SearchDepth5_Black)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. {diagnostics}");
+            Logger.LogMessage($"Test: {nameof(RuyLopez_SearchDepth5_Black)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. {diagnostics.ToString()}");
 
             // 24.10. depth 4
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to b8. Board evaluations: 2025886. Check evaluations: 1023. Time elapsed: 31392 ms. Available moves found: 31.
 
             // 24.10. depth 5
             // Test: RuyLopez_SearchDepth5_Black. Board evaluations: 19889371. Check evaluations: 1022. Time elapsed: 318569 ms. Available moves found: 31.
+
+            // 24.10. depth 4. Strategy - class
+            // Test: RuyLopez_SearchDepth5_Black. Move: c6 to b8. Board evaluations: 2025886. Check evaluations: 1023. Time elapsed: 28803,7124 ms. Available moves found: 31.
+
+            // 24.10. Depth 4 with order prioritize. Edit Board.Moves() - order capture to be first. Seems like really boosts with alpha-beta pruning
+            // Test: RuyLopez_SearchDepth5_Black. Move: c6 to b8. Board evaluations: 305303. Check evaluations: 1023. Time elapsed: 5451 ms. Available moves found: 31.
+
+            // 24.10. Depth 5 with order prioritize
+            // Test: RuyLopez_SearchDepth5_Black. Move: f7 to f6. Board evaluations: 1532427. Check evaluations: 1022. Time elapsed: 26794 ms. Available moves found: 31.
         }
     }
 }

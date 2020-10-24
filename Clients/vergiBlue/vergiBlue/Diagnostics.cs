@@ -32,7 +32,7 @@ namespace vergiBlue
             var result = $"Board evaluations: {EvaluationCount}. ";
             if (CheckCount > 0) result += $"Check evaluations: {CheckCount}. ";
 
-            result += $"Time elapsed: {TimeElapsed.TotalMilliseconds} ms. ";
+            result += $"Time elapsed: {TimeElapsed.TotalMilliseconds:F0} ms. ";
             //result += $"Alphas: {AlphaCutoffs}, betas: {BetaCutoffs}. ";
 
             foreach (var message in Messages)
