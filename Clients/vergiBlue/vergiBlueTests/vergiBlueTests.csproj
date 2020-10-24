@@ -65,6 +65,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BenchMarking.cs" />
     <Compile Include="CheckTests.cs" />
     <Compile Include="GeneralTests.cs" />
     <Compile Include="PlayerMoveTests.cs" />

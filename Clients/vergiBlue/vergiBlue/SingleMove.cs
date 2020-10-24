@@ -23,6 +23,14 @@ namespace vergiBlue
             Promotion = promotion;
         }
 
+        public SingleMove(string previousPosition, string newPosition, bool capture = false, bool promotion = false)
+        {
+            PrevPos = previousPosition.ToTuple();
+            NewPos = newPosition.ToTuple();
+            Capture = capture;
+            Promotion = promotion;
+        }
+
         /// <summary>
         /// Constructor for interface move data
         /// </summary>
