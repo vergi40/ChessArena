@@ -10,10 +10,19 @@ namespace vergiBlue
     public enum GamePhase
     {
         /// <summary>
-        /// Openings and initial
+        /// Openings and initial. Very slow evaluation calculation when all the pieces are out open
         /// </summary>
         Start,
         Middle,
+
+        /// <summary>
+        /// King might be in danger
+        /// </summary>
+        MidEndGame,
+
+        /// <summary>
+        /// King might be in danger
+        /// </summary>
         EndGame
     }
 
@@ -21,7 +30,7 @@ namespace vergiBlue
     {
         // Game strategic variables
 
-        public GamePhase Phase { get; set; } = GamePhase.Start;
+        public GamePhase Phase { get; set; }
         public int SearchDepth { get; set; } = 4;
 
         /// <summary>
@@ -41,11 +50,6 @@ namespace vergiBlue
             }
         }
 
-        private TimeSpan _lastTurnElapsed { get; set; } = TimeSpan.Zero;
-        private int _lastTurnEvals { get; set; } = 0;
-        private int _lastTurnCheckEvals { get; set; } = 0;
-
-
         private int _connectionTestIndex = 2;
         public Move LatestOpponentMove { get; set; }
         public IList<Move> GameHistory { get; set; } = new List<Move>();
@@ -64,6 +68,12 @@ namespace vergiBlue
         }
 
         public Board Board { get; set; } = new Board();
+        public Strategy Strategy { get; set; }
+
+        /// <summary>
+        /// For testing single next turn, overwrite this.
+        /// </summary>
+        public DiagnosticsData PreviousData { get; set; } = new DiagnosticsData();
 
         /// <summary>
         /// Use dummy moves to test connection with server
@@ -76,11 +86,13 @@ namespace vergiBlue
         public Logic(bool isPlayerWhite) : base(isPlayerWhite)
         {
             _connectionTestOverride = false;
+            Strategy = new Strategy(isPlayerWhite);
         }
 
         public Logic(GameStartInformation startInformation, bool connectionTesting) : base(startInformation.WhitePlayer)
         {
             _connectionTestOverride = connectionTesting;
+            Strategy = new Strategy(startInformation.WhitePlayer);
             if (!connectionTesting) Board.InitializeEmptyBoard();
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
         }
@@ -90,8 +102,7 @@ namespace vergiBlue
 
             if (_connectionTestOverride)
             {
-                var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed, out int evals, out int checkEvals);
-                _lastTurnElapsed = timeElapsed;
+                var diagnostics = Diagnostics.CollectAndClear();
                 // Dummy moves for connection testing
                 var move = new PlayerMove()
                 {
@@ -101,7 +112,7 @@ namespace vergiBlue
                         EndPosition = $"a{_connectionTestIndex}",
                         PromotionResult = Move.Types.PromotionPieceType.NoPromotion
                     },
-                    Diagnostics = diagnostics
+                    Diagnostics = diagnostics.ToString()
                 };
 
                 return move;
@@ -113,9 +124,12 @@ namespace vergiBlue
                 // Start to validate indirect checkmates also. Filter out moves that result to check
                 var allMoves = Board.Moves(isMaximizing, true).ToList();
                 Diagnostics.AddMessage($"Available moves found: {allMoves.Count}. ");
-                AnalyzeGamePhase(allMoves.Count);
-
                 Diagnostics.StartMoveCalculations();
+
+                Strategy.Update(PreviousData, TurnCount);
+                var strategyResult = Strategy.DecideSearchDepth(PreviousData, allMoves, Board);
+                SearchDepth = strategyResult.searchDepth;
+                Phase = strategyResult.gamePhase;
                 var bestMove = AnalyzeBestMove(allMoves);
 
                 if (bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
@@ -132,15 +146,12 @@ namespace vergiBlue
                 //if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
                 if(bestMove.Promotion) Diagnostics.AddMessage($"Promotion occured at {bestMove.NewPos.ToAlgebraic()}. ");
 
-                var diagnostics = Diagnostics.CollectAndClear(out TimeSpan timeElapsed, out int evals, out int checkEvals);
-                _lastTurnElapsed = timeElapsed;
-                _lastTurnEvals = evals;
-                _lastTurnCheckEvals = checkEvals;
+                PreviousData = Diagnostics.CollectAndClear();
 
                 var move = new PlayerMove()
                 {
                     Move = bestMove.ToInterfaceMove(castling, check),
-                    Diagnostics = diagnostics
+                    Diagnostics = PreviousData.ToString()
                 };
                 GameHistory.Add(move.Move);
                 return move;
@@ -152,7 +163,7 @@ namespace vergiBlue
             var isMaximizing = IsPlayerWhite;
 
 
-            if (Phase == GamePhase.EndGame)
+            if (Phase == GamePhase.MidEndGame || Phase == GamePhase.EndGame)
             {
                 // Brute search checkmate
                 foreach (var singleMove in allMoves)
@@ -203,59 +214,6 @@ namespace vergiBlue
             return bestMove;
         }
 
-        private void AnalyzeGamePhase(int movePossibilities)
-        {
-            // TODO as start parameters
-            const int MaxDepth = 5;
-            const int MinDepth = 2;
-
-            if (PlayerTurnCount == 0)
-            {
-                Phase = GamePhase.Start;
-                SearchDepth = 4;
-            }
-            else if(PlayerTurnCount == 4)
-            {
-                Phase = GamePhase.Middle;
-                SearchDepth = 3;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
-            }
-            else if ((_lastTurnElapsed.TotalMilliseconds > 1500 || _lastTurnEvals > 600000) && SearchDepth > MinDepth)
-            {
-                SearchDepth--;
-                Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
-            }
-            else if ((_lastTurnElapsed.TotalMilliseconds < 200 || _lastTurnEvals < 50000) && SearchDepth < MaxDepth)
-            {
-                // Only raise to max depth if possibilities are low enough
-                if(SearchDepth < MaxDepth - 1 || movePossibilities < 21)
-                {
-                    SearchDepth++;
-                    Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
-                }
-            }
-
-            if(Phase == GamePhase.Middle && _lastTurnCheckEvals >= 800)
-            {
-                // Endgame - opponent has max 3 non-pawns left
-                //var powerPieces = Board.PieceList.Count(p =>
-                //    p.IsWhite != IsPlayerWhite && Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
-                //if (powerPieces < 4)
-                //{
-                //    Phase = GamePhase.EndGame;
-                //    Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
-                //}
-
-                Phase = GamePhase.EndGame;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
-            }
-            else if (Phase == GamePhase.EndGame && _lastTurnCheckEvals < 800)
-            {
-                Phase = GamePhase.Middle;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
-            }
-
-        }
 
         public sealed override void ReceiveMove(Move opponentMove)
         {

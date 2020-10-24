@@ -42,18 +42,21 @@ namespace vergiBlueTests
             board.ExecuteMove(new SingleMove("b8", "c6"));
             board.ExecuteMove(new SingleMove("f1", "b5"));
 
-            var player = new Logic(false);
-            player.Phase = GamePhase.Middle;
-            player.TurnCount = 20;
-            player.SearchDepth = 4;
-
-            var previousMove = new Move()
+            var data = new DiagnosticsData()
             {
-                StartPosition = "f1",
-                EndPosition = "b5"
+                OverrideSearchDepth = 4
             };
-            player.LatestOpponentMove = previousMove;
-            player.GameHistory.Add(previousMove);
+
+            var player = new Logic(false);
+            player.PreviousData = data;
+
+            //var previousMove = new Move()
+            //{
+            //    StartPosition = "f1",
+            //    EndPosition = "b5"
+            //};
+            //player.LatestOpponentMove = previousMove;
+            //player.GameHistory.Add(previousMove);
             player.Board = new Board(board);
 
             var playerMove = player.CreateMove();
