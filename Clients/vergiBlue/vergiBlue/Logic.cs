@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Common;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
@@ -188,11 +189,29 @@ namespace vergiBlue
             // TODO separate logic to different layers. e.g. player depth at 2, 4 and when to use simple isCheckMate
             var bestValue = WorstValue(IsPlayerWhite);
             SingleMove bestMove = null;
-            foreach (var singleMove in allMoves)
+
+            // https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/how-to-write-a-parallel-for-loop-with-thread-local-variables
+            var evaluated = new List<(double, SingleMove)>();
+            var syncObject = new object();
+            Parallel.ForEach(allMoves, 
+                () => (0.0, new SingleMove("a1", "a1")), // Local initialization. Need to inform compiler the type by initializing
+                (move, loopState, localState) => // Predefined lambda expression (Func<SingleMove, ParallelLoopState, thread-local variable, body>)
             {
-                var newBoard = new Board(Board, singleMove);
+                var newBoard = new Board(Board, move);
                 var value = MiniMax.ToDepth(newBoard, SearchDepth, -100000, 100000, !isMaximizing);
-                
+                localState = (value, move);
+                return localState;
+            },
+                (finalResult) => 
+            {
+                lock(syncObject) evaluated.Add(finalResult);
+            });
+
+            // Handle after parallel iteration
+            foreach (var tuple in evaluated)
+            {
+                var value = tuple.Item1;
+                var singleMove = tuple.Item2;
                 if (isMaximizing)
                 {
                     if (value > bestValue)
@@ -210,6 +229,29 @@ namespace vergiBlue
                     }
                 }
             }
+
+            //foreach (var singleMove in allMoves)
+            //{
+            //    var newBoard = new Board(Board, singleMove);
+            //    var value = MiniMax.ToDepth(newBoard, SearchDepth, -100000, 100000, !isMaximizing);
+                
+            //    if (isMaximizing)
+            //    {
+            //        if (value > bestValue)
+            //        {
+            //            bestValue = value;
+            //            bestMove = singleMove;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        if (value < bestValue)
+            //        {
+            //            bestValue = value;
+            //            bestMove = singleMove;
+            //        }
+            //    }
+            //}
 
             return bestMove;
         }
