@@ -47,7 +47,7 @@ namespace vergiBlue
         public Move ToInterfaceMove(bool castling, bool check)
         {
             var promotionType = Move.Types.PromotionPieceType.NoPromotion;
-            if (Promotion) promotionType = Move.Types.PromotionPieceType.Rook;
+            if (Promotion) promotionType = Move.Types.PromotionPieceType.Queen;
 
             var move = new Move()
             {

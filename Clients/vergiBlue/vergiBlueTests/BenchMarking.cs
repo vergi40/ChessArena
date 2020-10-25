@@ -72,12 +72,14 @@ namespace vergiBlueTests
             // 24.10. depth 4. Strategy - class
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to b8. Board evaluations: 2025886. Check evaluations: 1023. Time elapsed: 28803,7124 ms. Available moves found: 31.
 
+
             // ------- Order prioritizing
             // 24.10. Depth 4 with order prioritize. Edit Board.Moves() - order capture to be first. Seems like really boosts with alpha-beta pruning
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to b8. Board evaluations: 305303. Check evaluations: 1023. Time elapsed: 5451 ms. Available moves found: 31.
 
             // 24.10. Depth 5 with order prioritize
             // Test: RuyLopez_SearchDepth5_Black. Move: f7 to f6. Board evaluations: 1532427. Check evaluations: 1022. Time elapsed: 26794 ms. Available moves found: 31.
+
 
             // ------- Main allMoves-loop parallelized
             // 25.10. Depth 4. All counter methods commented

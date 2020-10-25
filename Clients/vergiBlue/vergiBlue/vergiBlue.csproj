@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Algorithms\CheckMate.cs" />
     <Compile Include="Algorithms\MiniMax.cs" />
+    <Compile Include="Algorithms\MoveHistory.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="Diagnostics.cs" />
     <Compile Include="Extensions.cs" />
@@ -77,6 +78,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Game situations\Bishop ending.png" />
     <Content Include="Game situations\King moved to be captured.png" />
   </ItemGroup>
   <ItemGroup />

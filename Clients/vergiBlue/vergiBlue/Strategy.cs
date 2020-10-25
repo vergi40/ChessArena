@@ -31,13 +31,15 @@ namespace vergiBlue
         }
 
         // TODO as start parameters
-        const int MaxDepth = 4;
+        public int MaxDepth { get; set; } = 5;
         const int MinDepth = 2;
 
-        public Strategy(bool isWhite)
+        public Strategy(bool isWhite, int? overrideMaxDepth)
         {
             IsPlayerWhite = isWhite;
             SearchDepth = 3;
+
+            if (overrideMaxDepth != null) MaxDepth = overrideMaxDepth.Value;
         }
 
         /// <summary>
@@ -54,7 +56,7 @@ namespace vergiBlue
         public (int searchDepth, GamePhase gamePhase) DecideSearchDepth(DiagnosticsData previous, List<SingleMove> allMoves, Board board)
         {
             // Testing
-            if (previous.OverrideSearchDepth != null) return (previous.OverrideSearchDepth.Value, GamePhase.Start);
+            if (previous.OverrideSearchDepth != null) return (previous.OverrideSearchDepth.Value, previous.OverrideGamePhase);
 
             _previous = previous;
 
@@ -91,7 +93,7 @@ namespace vergiBlue
             // Game start
             if (_previous.TimeElapsed.Equals(TimeSpan.Zero))
             {
-                SearchDepth = 3; //default
+                SearchDepth = Math.Min(MaxDepth, 3);
                 Phase = GamePhase.Start;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
                 return;
@@ -121,7 +123,7 @@ namespace vergiBlue
             // 
             if (Phase != GamePhase.Middle && Phase != GamePhase.MidEndGame)
             {
-                SearchDepth = 3; //default
+                SearchDepth = Math.Min(MaxDepth, 4);
                 Phase = GamePhase.Middle;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
                 return;
@@ -136,14 +138,14 @@ namespace vergiBlue
                 SearchDepth--;
                 Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
             }
-            else if ((_previous.TimeElapsed.TotalMilliseconds < 200 || Math.Max(_previous.EvaluationCount, approximateEvalCount) < 50000) && SearchDepth < MaxDepth - 1)
+            else if ((_previous.TimeElapsed.TotalMilliseconds < 200 || Math.Max(_previous.EvaluationCount, approximateEvalCount) < 50000) && SearchDepth < MaxDepth)
             {
                 // Only raise to max depth if possibilities are low enough
                 SearchDepth++;
                 Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
             }
 
-            if (_previous.CheckCount >= criticalCheckCount)
+            if (Phase == GamePhase.Middle && _previous.CheckCount >= criticalCheckCount)
             {
                 Phase = GamePhase.MidEndGame;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
@@ -160,7 +162,7 @@ namespace vergiBlue
             // 
             if (Phase != GamePhase.EndGame)
             {
-                SearchDepth = 4;
+                SearchDepth = Math.Min(MaxDepth, 5);
                 Phase = GamePhase.EndGame;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
                 return;
@@ -171,12 +173,12 @@ namespace vergiBlue
 
             var approximateEvalCount = Math.Pow(movePossibilities, SearchDepth);
 
-            if ((_previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, _previous.EvaluationCount) > criticalHighEvalCount) && SearchDepth > MinDepth)
+            if ((_previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, _previous.EvaluationCount) > criticalHighEvalCount) && SearchDepth > MinDepth + 1)
             {
                 SearchDepth--;
                 Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
             }
-            else if ((_previous.TimeElapsed.TotalMilliseconds < 400 || Math.Max(_previous.EvaluationCount, approximateEvalCount) < criticalLowEvalCount) && SearchDepth < MaxDepth + 1)
+            else if ((_previous.TimeElapsed.TotalMilliseconds < 400 || Math.Max(_previous.EvaluationCount, approximateEvalCount) < criticalLowEvalCount) && SearchDepth < MaxDepth + 2)
             {
                 // Only raise to max depth if possibilities are low enough
                 SearchDepth++;

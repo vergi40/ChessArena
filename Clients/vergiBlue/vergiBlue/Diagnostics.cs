@@ -22,6 +22,7 @@ namespace vergiBlue
         /// If set, <see cref="Strategy.DecideSearchDepth"/> will be overridden with given value.
         /// </summary>
         public int? OverrideSearchDepth { get; set; } = null;
+        public GamePhase OverrideGamePhase { get; set; } = GamePhase.Start;
 
         /// <summary>
         /// Call in end of each player turn

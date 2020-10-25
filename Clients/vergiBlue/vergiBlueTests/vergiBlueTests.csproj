@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="BenchMarking.cs" />
     <Compile Include="CheckTests.cs" />
+    <Compile Include="EndGameTests.cs" />
     <Compile Include="GeneralTests.cs" />
     <Compile Include="PlayerMoveTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

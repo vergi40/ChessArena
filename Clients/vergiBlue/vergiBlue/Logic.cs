@@ -84,16 +84,16 @@ namespace vergiBlue
         /// <summary>
         /// For tests. Test environment will handle board initialization
         /// </summary>
-        public Logic(bool isPlayerWhite) : base(isPlayerWhite)
+        public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             _connectionTestOverride = false;
-            Strategy = new Strategy(isPlayerWhite);
+            Strategy = new Strategy(isPlayerWhite, overrideMaxDepth);
         }
 
-        public Logic(GameStartInformation startInformation, bool connectionTesting) : base(startInformation.WhitePlayer)
+        public Logic(GameStartInformation startInformation, bool connectionTesting, int? overrideMaxDepth = null) : base(startInformation.WhitePlayer)
         {
             _connectionTestOverride = connectionTesting;
-            Strategy = new Strategy(startInformation.WhitePlayer);
+            Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth);
             if (!connectionTesting) Board.InitializeEmptyBoard();
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
         }
@@ -121,11 +121,19 @@ namespace vergiBlue
             else
             {
                 var isMaximizing = IsPlayerWhite;
-
-                // Start to validate indirect checkmates also. Filter out moves that result to check
-                var allMoves = Board.Moves(isMaximizing, true).ToList();
-                Diagnostics.AddMessage($"Available moves found: {allMoves.Count}. ");
                 Diagnostics.StartMoveCalculations();
+
+                // Get all available moves and do necessary filtering
+                var allMoves = Board.Moves(isMaximizing, true).ToList();
+                if(MoveHistory.IsLeaningToDraw(GameHistory))
+                {
+                    var repetionMove = GameHistory[GameHistory.Count - 4];
+                    allMoves.RemoveAll(m =>
+                        m.PrevPos.ToAlgebraic() == repetionMove.StartPosition &&
+                        m.NewPos.ToAlgebraic() == repetionMove.EndPosition);
+
+                }
+                Diagnostics.AddMessage($"Available moves found: {allMoves.Count}. ");
 
                 Strategy.Update(PreviousData, TurnCount);
                 var strategyResult = Strategy.DecideSearchDepth(PreviousData, allMoves, Board);

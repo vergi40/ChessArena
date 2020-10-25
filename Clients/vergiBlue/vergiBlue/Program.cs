@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Common;
 using Common.Connection;
+using vergiBlue.Algorithms;
 
 namespace vergiBlue
 {
@@ -45,8 +46,9 @@ namespace vergiBlue
                 Log("[2] Edit player name and start game");
                 Log("[3] Start local game with two vergiBlues against each other");
                 Log("[4] Start local game with two vergiBlues against each other. Delay between moves");
-                Log("[5] Connection testing game");
-                Log("[6] Exit");
+                Log("[5] Custom local game");
+                Log("[9] Connection testing game");
+                Log("[Any] Exit");
 
                 Console.Write(" > ");
                 var input = Console.ReadKey();
@@ -69,13 +71,17 @@ namespace vergiBlue
                 }
                 else if (input.KeyChar.ToString() == "3")
                 {
-                    StartLocalGame(0);
+                    StartLocalGame(0, null);
                 }
                 else if (input.KeyChar.ToString() == "4")
                 {
-                    StartLocalGame(1000);
+                    StartLocalGame(1000, null);
                 }
                 else if (input.KeyChar.ToString() == "5")
+                {
+                    CustomLocalGame();
+                }
+                else if (input.KeyChar.ToString() == "9")
                 {
                     var connection = new ConnectionModule();
                     StartGame(connection, "Connection test AI", true);
@@ -85,7 +91,20 @@ namespace vergiBlue
 
                 Log(Environment.NewLine);
             }
+        }
 
+        static void CustomLocalGame()
+        {
+            Log(Environment.NewLine);
+            Log("[1] Normal game with delay and more dum opponent");
+            Log("[Any] Exit");
+
+            Console.Write(" > ");
+            var input = Console.ReadKey();
+            if (input.KeyChar.ToString() == "1")
+            {
+                StartLocalGame(1000, 3);
+            }
         }
 
         static void StartGame(ConnectionModule connection, string playerName, bool connectionTesting)
@@ -111,7 +130,7 @@ namespace vergiBlue
             playTask.Wait();
         }
 
-        static void StartLocalGame(int minDelayInMs)
+        static void StartLocalGame(int minDelayInMs, int? overrideOpponentMaxDepth)
         {
             Log(Environment.NewLine);
             // TODO async
@@ -123,11 +142,11 @@ namespace vergiBlue
             
             var firstMove = player1.CreateMove();
             moveHistory.Add(firstMove);
-            PrintMove(firstMove, "player1");
+            PrintMove(firstMove, "white");
             PrintBoardAfterMove(firstMove, "", board);
 
             var info2 = new GameStartInformation() {WhitePlayer = false, OpponentMove = firstMove.Move};
-            var player2 = new Logic(info2, false);
+            var player2 = new Logic(info2, false, overrideOpponentMaxDepth);
             try
             {
 
@@ -135,14 +154,14 @@ namespace vergiBlue
                 {
                     var move = player2.CreateMove();
                     moveHistory.Add(move);
-                    PrintMove(move, "player2");
+                    PrintMove(move, "black");
                     PrintBoardAfterMove(move, "", board);
                     if (move.Move.CheckMate)
                     {
                         Log("Checkmate");
                         break;
                     }
-                    if (IsDraw(moveHistory))
+                    if (MoveHistory.IsDraw(moveHistory))
                     {
                         Log("Draw");
                         break;
@@ -152,14 +171,14 @@ namespace vergiBlue
 
                     move = player1.CreateMove();
                     moveHistory.Add(move);
-                    PrintMove(move, "player1");
+                    PrintMove(move, "white");
                     PrintBoardAfterMove(move, "", board);
                     if (move.Move.CheckMate)
                     {
                         Log("Checkmate");
                         break;
                     }
-                    if (IsDraw(moveHistory))
+                    if (MoveHistory.IsDraw(moveHistory))
                     {
                         Log("Draw");
                         break;
@@ -175,33 +194,6 @@ namespace vergiBlue
             Console.Read();
         }
 
-        private static bool IsDraw(IList<PlayerMove> moves)
-        {
-            if (moves.Count > 15)
-            {
-                var count = moves.Count;
-                if (!MovesMatch(moves, count - 1, count - 5)) return false;
-                if (!MovesMatch(moves, count - 3, count - 7)) return false;
-                if (!MovesMatch(moves, count - 5, count - 9)) return false;
-                if (!MovesMatch(moves, count - 7, count - 11)) return false;
-                if (!MovesMatch(moves, count - 9, count - 13)) return false;
-                if (!MovesMatch(moves, count - 11, count - 15)) return false;
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool MovesMatch(IList<PlayerMove> allMoves, int firstIndex, int secondIndex)
-        {
-            if (allMoves[firstIndex].Move.StartPosition == allMoves[secondIndex].Move.StartPosition
-                && allMoves[firstIndex].Move.EndPosition == allMoves[secondIndex].Move.EndPosition)
-            {
-                return true;
-            }
-
-            return false;
-        }
 
         static void PrintMove(PlayerMove move, string playerName)
         {
