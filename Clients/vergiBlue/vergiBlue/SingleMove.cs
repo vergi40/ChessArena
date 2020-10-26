@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommonNetStandard.Interface;
+using CommonNetStandard.Local_implementation;
 
 namespace vergiBlue
 {
@@ -36,20 +38,20 @@ namespace vergiBlue
         /// </summary>
         /// <param name="interfaceMove"></param>
         /// <param name="capture"></param>
-        public SingleMove(Move interfaceMove, bool capture = false)
+        public SingleMove(IMove interfaceMove, bool capture = false)
         {
             PrevPos = interfaceMove.StartPosition.ToTuple();
             NewPos = interfaceMove.EndPosition.ToTuple();
             Capture = capture;
-            Promotion = interfaceMove.PromotionResult != Move.Types.PromotionPieceType.NoPromotion;
+            Promotion = interfaceMove.PromotionResult != PromotionPieceType.NoPromotion;
         }
 
-        public Move ToInterfaceMove(bool castling, bool check)
+        public IMove ToInterfaceMove(bool castling, bool check)
         {
-            var promotionType = Move.Types.PromotionPieceType.NoPromotion;
-            if (Promotion) promotionType = Move.Types.PromotionPieceType.Queen;
+            var promotionType = PromotionPieceType.NoPromotion;
+            if (Promotion) promotionType = PromotionPieceType.Queen;
 
-            var move = new Move()
+            var move = new MoveImplementation()
             {
                 StartPosition = PrevPos.ToAlgebraic(),
                 EndPosition = NewPos.ToAlgebraic(),

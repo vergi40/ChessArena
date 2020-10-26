@@ -1,7 +1,10 @@
-﻿namespace CommonNetStandard
+﻿using CommonNetStandard.Connection;
+using CommonNetStandard.Interface;
+
+namespace CommonNetStandard
 {
     /// <summary>
-    /// Inherit custom AI logic from this class and inject it to <see cref="Common.ConnectionModule"/>
+    /// Inherit custom AI logic from this class and inject it to <see cref="ConnectionModule"/>
     /// </summary>
     public abstract class LogicBase
     {
@@ -11,7 +14,7 @@
         public bool IsPlayerWhite { get; }
         protected LogicBase(bool isPlayerWhite) { IsPlayerWhite = isPlayerWhite; }
         
-        public abstract PlayerMove CreateMove();
-        public abstract void ReceiveMove(Move opponentMove);
+        public abstract IPlayerMove CreateMove();
+        public abstract void ReceiveMove(IMove opponentMove);
     }
 }

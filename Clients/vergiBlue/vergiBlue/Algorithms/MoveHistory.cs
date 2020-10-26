@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommonNetStandard.Interface;
 
 namespace vergiBlue.Algorithms
 {
@@ -13,7 +14,7 @@ namespace vergiBlue.Algorithms
         /// </summary>
         /// <param name="moves"></param>
         /// <returns></returns>
-        public static bool IsDraw(IList<PlayerMove> moves)
+        public static bool IsDraw(IList<IPlayerMove> moves)
         {
             return IsDraw(moves.Select(m => m.Move).ToList());
         }
@@ -23,7 +24,7 @@ namespace vergiBlue.Algorithms
         /// </summary>
         /// <param name="moves"></param>
         /// <returns></returns>
-        public static bool IsDraw(IList<Move> moves)
+        public static bool IsDraw(IList<IMove> moves)
         {
             if (moves.Count > 15)
             {
@@ -45,7 +46,7 @@ namespace vergiBlue.Algorithms
         /// </summary>
         /// <param name="moves"></param>
         /// <returns></returns>
-        public static bool IsLeaningToDraw(IList<Move> moves)
+        public static bool IsLeaningToDraw(IList<IMove> moves)
         {
             if (moves.Count > 15)
             {
@@ -60,7 +61,7 @@ namespace vergiBlue.Algorithms
             return false;
         }
 
-        public static bool MovesMatch(IList<Move> allMoves, int firstIndex, int secondIndex)
+        public static bool MovesMatch(IList<IMove> allMoves, int firstIndex, int secondIndex)
         {
             if (allMoves[firstIndex].StartPosition == allMoves[secondIndex].StartPosition
                 && allMoves[firstIndex].EndPosition == allMoves[secondIndex].EndPosition)

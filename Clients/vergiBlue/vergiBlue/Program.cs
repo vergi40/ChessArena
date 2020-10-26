@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using CommonNetStandard;
 using CommonNetStandard.Connection;
+using CommonNetStandard.Interface;
+using CommonNetStandard.Local_implementation;
 using vergiBlue.Algorithms;
 
 namespace vergiBlue
@@ -134,8 +136,8 @@ namespace vergiBlue
         {
             Log(Environment.NewLine);
             // TODO async
-            var moveHistory = new List<PlayerMove>();
-            var info1 = new GameStartInformation() {WhitePlayer = true};
+            var moveHistory = new List<IPlayerMove>();
+            var info1 = new StartInformationImplementation() {WhitePlayer = true};
 
             var player1 = new Logic(info1, false);
             var board = new SimpleBoard(player1.Board);
@@ -145,7 +147,7 @@ namespace vergiBlue
             PrintMove(firstMove, "white");
             PrintBoardAfterMove(firstMove, "", board);
 
-            var info2 = new GameStartInformation() {WhitePlayer = false, OpponentMove = firstMove.Move};
+            var info2 = new StartInformationImplementation() {WhitePlayer = false, OpponentMove = firstMove.Move};
             var player2 = new Logic(info2, false, overrideOpponentMaxDepth);
             try
             {
@@ -195,7 +197,7 @@ namespace vergiBlue
         }
 
 
-        static void PrintMove(PlayerMove move, string playerName)
+        static void PrintMove(IPlayerMove move, string playerName)
         {
             var message = $"{playerName.PadRight(10)}- {move.Move.StartPosition} to ";
             //if (move.Move.Capture) info += "x";
@@ -208,10 +210,10 @@ namespace vergiBlue
             Log( message);
         }
 
-        static void PrintBoardAfterMove(PlayerMove move, string playerName, SimpleBoard board)
+        static void PrintBoardAfterMove(IPlayerMove move, string playerName, SimpleBoard board)
         {
             var piece = board.Get(move.Move.StartPosition.ToTuple());
-            if (move.Move.PromotionResult != Move.Types.PromotionPieceType.NoPromotion)
+            if (move.Move.PromotionResult != PromotionPieceType.NoPromotion)
             {
                 if (piece.Contains("w")) piece = "wQ ";
                 else piece = "bQ ";

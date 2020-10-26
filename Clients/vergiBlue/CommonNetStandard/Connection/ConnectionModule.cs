@@ -1,4 +1,6 @@
 ﻿using System.Threading.Tasks;
+using CommonNetStandard.Interface;
+using CommonNetStandard.Local_implementation;
 using Grpc.Core;
 
 namespace CommonNetStandard.Connection
@@ -23,7 +25,7 @@ namespace CommonNetStandard.Connection
         /// </summary>
         /// <param name="address">ip:port</param>
         /// <param name="playerName"></param>
-        public async Task<GameStartInformation> Initialize(string address, string playerName)
+        public async Task<IGameStartInformation> Initialize(string address, string playerName)
         {
             _aiName = playerName;
             _channel = new Channel(address, ChannelCredentials.Insecure);
@@ -32,7 +34,12 @@ namespace CommonNetStandard.Connection
             Logger.Log($"Opening gRPC channel to {address}");
 
             var startInformation = await _client.Initialize(playerName);
-            return startInformation;
+            var localInformation = new StartInformationImplementation()
+            {
+                WhitePlayer = startInformation.WhitePlayer,
+                OpponentMove = Mapping.ToCommon(startInformation.OpponentMove)
+            };
+            return localInformation;
         }
 
         public async Task Play(LogicBase ai)

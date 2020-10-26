@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using CommonNetStandard.Local_implementation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
@@ -168,7 +169,7 @@ namespace vergiBlueTests
             opponent.Phase = GamePhase.EndGame;
             opponent.TurnCount = 21;
             opponent.SearchDepth = 4;
-            opponent.LatestOpponentMove = new Move(){Check = true};
+            opponent.LatestOpponentMove = new MoveImplementation(){Check = true};
 
             var board = new Board();
             // 
@@ -219,7 +220,7 @@ namespace vergiBlueTests
             player.TurnCount = 20;
             player.SearchDepth = 3;
 
-            var previousMove = new Move()
+            var previousMove = new MoveImplementation()
             {
                 StartPosition = "c4",
                 EndPosition = "e4"

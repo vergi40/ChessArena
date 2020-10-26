@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CommonNetStandard;
+using CommonNetStandard.Interface;
+using CommonNetStandard.Local_implementation;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
@@ -52,8 +54,8 @@ namespace vergiBlue
         }
 
         private int _connectionTestIndex = 2;
-        public Move LatestOpponentMove { get; set; }
-        public IList<Move> GameHistory { get; set; } = new List<Move>();
+        public IMove LatestOpponentMove { get; set; }
+        public IList<IMove> GameHistory { get; set; } = new List<IMove>();
 
         private bool _kingInDanger
         {
@@ -90,7 +92,7 @@ namespace vergiBlue
             Strategy = new Strategy(isPlayerWhite, overrideMaxDepth);
         }
 
-        public Logic(GameStartInformation startInformation, bool connectionTesting, int? overrideMaxDepth = null) : base(startInformation.WhitePlayer)
+        public Logic(IGameStartInformation startInformation, bool connectionTesting, int? overrideMaxDepth = null) : base(startInformation.WhitePlayer)
         {
             _connectionTestOverride = connectionTesting;
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth);
@@ -98,20 +100,20 @@ namespace vergiBlue
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
         }
 
-        public override PlayerMove CreateMove()
+        public override IPlayerMove CreateMove()
         {
 
             if (_connectionTestOverride)
             {
                 var diagnostics = Diagnostics.CollectAndClear();
                 // Dummy moves for connection testing
-                var move = new PlayerMove()
+                var move = new PlayerMoveImplementation()
                 {
-                    Move = new Move()
+                    Move = new MoveImplementation()
                     {
                         StartPosition = $"a{_connectionTestIndex--}",
                         EndPosition = $"a{_connectionTestIndex}",
-                        PromotionResult = Move.Types.PromotionPieceType.NoPromotion
+                        PromotionResult = PromotionPieceType.NoPromotion
                     },
                     Diagnostics = diagnostics.ToString()
                 };
@@ -157,7 +159,7 @@ namespace vergiBlue
 
                 PreviousData = Diagnostics.CollectAndClear();
 
-                var move = new PlayerMove()
+                var move = new PlayerMoveImplementation()
                 {
                     Move = bestMove.ToInterfaceMove(castling, check),
                     Diagnostics = PreviousData.ToString()
@@ -189,6 +191,8 @@ namespace vergiBlue
                     var newBoard = new Board(Board, singleMove);
                     if (CheckMate.InTwoTurns(newBoard, isMaximizing))
                     {
+                        // TODO collect all choices and choose best
+                        // Game goes to draw loop otherwise
                         return singleMove;
                     }
                 }
@@ -265,7 +269,7 @@ namespace vergiBlue
         }
 
 
-        public sealed override void ReceiveMove(Move opponentMove)
+        public sealed override void ReceiveMove(IMove opponentMove)
         {
             LatestOpponentMove = opponentMove;
 

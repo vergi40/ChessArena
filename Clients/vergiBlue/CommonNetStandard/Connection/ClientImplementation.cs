@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using CommonNetStandard.Interface;
 using Grpc.Core;
 
 namespace CommonNetStandard.Connection
@@ -35,18 +36,7 @@ namespace CommonNetStandard.Connection
             {
                 using (var call = _client.CreateMovements())
                 {
-
-                    //if(ai.IsPlayerWhite)
-                    //{
-                    //    // Player starts
-                    //    await call.RequestStream.WriteAsync(ai.CreateMove());
-                    //}
-
-
-                    await call.RequestStream.WriteAsync(ai.CreateMove());
-                    //var startMove =  call.RequestStream.WriteAsync(ai.CreateMove());
-                    //startMove.Wait();
-
+                    await call.RequestStream.WriteAsync(Mapping.ToGrpc(ai.CreateMove()));
 
                     // Continuos bidirectional streaming
                     var responseReaderTask = Task.Run((Func<Task>) (async () =>
@@ -57,10 +47,10 @@ namespace CommonNetStandard.Connection
                             Logger.Log($"Received opponent move: {opponentMove.StartPosition} to {opponentMove.EndPosition}");
 
                             // Analyze opponent move
-                            ai.ReceiveMove(opponentMove);
+                            ai.ReceiveMove(Mapping.ToCommon(opponentMove));
 
                             // Create own move
-                            await call.RequestStream.WriteAsync(ai.CreateMove());
+                            await call.RequestStream.WriteAsync(Mapping.ToGrpc(ai.CreateMove()));
                         }
                     }));
 
