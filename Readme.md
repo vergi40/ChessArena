@@ -12,7 +12,9 @@ Developing own chess AI's from scratch to battle each other. Games are hosted on
 * Basic minimax-algorithm as base logic
 * Iterating more intelligence by teaching how to handle [various game situations through tests](Clients/vergiBlue/vergiBlueTests/)
 * Includes [test server](Clients/vergiBlue/TestServer/) and console app where AI can play against itself
-* Minor goal is to include all connection-specific implementation in [Common-project](Clients/vergiBlue/Common/). C# clients should only need to implement shared abstract [LogicBase](Clients/vergiBlue/Common/LogicBase.cs).
+* Minor goal is to include all connection-specific implementation in [Common-project](Clients/vergiBlue/CommonNetStandard/). 
+	* C# clients should only need to implement shared abstract [LogicBase](Clients/vergiBlue/CommonNetStandard/LogicBase.cs).
+	* Example code how to implement your own ai in C# can be found in [Example.cs](Clients/vergiBlue/CommonNetStandard/Example.cs).
 
 
 ## Server
@@ -26,4 +28,4 @@ Developing own chess AI's from scratch to battle each other. Games are hosted on
 
 
 ## Rough roadmap
-* [Roadmap.md]
+* [Roadmap.md](./Roadmap.md)
