@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Grpc.Core;
 
-namespace Common.Connection
+namespace CommonNetStandard.Connection
 {
     /// <summary>
     /// Reference this class to create and maintain new grpc connection.

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Common
+﻿namespace CommonNetStandard
 {
     /// <summary>
     /// Inherit custom AI logic from this class and inject it to <see cref="Common.ConnectionModule"/>

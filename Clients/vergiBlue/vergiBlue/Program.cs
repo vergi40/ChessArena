@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using System.Configuration;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Common;
-using Common.Connection;
+using CommonNetStandard;
+using CommonNetStandard.Connection;
 using vergiBlue.Algorithms;
 
 namespace vergiBlue

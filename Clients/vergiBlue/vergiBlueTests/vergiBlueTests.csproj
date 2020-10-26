@@ -77,9 +77,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{9EFDBA49-E54D-4F82-912F-BF883A25F441}</Project>
-      <Name>Common</Name>
+    <ProjectReference Include="..\CommonNetStandard\CommonNetStandard.csproj">
+      <Project>{E15B36EB-44E3-478F-8A9E-6B0AEC413CE7}</Project>
+      <Name>CommonNetStandard</Name>
     </ProjectReference>
     <ProjectReference Include="..\vergiBlue\vergiBlue.csproj">
       <Project>{69f44283-aea6-450c-9cf4-12672440b9ea}</Project>

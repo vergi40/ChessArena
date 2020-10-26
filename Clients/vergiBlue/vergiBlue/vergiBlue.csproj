@@ -72,16 +72,15 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{9efdba49-e54d-4f82-912f-bf883a25f441}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Game situations\Bishop ending.png" />
     <Content Include="Game situations\King moved to be captured.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\CommonNetStandard\CommonNetStandard.csproj">
+      <Project>{e15b36eb-44e3-478f-8a9e-6b0aec413ce7}</Project>
+      <Name>CommonNetStandard</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Grpc.Core.2.32.0\build\net45\Grpc.Core.targets" Condition="Exists('..\packages\Grpc.Core.2.32.0\build\net45\Grpc.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

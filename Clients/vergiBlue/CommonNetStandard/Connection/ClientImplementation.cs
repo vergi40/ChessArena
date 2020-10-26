@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 
-namespace Common.Connection
+namespace CommonNetStandard.Connection
 {
     class ClientImplementation
     {

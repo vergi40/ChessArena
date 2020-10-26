@@ -71,9 +71,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{9efdba49-e54d-4f82-912f-bf883a25f441}</Project>
-      <Name>Common</Name>
+    <ProjectReference Include="..\CommonNetStandard\CommonNetStandard.csproj">
+      <Project>{e15b36eb-44e3-478f-8a9e-6b0aec413ce7}</Project>
+      <Name>CommonNetStandard</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
