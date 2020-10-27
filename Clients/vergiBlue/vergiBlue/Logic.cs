@@ -92,11 +92,12 @@ namespace vergiBlue
             Strategy = new Strategy(isPlayerWhite, overrideMaxDepth);
         }
 
-        public Logic(IGameStartInformation startInformation, bool connectionTesting, int? overrideMaxDepth = null) : base(startInformation.WhitePlayer)
+        public Logic(IGameStartInformation startInformation, bool connectionTesting, int? overrideMaxDepth = null, Board overrideBoard = null) : base(startInformation.WhitePlayer)
         {
             _connectionTestOverride = connectionTesting;
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth);
-            if (!connectionTesting) Board.InitializeEmptyBoard();
+            if(overrideBoard != null) Board = new Board(overrideBoard);
+            else if (!connectionTesting) Board.InitializeEmptyBoard();
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
         }
 
@@ -127,6 +128,11 @@ namespace vergiBlue
 
                 // Get all available moves and do necessary filtering
                 var allMoves = Board.Moves(isMaximizing, true).ToList();
+                if (allMoves.Count == 0)
+                {
+                    throw new ArgumentException($"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
+                }
+
                 if(MoveHistory.IsLeaningToDraw(GameHistory))
                 {
                     var repetionMove = GameHistory[GameHistory.Count - 4];
@@ -169,6 +175,14 @@ namespace vergiBlue
             }
         }
 
+        /// <summary>
+        /// Player should at least:
+        /// * Check if there is immediate checkmate available
+        /// * Check if there is possible checkmate in two turns.
+        /// 
+        /// </summary>
+        /// <param name="allMoves"></param>
+        /// <returns></returns>
         private SingleMove AnalyzeBestMove(IList<SingleMove> allMoves)
         {
             var isMaximizing = IsPlayerWhite;
@@ -176,95 +190,25 @@ namespace vergiBlue
 
             if (Phase == GamePhase.MidEndGame || Phase == GamePhase.EndGame)
             {
-                // Brute search checkmate
-                foreach (var singleMove in allMoves)
+                var checkMate = MoveResearch.ImmediateCheckMateAvailable(allMoves, Board, isMaximizing);
+                if (checkMate != null) return checkMate;
+
+                var twoTurnCheckMates = MoveResearch.CheckMateInTwoTurns(allMoves, Board, isMaximizing);
+                if (twoTurnCheckMates.Count > 1)
                 {
-                    var newBoard = new Board(Board, singleMove);
-                    if (newBoard.IsCheckMate(isMaximizing, false))
-                    {
-                        singleMove.CheckMate = true;
-                        return singleMove;
-                    }
+                    var evaluatedCheckMates = MoveResearch.GetMoveScoreListParallel(twoTurnCheckMates, SearchDepth, Board, isMaximizing);
+                    return MoveResearch.SelectBestMove(evaluatedCheckMates, isMaximizing);
                 }
-                foreach (var singleMove in allMoves)
+                else if (twoTurnCheckMates.Count > 0)
                 {
-                    var newBoard = new Board(Board, singleMove);
-                    if (CheckMate.InTwoTurns(newBoard, isMaximizing))
-                    {
-                        // TODO collect all choices and choose best
-                        // Game goes to draw loop otherwise
-                        return singleMove;
-                    }
+                    return twoTurnCheckMates.First();
                 }
             }
 
             // TODO separate logic to different layers. e.g. player depth at 2, 4 and when to use simple isCheckMate
-            var bestValue = WorstValue(IsPlayerWhite);
-            SingleMove bestMove = null;
-
-            // https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/how-to-write-a-parallel-for-loop-with-thread-local-variables
-            var evaluated = new List<(double, SingleMove)>();
-            var syncObject = new object();
-            Parallel.ForEach(allMoves, 
-                () => (0.0, new SingleMove("a1", "a1")), // Local initialization. Need to inform compiler the type by initializing
-                (move, loopState, localState) => // Predefined lambda expression (Func<SingleMove, ParallelLoopState, thread-local variable, body>)
-            {
-                var newBoard = new Board(Board, move);
-                var value = MiniMax.ToDepth(newBoard, SearchDepth, -100000, 100000, !isMaximizing);
-                localState = (value, move);
-                return localState;
-            },
-                (finalResult) => 
-            {
-                lock(syncObject) evaluated.Add(finalResult);
-            });
-
-            // Handle after parallel iteration
-            foreach (var tuple in evaluated)
-            {
-                var value = tuple.Item1;
-                var singleMove = tuple.Item2;
-                if (isMaximizing)
-                {
-                    if (value > bestValue)
-                    {
-                        bestValue = value;
-                        bestMove = singleMove;
-                    }
-                }
-                else
-                {
-                    if (value < bestValue)
-                    {
-                        bestValue = value;
-                        bestMove = singleMove;
-                    }
-                }
-            }
-
-            //foreach (var singleMove in allMoves)
-            //{
-            //    var newBoard = new Board(Board, singleMove);
-            //    var value = MiniMax.ToDepth(newBoard, SearchDepth, -100000, 100000, !isMaximizing);
-                
-            //    if (isMaximizing)
-            //    {
-            //        if (value > bestValue)
-            //        {
-            //            bestValue = value;
-            //            bestMove = singleMove;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        if (value < bestValue)
-            //        {
-            //            bestValue = value;
-            //            bestMove = singleMove;
-            //        }
-            //    }
-            //}
-
+            var evaluated = MoveResearch.GetMoveScoreListParallel(allMoves, SearchDepth, Board, isMaximizing);
+            SingleMove bestMove = MoveResearch.SelectBestMove(evaluated, isMaximizing);
+            
             return bestMove;
         }
 

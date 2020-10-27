@@ -10,6 +10,7 @@ using CommonNetStandard.Connection;
 using CommonNetStandard.Interface;
 using CommonNetStandard.Local_implementation;
 using vergiBlue.Algorithms;
+using vergiBlue.Pieces;
 
 namespace vergiBlue
 {
@@ -99,14 +100,83 @@ namespace vergiBlue
         {
             Log(Environment.NewLine);
             Log("[1] Normal game with delay and more dum opponent");
+            Log("[2] Endgame. QR vs -");
+            Log("[3] Endgame. RR vs R");
+            Log("[4] Endgame. PPPP vs PPPP");
             Log("[Any] Exit");
 
             Console.Write(" > ");
             var input = Console.ReadKey();
             if (input.KeyChar.ToString() == "1")
             {
-                StartLocalGame(1000, 3);
+                StartLocalGame(2000, 3);
             }
+            else if (input.KeyChar.ToString() == "2")
+            {
+                var board = new Board();
+                var pieces = new List<PieceBase>
+                {
+                    new Rook(true, "a1"),
+                    new Queen(true, "h1")
+                };
+                board.AddNew(pieces);
+                // 
+                var whiteKing = new King(true, "e1");
+                board.AddNew(whiteKing);
+
+                var blackKing = new King(false, "e8");
+                board.AddNew(blackKing);
+
+                board.Kings = (whiteKing, blackKing);
+                StartLocalGame(1500, null, board);
+            }
+            else if (input.KeyChar.ToString() == "3")
+            {
+                var board = new Board();
+                var pieces = new List<PieceBase>
+                {
+                    new Rook(true, "a1"),
+                    new Rook(true, "h1"),
+                    new Rook(false, "d8")
+                };
+                board.AddNew(pieces);
+                // 
+                var whiteKing = new King(true, "e1");
+                board.AddNew(whiteKing);
+
+                var blackKing = new King(false, "e8");
+                board.AddNew(blackKing);
+
+                board.Kings = (whiteKing, blackKing);
+                StartLocalGame(800, null, board);
+            }
+            else if (input.KeyChar.ToString() == "4")
+            {
+                var board = new Board();
+                var pieces = new List<PieceBase>
+                {
+                    new Pawn(true, "c2"),
+                    new Pawn(true, "d2"),
+                    new Pawn(true, "e2"),
+                    new Pawn(true, "f2"),
+                    new Pawn(false, "c7"),
+                    new Pawn(false, "d7"),
+                    new Pawn(false, "e7"),
+                    new Pawn(false, "f7")
+                };
+                board.AddNew(pieces);
+                // 
+                var whiteKing = new King(true, "e1");
+                board.AddNew(whiteKing);
+
+                var blackKing = new King(false, "e8");
+                board.AddNew(blackKing);
+
+                board.Kings = (whiteKing, blackKing);
+                StartLocalGame(1000, null, board);
+            }
+
+
         }
 
         static void StartGame(ConnectionModule connection, string playerName, bool connectionTesting)
@@ -132,14 +202,14 @@ namespace vergiBlue
             playTask.Wait();
         }
 
-        static void StartLocalGame(int minDelayInMs, int? overrideOpponentMaxDepth)
+        static void StartLocalGame(int minDelayInMs, int? overrideOpponentMaxDepth, Board overrideBoard = null)
         {
             Log(Environment.NewLine);
             // TODO async
             var moveHistory = new List<IPlayerMove>();
             var info1 = new StartInformationImplementation() {WhitePlayer = true};
 
-            var player1 = new Logic(info1, false);
+            var player1 = new Logic(info1, false, null, overrideBoard);
             var board = new SimpleBoard(player1.Board);
             
             var firstMove = player1.CreateMove();
@@ -148,7 +218,7 @@ namespace vergiBlue
             PrintBoardAfterMove(firstMove, "", board);
 
             var info2 = new StartInformationImplementation() {WhitePlayer = false, OpponentMove = firstMove.Move};
-            var player2 = new Logic(info2, false, overrideOpponentMaxDepth);
+            var player2 = new Logic(info2, false, overrideOpponentMaxDepth, overrideBoard);
             try
             {
 
@@ -202,8 +272,8 @@ namespace vergiBlue
             var message = $"{playerName.PadRight(10)}- {move.Move.StartPosition} to ";
             //if (move.Move.Capture) info += "x";
             message += $"{move.Move.EndPosition}";
-            if (move.Move.Check) message += "+";
             if (move.Move.CheckMate) message += "#";
+            else if (move.Move.Check) message += "+";
             message += ". ";
             //message += Environment.NewLine;
             message += $"{move.Diagnostics}";

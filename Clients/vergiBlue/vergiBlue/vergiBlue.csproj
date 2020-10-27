@@ -48,6 +48,7 @@
     <Compile Include="Algorithms\CheckMate.cs" />
     <Compile Include="Algorithms\MiniMax.cs" />
     <Compile Include="Algorithms\MoveHistory.cs" />
+    <Compile Include="Algorithms\MoveResearch.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="Diagnostics.cs" />
     <Compile Include="Extensions.cs" />
