@@ -6,6 +6,7 @@ using System.Net.Configuration;
 using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard;
+using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
 namespace vergiBlue
@@ -149,26 +150,29 @@ namespace vergiBlue
             return -1;
         }
 
-        public double Evaluate(bool isMaximizing, int currentSearchDepth)
+        public double Evaluate(bool isMaximizing, int? currentSearchDepth = null)
         {
             // TODO
             Diagnostics.IncrementEvalCount();
             var evalScore = PieceList.Sum(p => p.RelativeStrength);
 
             // Checkmate (in good or bad) should have more priority the sooner it occurs
-            if (evalScore > StrengthTable.King / 2)
+            if(currentSearchDepth != null)
             {
-                evalScore += 10 * (currentSearchDepth + 1);
-            }
-            else if (evalScore < -StrengthTable.King / 2)
-            {
-                evalScore -= 10 * (currentSearchDepth + 1);
+                if (evalScore > StrengthTable.King / 2)
+                {
+                    evalScore += 10 * (currentSearchDepth.Value + 1);
+                }
+                else if (evalScore < -StrengthTable.King / 2)
+                {
+                    evalScore -= 10 * (currentSearchDepth.Value + 1);
+                }
             }
 
             return evalScore;
         }
 
-        public IList<SingleMove> Moves(bool forWhite, bool kingInDanger = false)
+        public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false)
         {
             var list = new List<SingleMove>();
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
@@ -181,12 +185,14 @@ namespace vergiBlue
                         var newBoard = new Board(this, singleMove);
                         if (newBoard.IsCheck(!forWhite)) continue;
                     }
+
                     list.Add(singleMove);
                 }
             }
 
-            // Sort moves with capture first
-            return list.OrderByDescending(m => m.Capture).ToList();
+            if (orderMoves) list = MoveResearch.OrderMovesByEvaluation(list, this, forWhite);
+            else list = MoveResearch.OrderMovesByCapture(list);// Light ordering
+            return list;
         }
 
         public void InitializeEmptyBoard()
@@ -271,7 +277,7 @@ namespace vergiBlue
             }
 
             // Iterate all opponent moves and check is there any that doesn't have check when next player moves
-            var opponentMoves = Moves(!isWhiteOffensive);
+            var opponentMoves = Moves(!isWhiteOffensive, false);
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = new Board(this, singleMove);
@@ -297,7 +303,7 @@ namespace vergiBlue
             var opponentKing = KingLocation(!isWhiteOffensive);
             if (opponentKing == null) return false; // Test override, don't always have kings on board
 
-            var playerMoves = Moves(isWhiteOffensive);
+            var playerMoves = Moves(isWhiteOffensive, false, false);
             foreach (var singleMove in playerMoves)
             {
                 Diagnostics.IncrementCheckCount();

@@ -13,12 +13,12 @@ namespace vergiBlue.Algorithms
         {
             // TODO could modify to support n depth
             // Opponent moves
-            var opponentMoves = board.Moves(!isWhitePlayer);
+            var opponentMoves = board.Moves(!isWhitePlayer, false);
             foreach (var opponentMove in opponentMoves)
             {
                 var newBoard = new Board(board, opponentMove);
                 // Player moves
-                var playerMoves = newBoard.Moves(isWhitePlayer);
+                var playerMoves = newBoard.Moves(isWhitePlayer, false);
                 foreach (var playerMove in playerMoves)
                 {
                     var nextBoard = new Board(newBoard, playerMove);

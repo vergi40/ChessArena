@@ -109,5 +109,50 @@ namespace vergiBlue.Algorithms
 
             return checkMates;
         }
+
+        private static IList<(double eval, SingleMove move)> CreateEvaluationList(IEnumerable<SingleMove> moves,
+            Board board, bool isMaximizing)
+        {
+            IList<(double eval, SingleMove move)> list = new List<(double eval, SingleMove move)>();
+            foreach (var singleMove in moves)
+            {
+                var newBoard = new Board(board, singleMove);
+                var eval = newBoard.Evaluate(isMaximizing);
+                list.Add((eval, singleMove));
+            }
+
+            return list;
+        }
+
+        public static List<SingleMove> OrderMovesByEvaluation(List<SingleMove> moves, Board board, bool isMaximizing)
+        {
+            // Sort moves by evaluation score they produce
+            var list = CreateEvaluationList(moves, board, isMaximizing).ToList();
+            list.Sort(Compare);
+
+            int Compare((double eval, SingleMove move) move1, (double eval, SingleMove move) move2)
+            {
+                if (Math.Abs(move1.eval - move2.eval) < 1e-6) return 0;
+
+                if(!isMaximizing)
+                {
+                    if (move1.eval > move2.eval) return 1;
+                    return -1;
+                }
+                else
+                {
+                    if (move1.eval < move2.eval) return 1;
+                    return -1;
+                }
+            }
+
+            // 
+            return list.Select(m => m.move).ToList();
+        }
+
+        public static List<SingleMove> OrderMovesByCapture(List<SingleMove> moves)
+        {
+            return moves.OrderByDescending(m => m.Capture).ToList();
+        }
     }
 }

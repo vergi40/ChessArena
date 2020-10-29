@@ -44,7 +44,7 @@ namespace vergiBlueTests
 
             var data = new DiagnosticsData()
             {
-                OverrideSearchDepth = 4
+                OverrideSearchDepth = 5
             };
 
             var player = new Logic(false);
@@ -87,6 +87,28 @@ namespace vergiBlueTests
 
             // 25.10. Depth 5. All counter methods commented
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to d4. Board evaluations: 1532427. Check evaluations: 1030. Time elapsed: 7002 ms. Available moves found: 31.
+
+
+            // -------
+            // 29.10. depth 4 
+            // Test: RuyLopez_SearchDepth5_Black. Move: c6 to b8. Board evaluations: 191032982. Check evaluations: 1023. Time elapsed: 676506 ms. Available moves found: 31.
+
+            // negate
+            // Test: RuyLopez_SearchDepth5_Black. Move: c6 to a5. Board evaluations: 13251801. Check evaluations: 1024. Time elapsed: 54043 ms. Available moves found: 31.
+
+            // Skip ordering in check checks
+            // Test: RuyLopez_SearchDepth5_Black. Move: c6 to a5. Board evaluations: 13250777. Check evaluations: 1024. Time elapsed: 25777 ms. Available moves found: 31.
+
+            // Only reorder moves by evaluation at start depth
+            // Test: RuyLopez_SearchDepth5_Black. Move: c6 to a5. Board evaluations: 2025917. Check evaluations: 1024. Time elapsed: 10514 ms. Available moves found: 31.
+
+
+            // Only reorder moves by evaluation at start depth. Otherwise prioritize by capture.
+            // Depth 4
+            // Test: RuyLopez_SearchDepth5_Black. Move: d8 to f6. Board evaluations: 305334. Check evaluations: 1033. Time elapsed: 1568 ms. Available moves found: 31.
+            // Depth 5
+            // Test: RuyLopez_SearchDepth5_Black. Move: c6 to d4. Board evaluations: 1532458. Check evaluations: 1030. Time elapsed: 7147 ms. Available moves found: 31.
+            // 
         }
     }
 }

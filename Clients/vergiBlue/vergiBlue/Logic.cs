@@ -127,11 +127,14 @@ namespace vergiBlue
                 Diagnostics.StartMoveCalculations();
 
                 // Get all available moves and do necessary filtering
-                var allMoves = Board.Moves(isMaximizing, true).ToList();
+                List<SingleMove> allMoves = Board.Moves(isMaximizing, true, true).ToList();
                 if (allMoves.Count == 0)
                 {
                     throw new ArgumentException($"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
                 }
+
+                // Reorder moves to improve alpha-beta cutoffs
+                // allMoves = MoveResearch.OrderMoves(allMoves, Board, isMaximizing);
 
                 if(MoveHistory.IsLeaningToDraw(GameHistory))
                 {
