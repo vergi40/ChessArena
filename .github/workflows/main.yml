@@ -1,0 +1,18 @@
+# This workflow acts as a placeholder for the CI actions to be implemented
+
+name: Default CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions
+        with:
+          PROJECT_NAME: "TBA"
