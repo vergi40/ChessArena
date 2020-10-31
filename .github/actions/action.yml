@@ -1,0 +1,17 @@
+name: "Default actions"
+description: "Output project name"
+author: "antonpaa@github.com"
+
+inputs:
+  PROJECT_NAME:
+    description: "Name of the project"
+    required: true
+    default: "none"
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+
+branding:
+  icon: "code"
+  color: "blue"
