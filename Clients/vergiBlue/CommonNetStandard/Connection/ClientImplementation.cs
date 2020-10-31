@@ -20,14 +20,15 @@ namespace CommonNetStandard.Connection
         {
             var information = new GameInformation()
             {
-                Name = clientName
+                Name = clientName,
+                Chess = ""
             };
 
             Console.WriteLine("Initializing client... Getting start information from server.");
-            var startInformation = await _client.InitializeAsync(information);
+            var gameStartInformation = await _client.InitializeAsync(information);
 
-            Console.WriteLine($"Received info: start player: {startInformation.Start}.");
-            return startInformation;
+            Console.WriteLine($"Received info: start player: {gameStartInformation.Start}.");
+            return gameStartInformation;
 
         }
 
