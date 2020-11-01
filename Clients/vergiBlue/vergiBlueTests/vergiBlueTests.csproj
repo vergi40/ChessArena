@@ -81,9 +81,9 @@
       <Project>{E15B36EB-44E3-478F-8A9E-6B0AEC413CE7}</Project>
       <Name>CommonNetStandard</Name>
     </ProjectReference>
-    <ProjectReference Include="..\vergiBlue\vergiBlue.csproj">
-      <Project>{69f44283-aea6-450c-9cf4-12672440b9ea}</Project>
-      <Name>vergiBlue</Name>
+    <ProjectReference Include="..\vergiBlueNet5\vergiBlueNet5.csproj">
+      <Project>{9914a6b6-cb23-4012-9e26-25fd9f927bdc}</Project>
+      <Name>vergiBlueNet5</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
