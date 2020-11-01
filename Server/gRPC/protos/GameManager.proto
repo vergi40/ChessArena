@@ -7,18 +7,16 @@ service GameService {
     //
     // Inform server that the client is ready to start the game. 
     // Returns one of the following:
-    // 1. Player is starting player (white). Opponent move message not set.
-    // 2. Player is not starting player (black). Opponent move message provides opening
-    //    move coordinates. 
+    // 1. Player is starting player. Opponent act message not set.
+    // 2. Player is not starting player. Opponent act returned.
     rpc Initialize(GameInformation) returns (GameStartInformation) {}
 
     // A Bidirectional streaming RPC.
-    //
     // Send player moves. Receive opponent moves.
     rpc Act(stream Move) returns (stream Move) {}
 }
 
-// Initialize wanted game
+// Initialize game manager with wanted game
 message GameInformation {
     string name = 1;
     oneof game {
@@ -40,7 +38,6 @@ message Move {
         ChessMove chess = 1;
     }
     // Any optional additional data about the move.
-    // E.g. search depth, eval count, strategy...
     string diagnostics = 2;
 }
 
