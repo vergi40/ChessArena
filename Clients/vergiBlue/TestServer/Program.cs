@@ -5,6 +5,7 @@ using System.Net.Configuration;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using GameManager;
 using Grpc.Core;
 
 namespace TestServer
@@ -18,7 +19,7 @@ namespace TestServer
 
             Server server = new Server
             {
-                Services = { ChessArena.BindService(new TestServer()) },
+                Services = { GameService.BindService(new TestServer()) },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
             server.Start();
@@ -34,7 +35,7 @@ namespace TestServer
     /// <summary>
     /// Test one player interactions by providing mock data for another player
     /// </summary>
-    class TestServer : ChessArena.ChessArenaBase
+    class TestServer : GameService.GameServiceBase
     {
         private static readonly Logger _logger = new Logger(typeof(TestServer));
         public PlayerClass Player1 { get; set; }
@@ -45,14 +46,14 @@ namespace TestServer
         {
             MockPlayer = new MockClass()
             {
-                Information = new PlayerInformation()
+                Information = new GameInformation()
                 {
                     Name = "dumdum"
                 }
             };
         }
         
-        public override Task<GameStartInformation> Initialize(PlayerInformation request, ServerCallContext context)
+        public override Task<GameStartInformation> Initialize(GameInformation request, ServerCallContext context)
         {
             _logger.Info($"Client {request.Name} requested initialize.");
             bool connectionTest = request.Name.Contains("test");
@@ -65,7 +66,7 @@ namespace TestServer
                 else Player1 = new PlayerClass() {Information = request};
                 response = new GameStartInformation()
                 {
-                    WhitePlayer = true
+                    Start = true
                 };
             }
             else if(Player2 == null) 
@@ -74,8 +75,8 @@ namespace TestServer
                 else Player2 = new PlayerClass() { Information = request };
                 response = new GameStartInformation()
                 {
-                    WhitePlayer = false,
-                    OpponentMove = Player1.LatestMove.Move
+                    Start = false,
+                    ChessMove = Player1.LatestMove
                 };
             }
             else
@@ -86,9 +87,9 @@ namespace TestServer
             return Task.FromResult(response);
         }
 
-        private IAsyncStreamReader<PlayerMove> _p1ReqStream = null;
+        private IAsyncStreamReader<Move> _p1ReqStream = null;
         private IServerStreamWriter<Move> _p1ResStream = null;
-        private IAsyncStreamReader<PlayerMove> _p2ReqStream = null;
+        private IAsyncStreamReader<Move> _p2ReqStream = null;
         private IServerStreamWriter<Move> _p2ResStream = null;
 
         private enum GameState
@@ -110,7 +111,7 @@ namespace TestServer
         /// <summary>
         /// Two instances of this will be open simultaneously
         /// </summary>
-        public override async Task CreateMovements(IAsyncStreamReader<PlayerMove> requestStream, IServerStreamWriter<Move> responseStream, ServerCallContext context)
+        public override async Task Act(IAsyncStreamReader<Move> requestStream, IServerStreamWriter<Move> responseStream, ServerCallContext context)
         {
             _debugInstanceCount++;
 
@@ -181,7 +182,7 @@ namespace TestServer
                     }
                     else if (_nextState == GameState.P2Res)
                     {
-                        await _p2ResStream.WriteAsync(Player1.LatestMove.Move);
+                        await _p2ResStream.WriteAsync(Player1.LatestMove);
                         _logger.Info($"Sent p1 move to p2");
                         lock (_stateLock) _nextState = GameState.P2Req;
                     }
@@ -195,7 +196,7 @@ namespace TestServer
                     }
                     else if (_nextState == GameState.P1Res)
                     {
-                        await _p1ResStream.WriteAsync(Player2.LatestMove.Move);
+                        await _p1ResStream.WriteAsync(Player2.LatestMove);
                         _logger.Info($"Sent p2 move to p1");
                         lock (_stateLock) _nextState = GameState.P1Req;
                     }
@@ -219,12 +220,12 @@ namespace TestServer
         public string PeerName { get; set; } = "";
         public bool StreamOpened { get; set; } = false;
 
-        public PlayerInformation Information { get; set; }
-        public PlayerMove LatestMove { get; set; }
+        public GameInformation Information { get; set; }
+        public Move LatestMove { get; set; }
 
         public string PrintLatest()
         {
-            var message = $"{LatestMove.Move.StartPosition} to {LatestMove.Move.EndPosition}";
+            var message = $"{LatestMove.Chess.StartPosition} to {LatestMove.Chess.EndPosition}";
             return message;
         }
     }
@@ -236,14 +237,13 @@ namespace TestServer
         {
             var move = new Move()
             {
-                StartPosition = $"b{_index--}",
-                EndPosition = $"b{_index}",
-                PromotionResult = Move.Types.PromotionPieceType.NoPromotion
-            };
+                Chess = new ChessMove()
+                {
 
-            LatestMove = new PlayerMove()
-            {
-                Move = move
+                    StartPosition = $"b{_index--}",
+                    EndPosition = $"b{_index}",
+                    PromotionResult = ChessMove.Types.PromotionPieceType.NoPromotion
+                }
             };
 
             return move;
