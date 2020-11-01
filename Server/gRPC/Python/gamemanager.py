@@ -14,10 +14,19 @@ class GameManager(GameManager_pb2_grpc.GameService):
         self._game = None
 
     def Initialize(self, request, context):
-        print("Got a client Initialize call!")
-        self._player1 = request.name
+        if self._player1 == None:
+            self._player1 = request.name
+            print('Player1 '+request.name+' connected to game')
+        elif self._player2 == None:
+            print('Player2 '+request.name+' connected to game')
+            self._player2 = request.name
+        else:
+            context.set_code(grpc.StatusCode.RESOURCE_EXHAUSTED)
+            context.set_details('Game Manager has already been initialized for 2 players')
+            context.abort_with_status('3rd client tried to connect to a game')
+
         act = GameManager_pb2.Move()
-        
+
         if request.WhichOneof("game") == 'chess':
            module = __import__('chessarena', fromlist=[''])
            self._gameObject = module.ChessArena()
@@ -28,6 +37,8 @@ class GameManager(GameManager_pb2_grpc.GameService):
             context.set_details('Unknown game')
             context.abort_with_status('Client requested game was not known')
 
+        context.set_code(grpc.StatusCode.OK)
+        context.set_details('Game succesfully initialized for '+request.name)
         return GameManager_pb2.GameStartInformation(start=True, chessMove=act)
 
     def Act(self, request_iterator, context):
