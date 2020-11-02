@@ -37,9 +37,16 @@ namespace CommonNetStandard.Connection
             var startInformation = await _client.Initialize(playerName);
             var localInformation = new StartInformationImplementation()
             {
-                WhitePlayer = startInformation.Start,
-                OpponentMove = Mapping.ToCommon(startInformation.ChessMove)
+                WhitePlayer = startInformation.Start
             };
+
+            // Has move data only if player is black
+            if (!localInformation.WhitePlayer)
+            {
+                localInformation.OpponentMove = Mapping.ToCommon(startInformation.ChessMove);
+            }
+            
+
             return localInformation;
         }
 

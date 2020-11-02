@@ -98,6 +98,8 @@ namespace vergiBlue
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth);
             if(overrideBoard != null) Board = new Board(overrideBoard);
             else if (!connectionTesting) Board.InitializeEmptyBoard();
+            
+            // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
         }
 

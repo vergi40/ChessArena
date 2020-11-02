@@ -33,7 +33,7 @@ namespace CommonNetStandard.Connection
 
         public static IMove ToCommon(Move grpcMove)
         {
-            if (grpcMove.Chess == null) throw new ArgumentException($"Expected chess parameter was null.", nameof(grpcMove));
+            if (grpcMove == null || grpcMove.Chess == null) throw new ArgumentException($"Expected chess parameter was null.", nameof(grpcMove));
             var chessMove = grpcMove.Chess;
             
             var move = new MoveImplementation()

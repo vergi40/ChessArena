@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using System.Configuration;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -27,14 +25,21 @@ namespace vergiBlue
         public static extern IntPtr GetStdHandle(int handle);
 
 
-        private static string _currentVersion = "v0.02";
+        private static string _currentVersion = "v0.20";
         private static string _aiName = "vergiBlue";
 
         private static void Log(string message, bool writeToConsole = true) => Logger.Log(message, writeToConsole);
 
         static void Main(string[] args)
         {
-            Console.SetWindowSize(180, 40);
+            try
+            {
+                // Just catch if operating non-windows
+                Console.SetWindowSize(180, 40);
+            }
+            catch { }
+
+            // Console text color editing
             var handle = GetStdHandle(-11);
             int mode;
             GetConsoleMode(handle, out mode);
