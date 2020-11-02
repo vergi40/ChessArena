@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30523.141
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServer", "TestServer\TestServer.csproj", "{E65196C6-AD94-4AF5-90E9-8255EAE2E7AD}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vergiBlueTests", "vergiBlueTests\vergiBlueTests.csproj", "{15A412AD-2BDC-45ED-B602-A1B71E154ABC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonNetStandard", "CommonNetStandard\CommonNetStandard.csproj", "{E15B36EB-44E3-478F-8A9E-6B0AEC413CE7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vergiBlue", "vergiBlue\vergiBlue.csproj", "{2E46AC24-61F4-4CF3-AC4B-4D658D2880D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vergiBlue", "vergiBlue\vergiBlue.csproj", "{2E46AC24-61F4-4CF3-AC4B-4D658D2880D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServer", "TestServer\TestServer.csproj", "{4D86C611-4217-4F95-BF92-B1EC29F8E389}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E65196C6-AD94-4AF5-90E9-8255EAE2E7AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E65196C6-AD94-4AF5-90E9-8255EAE2E7AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E65196C6-AD94-4AF5-90E9-8255EAE2E7AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E65196C6-AD94-4AF5-90E9-8255EAE2E7AD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{15A412AD-2BDC-45ED-B602-A1B71E154ABC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{15A412AD-2BDC-45ED-B602-A1B71E154ABC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15A412AD-2BDC-45ED-B602-A1B71E154ABC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,6 +29,10 @@ Global
 		{2E46AC24-61F4-4CF3-AC4B-4D658D2880D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E46AC24-61F4-4CF3-AC4B-4D658D2880D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E46AC24-61F4-4CF3-AC4B-4D658D2880D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D86C611-4217-4F95-BF92-B1EC29F8E389}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D86C611-4217-4F95-BF92-B1EC29F8E389}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D86C611-4217-4F95-BF92-B1EC29F8E389}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D86C611-4217-4F95-BF92-B1EC29F8E389}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
