@@ -10,6 +10,6 @@ namespace CommonNetStandard.Interface
         /// </summary>
         bool WhitePlayer { get; set; }
 
-        IMove OpponentMove { get; set; }
+        IMove? OpponentMove { get; set; }
     }
 }

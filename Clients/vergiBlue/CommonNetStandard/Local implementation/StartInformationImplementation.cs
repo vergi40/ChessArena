@@ -13,6 +13,6 @@ namespace CommonNetStandard.Local_implementation
         }
 
         public bool WhitePlayer { get; set; }
-        public IMove OpponentMove { get; set; }
+        public IMove? OpponentMove { get; set; }
     }
 }

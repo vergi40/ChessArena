@@ -14,5 +14,11 @@ namespace CommonNetStandard.Local_implementation
 
         public IMove Move { get; set; }
         public string Diagnostics { get; set; }
+
+        public PlayerMoveImplementation(IMove move, string diagnostics)
+        {
+            Move = move;
+            Diagnostics = diagnostics;
+        }
     }
 }

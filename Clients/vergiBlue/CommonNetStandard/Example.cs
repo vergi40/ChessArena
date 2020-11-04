@@ -13,8 +13,8 @@ namespace CommonNetStandard
     {
         static void Main()
         {
-            var connection = new ConnectionModule();
-            var startInformation = connection.Initialize("127.0.0.1:30052", "example player");
+            var connection = new ConnectionModule("127.0.0.1:30052");
+            var startInformation = connection.Initialize("example player");
 
             // Wait for the server to respond
             startInformation.Wait();

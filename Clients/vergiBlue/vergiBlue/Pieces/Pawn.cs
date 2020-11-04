@@ -11,12 +11,6 @@ namespace vergiBlue.Pieces
         public override char Identity { get; }
         public override double RelativeStrength { get; }
 
-        public Pawn( bool isWhite) : base(isWhite)
-        {
-            Identity = 'P';
-            RelativeStrength = StrengthTable.Pawn * Direction;
-        }
-
         public Pawn(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
             Identity = 'P';
@@ -29,7 +23,7 @@ namespace vergiBlue.Pieces
             RelativeStrength = StrengthTable.Pawn * Direction;
         }
 
-        protected  override SingleMove CanMoveTo((int, int) target, Board board, bool validateBorders = false)
+        protected override SingleMove? CanMoveTo((int, int) target, Board board, bool validateBorders = false)
         {
             if (validateBorders && Logic.IsOutside(target)) return null;
 
@@ -41,7 +35,7 @@ namespace vergiBlue.Pieces
             return null;
         }
 
-        private SingleMove CanCapture((int, int) target, Board board)
+        private SingleMove? CanCapture((int, int) target, Board board)
         {
             if(Logic.IsOutside(target)) return null;
 
@@ -88,8 +82,7 @@ namespace vergiBlue.Pieces
 
         public override PieceBase CreateCopy()
         {
-            var piece = new Pawn(IsWhite);
-            piece.CurrentPosition = CurrentPosition;
+            var piece = new Pawn(IsWhite, CurrentPosition);
             return piece;
         }
     }

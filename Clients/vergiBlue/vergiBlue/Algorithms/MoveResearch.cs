@@ -31,9 +31,9 @@ namespace vergiBlue.Algorithms
             return evaluated;
         }
 
-        public static SingleMove SelectBestMove(IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, bool isMaximizing)
+        public static SingleMove? SelectBestMove(IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, bool isMaximizing)
         {
-            SingleMove bestMove = null;
+            SingleMove? bestMove = null;
             var bestValue = WorstValue(isMaximizing);
 
             foreach (var tuple in evaluationList)
@@ -77,7 +77,7 @@ namespace vergiBlue.Algorithms
         /// Returns checkmate move or null.
         /// </summary>
         /// <returns></returns>
-        public static SingleMove ImmediateCheckMateAvailable(IList<SingleMove> moves, Board board, bool isMaximizing)
+        public static SingleMove? ImmediateCheckMateAvailable(IList<SingleMove> moves, Board board, bool isMaximizing)
         {
             // Brute search checkmate
             foreach (var singleMove in moves)

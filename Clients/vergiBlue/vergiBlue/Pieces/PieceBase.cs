@@ -56,15 +56,16 @@ namespace vergiBlue.Pieces
         /// <param name="board"></param>
         /// <param name="validateBorders"></param>
         /// <returns></returns>
-        protected virtual SingleMove CanMoveTo((int, int) target, Board board, bool validateBorders = false)
+        protected virtual SingleMove? CanMoveTo((int, int) target, Board board, bool validateBorders = false)
         {
             if (validateBorders && Logic.IsOutside(target)) return null;
 
-            if (board.ValueAt(target) == null)
+            var valueAt = board.ValueAt(target);
+            if (valueAt == null)
             {
                 return new SingleMove(CurrentPosition, target);
             }
-            else if (board.ValueAt(target).IsWhite != IsWhite)
+            else if (valueAt.IsWhite != IsWhite)
             {
                 return new SingleMove(CurrentPosition, target, true);
             }

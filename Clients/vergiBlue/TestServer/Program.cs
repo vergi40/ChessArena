@@ -37,8 +37,8 @@ namespace TestServer
     class TestServer : GameService.GameServiceBase
     {
         private static readonly Logger _logger = new Logger(typeof(TestServer));
-        public PlayerClass Player1 { get; set; }
-        public PlayerClass Player2 { get; set; }
+        public PlayerClass? Player1 { get; set; }
+        public PlayerClass? Player2 { get; set; }
         public MockClass MockPlayer { get; set; }
 
         public TestServer()
@@ -86,10 +86,10 @@ namespace TestServer
             return Task.FromResult(response);
         }
 
-        private IAsyncStreamReader<Move> _p1ReqStream = null;
-        private IServerStreamWriter<Move> _p1ResStream = null;
-        private IAsyncStreamReader<Move> _p2ReqStream = null;
-        private IServerStreamWriter<Move> _p2ResStream = null;
+        private IAsyncStreamReader<Move>? _p1ReqStream = null;
+        private IServerStreamWriter<Move>? _p1ResStream = null;
+        private IAsyncStreamReader<Move>? _p2ReqStream = null;
+        private IServerStreamWriter<Move>? _p2ResStream = null;
 
         private enum GameState
         {
@@ -105,7 +105,7 @@ namespace TestServer
         private readonly object _stateLock = new object();
         private int _debugInstanceCount = 0;
 
-        private Task _mainLoop = null;
+        private Task? _mainLoop = null;
 
         /// <summary>
         /// Two instances of this will be open simultaneously
@@ -117,7 +117,7 @@ namespace TestServer
             if (_mainLoop == null)
             {
                 // P1
-                if (!Player1.StreamOpened)
+                if (Player1 != null && !Player1.StreamOpened)
                 {
                     Player1.StreamOpened = true;
                     Player1.PeerName = context.Peer;
@@ -130,7 +130,10 @@ namespace TestServer
             }
             else
             {
-                if (!Player2.StreamOpened && context.Peer != Player1.PeerName)
+                if (Player1 != null && 
+                    Player2 != null && 
+                    !Player2.StreamOpened && 
+                    context.Peer != Player1.PeerName)
                 {
                     Player2.StreamOpened = true;
                     Player2.PeerName = context.Peer;
@@ -166,6 +169,8 @@ namespace TestServer
                     else if (_nextState == GameState.P1Req)
                     {
                         await _p1ReqStream.MoveNext();
+
+                        if (Player1 == null || _p1ReqStream == null) throw new Exception("Logical error");
                         Player1.LatestMove = _p1ReqStream.Current;
                         _logger.Info($"{(Player1.Information.Name + ":").PadRight(12)} Received move {Player1.PrintLatest()}");
                         _logger.Info($"{(Player1.Information.Name + ":").PadRight(12)} {Player1.LatestMove.Diagnostics}");
@@ -181,6 +186,7 @@ namespace TestServer
                     }
                     else if (_nextState == GameState.P2Res)
                     {
+                        if (Player1 == null || _p2ResStream == null) throw new Exception("Logical error");
                         await _p2ResStream.WriteAsync(Player1.LatestMove);
                         _logger.Info($"Sent p1 move to p2");
                         lock (_stateLock) _nextState = GameState.P2Req;
@@ -188,6 +194,7 @@ namespace TestServer
                     else if (_nextState == GameState.P2Req)
                     {
                         await _p2ReqStream.MoveNext();
+                        if (Player2 == null || _p2ReqStream == null) throw new Exception("Logical error");
                         Player2.LatestMove = _p2ReqStream.Current;
                         _logger.Info($"{(Player2.Information.Name + ":").PadRight(12)} Received move {Player2.PrintLatest()}");
                         _logger.Info($"{(Player2.Information.Name + ":").PadRight(12)} {Player2.LatestMove.Diagnostics}");
@@ -195,6 +202,7 @@ namespace TestServer
                     }
                     else if (_nextState == GameState.P1Res)
                     {
+                        if (Player2 == null || _p1ResStream == null) throw new Exception("Logical error");
                         await _p1ResStream.WriteAsync(Player2.LatestMove);
                         _logger.Info($"Sent p2 move to p1");
                         lock (_stateLock) _nextState = GameState.P1Req;
@@ -219,8 +227,8 @@ namespace TestServer
         public string PeerName { get; set; } = "";
         public bool StreamOpened { get; set; } = false;
 
-        public GameInformation Information { get; set; }
-        public Move LatestMove { get; set; }
+        public GameInformation Information { get; set; } = new GameInformation();
+        public Move LatestMove { get; set; } = new Move();
 
         public string PrintLatest()
         {

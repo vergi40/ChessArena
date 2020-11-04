@@ -46,6 +46,12 @@ namespace CommonNetStandard.Connection
                         while (await call.ResponseStream.MoveNext(CancellationToken.None))
                         {
                             var opponentMove = call.ResponseStream.Current;
+                            if(opponentMove == null || opponentMove.Chess == null)
+                            {
+                                // Error or game end
+                                return;
+                            }
+
                             Logger.Log($"Received opponent move: {opponentMove.Chess.StartPosition} to {opponentMove.Chess.EndPosition}");
 
                             // Analyze opponent move

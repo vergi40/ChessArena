@@ -13,12 +13,16 @@ namespace CommonNetStandard.Connection
     /// </summary>
     public class ConnectionModule
     {
-        private string _aiName;
+        private string _aiName = "";
+        private string _address;
         private Channel _channel;
         private ClientImplementation _client;
 
-        public ConnectionModule()
+        public ConnectionModule(string address)
         {
+            _address = address;
+            _channel = new Channel(address, ChannelCredentials.Insecure);
+            _client = new ClientImplementation(new GameService.GameServiceClient(_channel));
         }
 
         /// <summary>
@@ -26,14 +30,10 @@ namespace CommonNetStandard.Connection
         /// </summary>
         /// <param name="address">ip:port</param>
         /// <param name="playerName"></param>
-        public async Task<IGameStartInformation> Initialize(string address, string playerName)
+        public async Task<IGameStartInformation> Initialize(string playerName)
         {
             _aiName = playerName;
-            _channel = new Channel(address, ChannelCredentials.Insecure);
-            _client = new ClientImplementation(new GameService.GameServiceClient(_channel));
-
-            Logger.Log($"Opening gRPC channel to {address}");
-
+            Logger.Log($"Opening gRPC channel to {_address}");
             var startInformation = await _client.Initialize(playerName);
             var localInformation = new StartInformationImplementation()
             {

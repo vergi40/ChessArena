@@ -62,7 +62,7 @@ namespace vergiBlue
                 var input = Console.ReadKey();
                 if (input.KeyChar.ToString() == "1")
                 {
-                    var connection = new ConnectionModule();
+                    var connection = new ConnectionModule(GetAddress());
                     StartGame(connection, _aiName, false);
                     connection.CloseConnection();
                 }
@@ -71,9 +71,9 @@ namespace vergiBlue
                     Log(Environment.NewLine);
                     Log("Give player name: ");
                     Console.Write(" > "); 
-                    var playerName = Console.ReadLine();
+                    var playerName = Console.ReadLine() ?? "testplayer";
                     Log($"Chess ai {playerName} [{_currentVersion}]");
-                    var connection = new ConnectionModule();
+                    var connection = new ConnectionModule(GetAddress());
                     StartGame(connection, playerName, false);
                     connection.CloseConnection();
                 }
@@ -91,7 +91,7 @@ namespace vergiBlue
                 }
                 else if (input.KeyChar.ToString() == "9")
                 {
-                    var connection = new ConnectionModule();
+                    var connection = new ConnectionModule(GetAddress());
                     StartGame(connection, "Connection test AI", true);
                     connection.CloseConnection();
                 }
@@ -188,7 +188,7 @@ namespace vergiBlue
         {
             Log(Environment.NewLine);
             // TODO async
-            var startInformation = connection.Initialize(GetAddress(), playerName);
+            var startInformation = connection.Initialize(playerName);
             startInformation.Wait();
 
             Log($"Received game start information.");
@@ -207,7 +207,7 @@ namespace vergiBlue
             playTask.Wait();
         }
 
-        static void StartLocalGame(int minDelayInMs, int? overrideOpponentMaxDepth, Board overrideBoard = null)
+        static void StartLocalGame(int minDelayInMs, int? overrideOpponentMaxDepth, Board? overrideBoard = null)
         {
             Log(Environment.NewLine);
             // TODO async

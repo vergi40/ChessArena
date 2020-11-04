@@ -25,7 +25,7 @@ namespace vergiBlue
         /// <summary>
         /// Track kings for whole game
         /// </summary>
-        public (King white, King black) Kings { get; set; }
+        public (King? white, King? black) Kings { get; set; }
 
         /// <summary>
         /// Start game initialization
@@ -54,13 +54,13 @@ namespace vergiBlue
             ExecuteMove(move);
         }
 
-        private void InitializeKingsFromReference((King white, King black) previousKings)
+        private void InitializeKingsFromReference((King? white, King? black) previousKings)
         {
             // Need to ensure kings in board are same as these
             // A bit code smell but works for now
-            King newWhite = previousKings.white?.CreateKingCopy();
+            King? newWhite = previousKings.white?.CreateKingCopy();
             if (newWhite != null) Pieces[newWhite.CurrentPosition] = newWhite;
-            King newBlack = previousKings.black?.CreateKingCopy();
+            King? newBlack = previousKings.black?.CreateKingCopy();
             if (newBlack != null) Pieces[newBlack.CurrentPosition] = newBlack;
             Kings = (newWhite, newBlack);
         }
@@ -74,8 +74,11 @@ namespace vergiBlue
             if (move.Capture)
             {
                 // Ensure validation ends if king is eaten
-                var isWhite = ValueAt(move.PrevPos).IsWhite;
-                if (KingLocation(!isWhite).CurrentPosition == move.NewPos)
+                var previousPosValue = ValueAt(move.PrevPos);
+                if (previousPosValue == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
+
+                var isWhite = previousPosValue.IsWhite;
+                if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
                     RemovePieces(!isWhite);
                 }
@@ -124,7 +127,7 @@ namespace vergiBlue
         /// Return piece at coordinates, null if empty.
         /// </summary>
         /// <returns>Can be null</returns>
-        public PieceBase ValueAt((int, int) target)
+        public PieceBase? ValueAt((int, int) target)
         {
             if (Pieces.ContainsKey(target)) return Pieces[target];
             return null;
@@ -255,7 +258,7 @@ namespace vergiBlue
         /// </summary>
         /// <param name="whiteKing"></param>
         /// <returns></returns>
-        private King KingLocation(bool whiteKing)
+        private King? KingLocation(bool whiteKing)
         {
             if (whiteKing) return Kings.white;
             else return Kings.black;

@@ -174,8 +174,7 @@ namespace vergiBlueTests
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
             CreateRooks(asTuples, board, true);
 
-            var pawn = new Pawn(true);
-            pawn.CurrentPosition = "f7".ToTuple();
+            var pawn = new Pawn(true, "f7");
             board.AddNew(pawn);
 
             // 

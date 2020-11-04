@@ -10,12 +10,6 @@ namespace vergiBlue.Pieces
     {
         public override char Identity { get; }
         public override double RelativeStrength { get; }
-        
-        public Rook(bool isWhite) : base(isWhite)
-        {
-            Identity = 'R';
-            RelativeStrength = StrengthTable.Rook * Direction;
-        }
 
         public Rook(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
@@ -36,8 +30,7 @@ namespace vergiBlue.Pieces
 
         public override PieceBase CreateCopy()
         {
-            var piece = new Rook(IsWhite);
-            piece.CurrentPosition = CurrentPosition;
+            var piece = new Rook(IsWhite, CurrentPosition);
             return piece;
         }
     }

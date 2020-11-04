@@ -9,7 +9,7 @@ namespace vergiBlue
     public class Strategy
     {
         public bool IsPlayerWhite { get; }
-        private DiagnosticsData _previous { get; set; }
+        private DiagnosticsData _previous { get; set; } = new DiagnosticsData();
         public GamePhase Phase { get; set; }
         public int SearchDepth { get; set; }
 

@@ -54,7 +54,7 @@ namespace vergiBlue
         }
 
         private int _connectionTestIndex = 2;
-        public IMove LatestOpponentMove { get; set; }
+        public IMove? LatestOpponentMove { get; set; }
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
 
         private bool _kingInDanger
@@ -92,7 +92,7 @@ namespace vergiBlue
             Strategy = new Strategy(isPlayerWhite, overrideMaxDepth);
         }
 
-        public Logic(IGameStartInformation startInformation, bool connectionTesting, int? overrideMaxDepth = null, Board overrideBoard = null) : base(startInformation.WhitePlayer)
+        public Logic(IGameStartInformation startInformation, bool connectionTesting, int? overrideMaxDepth = null, Board? overrideBoard = null) : base(startInformation.WhitePlayer)
         {
             _connectionTestOverride = connectionTesting;
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth);
@@ -110,16 +110,14 @@ namespace vergiBlue
             {
                 var diagnostics = Diagnostics.CollectAndClear();
                 // Dummy moves for connection testing
-                var move = new PlayerMoveImplementation()
-                {
-                    Move = new MoveImplementation()
+                var move = new PlayerMoveImplementation(
+                    new MoveImplementation()
                     {
                         StartPosition = $"a{_connectionTestIndex--}",
                         EndPosition = $"a{_connectionTestIndex}",
                         PromotionResult = PromotionPieceType.NoPromotion
                     },
-                    Diagnostics = diagnostics.ToString()
-                };
+                    diagnostics.ToString());
 
                 return move;
             }
@@ -170,11 +168,9 @@ namespace vergiBlue
 
                 PreviousData = Diagnostics.CollectAndClear();
 
-                var move = new PlayerMoveImplementation()
-                {
-                    Move = bestMove.ToInterfaceMove(castling, check),
-                    Diagnostics = PreviousData.ToString()
-                };
+                var move = new PlayerMoveImplementation(
+                    bestMove.ToInterfaceMove(castling, check),
+                    PreviousData.ToString());
                 GameHistory.Add(move.Move);
                 return move;
             }
@@ -188,7 +184,7 @@ namespace vergiBlue
         /// </summary>
         /// <param name="allMoves"></param>
         /// <returns></returns>
-        private SingleMove AnalyzeBestMove(IList<SingleMove> allMoves)
+        private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves)
         {
             var isMaximizing = IsPlayerWhite;
 
@@ -212,14 +208,19 @@ namespace vergiBlue
 
             // TODO separate logic to different layers. e.g. player depth at 2, 4 and when to use simple isCheckMate
             var evaluated = MoveResearch.GetMoveScoreListParallel(allMoves, SearchDepth, Board, isMaximizing);
-            SingleMove bestMove = MoveResearch.SelectBestMove(evaluated, isMaximizing);
+            SingleMove? bestMove = MoveResearch.SelectBestMove(evaluated, isMaximizing);
             
             return bestMove;
         }
 
 
-        public sealed override void ReceiveMove(IMove opponentMove)
+        public sealed override void ReceiveMove(IMove? opponentMove)
         {
+            if(opponentMove == null)
+            {
+                throw new ArgumentException($"Received null move. Error or game has ended.");
+            }
+
             LatestOpponentMove = opponentMove;
 
             if (!_connectionTestOverride)
