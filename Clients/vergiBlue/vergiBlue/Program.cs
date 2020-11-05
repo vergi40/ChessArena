@@ -14,17 +14,6 @@ namespace vergiBlue
 {
     class Program
     {
-        // Console coloring
-        // https://stackoverflow.com/questions/7937256/custom-text-color-in-c-sharp-console-application
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool SetConsoleMode(IntPtr hConsoleHandle, int mode);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool GetConsoleMode(IntPtr handle, out int mode);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr GetStdHandle(int handle);
-
-
         private static string _currentVersion = "v0.20";
         private static string _aiName = "vergiBlue";
 
@@ -32,20 +21,6 @@ namespace vergiBlue
 
         static void Main(string[] args)
         {
-            try
-            {
-                // Just catch if operating non-windows
-                Console.SetWindowSize(180, 40);
-            }
-            catch { }
-
-            // Console text color editing
-            var handle = GetStdHandle(-11);
-            int mode;
-            GetConsoleMode(handle, out mode);
-            SetConsoleMode(handle, mode | 0x4);
-
-
             Log($"Chess ai {_aiName} [{_currentVersion}]");
 
             while (true)
@@ -321,11 +296,13 @@ namespace vergiBlue
 
     class SimpleBoard
     {
+        private ConsoleColors Colors { get; }
         public const string PreviousTileValue = "[ ]";
 
         public string[,] Tiles { get; set; }
         public SimpleBoard(Board board)
         {
+            Colors = new ConsoleColors();
             Tiles = new string[8,8];
             foreach (var piece in board.PieceList)
             {
@@ -347,17 +324,13 @@ namespace vergiBlue
 
         public void Print()
         {
-            // 
-            var blackBackground = "\x1b[48;5;0m";
-            var whiteForeground = "\x1b[38;5;255m";
-            
             for (int row = 7; row >= 0; row--)
             {
                 var columnString = $"{row + 1}| ";
                 for (int column = 0; column < 8; column++)
                 {
                     columnString += DrawPiece(Get((column, row)));
-                    columnString += blackBackground + whiteForeground;
+                    columnString += Colors.BlackBackground + Colors.WhiteForeground;
                 }
                 Logger.Log(columnString);
             }
@@ -376,18 +349,84 @@ namespace vergiBlue
             // https://stackoverflow.com/questions/7937256/custom-text-color-in-c-sharp-console-application
             if (value.Contains("w"))
             {
-                // 0-255
-                var whiteBackground = "\x1b[48;5;255m";
-                var blackForeground = "\x1b[38;5;0m";
-                value = whiteBackground + blackForeground + value;
+                value = Colors.WhiteBackground + Colors.BlackForeground + value;
             }
             else
             {
-                var blackBackground = "\x1b[48;5;0m";
-                var whiteForeground = "\x1b[38;5;255m";
-                value = blackBackground + whiteForeground + value;
+                value = Colors.BlackBackground + Colors.WhiteForeground + value;
             }
             return value;
+        }
+    }
+
+    /// <summary>
+    /// Modify console output foreground and background colors.
+    /// </summary>
+    class ConsoleColors
+    {
+        // https://stackoverflow.com/questions/7937256/custom-text-color-in-c-sharp-console-application
+        private readonly bool _isWindowsOS;
+
+        // Color range is 0-255
+        const int WhiteInteger = 255;
+        const int BlackInteger = 0;
+
+        public string WhiteBackground
+        {
+            get
+            {
+                if(_isWindowsOS) return $"\x1b[48;5;{WhiteInteger}m";
+                return "";
+            }
+        }
+        public string BlackBackground
+        {
+            get
+            {
+                if (_isWindowsOS) return $"\x1b[48;5;{BlackInteger}m";
+                return "";
+            }
+        }
+        public string WhiteForeground
+        {
+            get
+            {
+                if (_isWindowsOS) return $"\x1b[38;5;{WhiteInteger}m";
+                return "";
+            }
+        }
+        public string BlackForeground
+        {
+            get
+            {
+                if (_isWindowsOS) return $"\x1b[38;5;{BlackInteger}m";
+                return "";
+            }
+        }
+
+
+        // Console coloring
+        // https://stackoverflow.com/questions/7937256/custom-text-color-in-c-sharp-console-application
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool SetConsoleMode(IntPtr hConsoleHandle, int mode);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool GetConsoleMode(IntPtr handle, out int mode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr GetStdHandle(int handle);
+
+        public ConsoleColors()
+        {
+            _isWindowsOS = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            if (_isWindowsOS)
+            {
+                Console.SetWindowSize(180, 40);
+                // Console text color editing
+                var handle = GetStdHandle(-11);
+                int mode;
+                GetConsoleMode(handle, out mode);
+                SetConsoleMode(handle, mode | 0x4);
+            }
         }
     }
 }
