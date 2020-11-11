@@ -11,13 +11,30 @@ namespace vergiBlue
 {
     class Program
     {
-        private static string? _currentVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
-        private static string _aiName = "vergiBlue";
+        // Program is singleton static so static properties should be ok
+        private static string? _currentVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(2);
+        private static string _playerName { get; set; } = "vergiBlue";
+        private static int _gameMode { get; set; }
+        private static string _address { get; set; } = ConfigurationManager.AppSettings["Address"] ?? "";
+        private static string _port { get; set; } = ConfigurationManager.AppSettings["Port"] ?? "";
+        private static int _minimumDelayBetweenMoves { get; set; } = 0;
 
         private static void Log(string message, bool writeToConsole = true) => Logger.Log(message, writeToConsole);
+
+        private static string _fullAddress => $"{_address}:{_port}"; 
+
+        /// <summary>
+        /// Optional arguments given in command line
+        /// </summary>
+        /// <param name="options"></param>
         static void RunOptions(Options options)
         {
             //handle options
+            if (options.GameMode > 0) _gameMode = options.GameMode;
+            if (options.PlayerName != "") _playerName = options.PlayerName;
+            if (options.Address != "") _address = options.Address;
+            if (options.Port != "") _port = options.Port;
+            if (options.MinDelay > 0) _minimumDelayBetweenMoves = options.MinDelay;
         }
         static void HandleParseError(IEnumerable<Error> errs)
         {
@@ -25,11 +42,15 @@ namespace vergiBlue
             _stopArgsGiven = true;
         }
 
+        /// <summary>
+        /// User queried version of info from the app - stop execution
+        /// </summary>
         private static bool _stopArgsGiven = false;
 
         static void Main(string[] args)
         {
-            var result = CommandLine.Parser.Default.ParseArguments<Options>(args)
+            // Given arguments saved to private properties
+            CommandLine.Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(RunOptions)
                 .WithNotParsed(HandleParseError);
 
@@ -39,48 +60,49 @@ namespace vergiBlue
 
             while (true)
             {
-                Log(Options.PrintGameModes());
-                //Log("[2] Edit player name and start game");
-                //Log("[3] Start local game with two vergiBlues against each other");
-                //Log("[4] Start local game with two vergiBlues against each other. Delay between moves");
-                //Log("[5] Custom local game");
-                //Log("[9] Connection testing game");
-                Log("[Any] Exit");
-
-                Console.Write(" > ");
-                var input = Console.ReadKey();
-                if (input.KeyChar.ToString() == "1")
+                if (_gameMode <= 0)
                 {
-                    var connection = new ConnectionModule(GetAddress());
-                    NetworkGame.Start(connection, _aiName, false);
+                    // User did not explicitly set gamemode in command line arguments
+                    _gameMode = InputGameMode();
+                }
+
+                if (_gameMode < 0)
+                {
+                    break;
+                }
+
+                if (_gameMode == 1)
+                {
+                    var connection = new ConnectionModule(_fullAddress);
+                    NetworkGame.Start(connection, _playerName, false);
                     connection.CloseConnection();
                 }
-                else if (input.KeyChar.ToString() == "2")
+                else if (_gameMode == 2)
                 {
                     Log(Environment.NewLine);
                     Log("Give player name: ");
                     Console.Write(" > "); 
-                    var playerName = Console.ReadLine() ?? "testplayer";
+                    var playerName = Console.ReadLine() ?? _playerName;
                     Log($"Chess ai {playerName} [{_currentVersion}]");
-                    var connection = new ConnectionModule(GetAddress());
+                    var connection = new ConnectionModule(_fullAddress);
                     NetworkGame.Start(connection, playerName, false);
                     connection.CloseConnection();
                 }
-                else if (input.KeyChar.ToString() == "3")
+                else if (_gameMode == 3)
                 {
-                    LocalGame.Start(0, null);
+                    LocalGame.Start(_minimumDelayBetweenMoves, null);
                 }
-                else if (input.KeyChar.ToString() == "4")
+                else if (_gameMode == 4)
                 {
-                    LocalGame.Start(1000, null);
+                    LocalGame.Start(Math.Max(1000, _minimumDelayBetweenMoves), null);
                 }
-                else if (input.KeyChar.ToString() == "5")
+                else if (_gameMode == 5)
                 {
                     LocalGame.CustomStart();
                 }
-                else if (input.KeyChar.ToString() == "9")
+                else if (_gameMode == 9)
                 {
-                    var connection = new ConnectionModule(GetAddress());
+                    var connection = new ConnectionModule(_fullAddress);
                     NetworkGame.Start(connection, "Connection test AI", true);
                     connection.CloseConnection();
                 }
@@ -90,9 +112,25 @@ namespace vergiBlue
             }
         }
 
-        static string GetAddress()
+        private static int InputGameMode()
         {
-            return ConfigurationManager.AppSettings["Address"] + ":" + ConfigurationManager.AppSettings["Port"];
+            Log(Options.PrintGameModes());
+            //Log("[2] Edit player name and start game");
+            //Log("[3] Start local game with two vergiBlues against each other");
+            //Log("[4] Start local game with two vergiBlues against each other. Delay between moves");
+            //Log("[5] Custom local game");
+            //Log("[9] Connection testing game");
+            Log("[Any] Exit");
+
+            Console.Write(" > ");
+            var input = Console.ReadKey().KeyChar;
+            if (char.IsDigit(input))
+            {
+                return int.Parse(input.ToString());
+            }
+
+            // Error
+            return -1;
         }
     }
 }

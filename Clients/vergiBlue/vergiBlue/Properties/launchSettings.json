@@ -1,8 +1,7 @@
 {
   "profiles": {
     "vergiBlue": {
-      "commandName": "Project",
-      "commandLineArgs": "--version"
+      "commandName": "Project"
     }
   }
 }
