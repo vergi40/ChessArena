@@ -1,4 +1,4 @@
-var PROTO_PATH = __dirname + '/../Server/gRPC/protos/GameManager.proto';
+var PROTO_PATH = __dirname + '/../../Server/gRPC/protos/GameManager.proto';
 
 var async = require('async');
 var fs = require('fs');
