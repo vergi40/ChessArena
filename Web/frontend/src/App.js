@@ -2,7 +2,7 @@ import './App.css';
 import "./styles/cm-chessboard.css"
 import React, {Component} from 'react';
 import Chess from "chess.js";
-import {Chessboard, INPUT_EVENT_TYPE, MOVE_INPUT_MODE, COLOR} from "cm-chessboard"
+import {Chessboard, MOVE_INPUT_MODE, COLOR} from "cm-chessboard"
 
 // For styling
 import 'tachyons';
@@ -21,14 +21,15 @@ class App extends Component {
     };
   }
 
+  // Initialize
   componentDidMount() {
     console.log("Component App mounted to DOM.")
     this.game = new Chess();
-    const board = new Chessboard(document.getElementById("board"), {
+    this.board = new Chessboard(document.getElementById("board"), {
       position: this.game.fen(),
       orientation: COLOR.white,
-      // moveInputMode: MOVE_INPUT_MODE.viewOnly,
-      moveInputMode: MOVE_INPUT_MODE.dragPiece,
+      moveInputMode: MOVE_INPUT_MODE.viewOnly,
+      // moveInputMode: MOVE_INPUT_MODE.dragPiece,
       responsive: true,
       sprite: {
         // url: "../assets/images/chessboard-sprite.svg", // pieces and markers are stored as svg in the sprite
@@ -37,30 +38,33 @@ class App extends Component {
     }
     });
 
-    board.enableMoveInput(this.inputHandler);
+    // this.board.enableMoveInput(this.inputHandler);
   }
 
-  inputHandler = (event) => {
-    if (event.type === INPUT_EVENT_TYPE.moveDone) {
+  // User can create moves by dragging
+  // Waiting for use case
 
-      const move = this.game.move({
-        from: event.squareFrom,
-        to: event.squareTo,
-        promotion: 'q',
-      });
+  // inputHandler = (event) => {
+  //   if (event.type === INPUT_EVENT_TYPE.moveDone) {
 
-      if (move === null) return;
+  //     const move = this.game.move({
+  //       from: event.squareFrom,
+  //       to: event.squareTo,
+  //       promotion: 'q',
+  //     });
 
-      this.setState(() => ({
-        fen: this.game.fen(),
-        history: this.game.history({verbose: true}),
-      }));
+  //     if (move === null) return;
 
-      setTimeout(() => {
-        event.chessboard.setPosition(this.game.fen())
-      })
-    }
-  };
+  //     this.setState(() => ({
+  //       fen: this.game.fen(),
+  //       history: this.game.history({verbose: true}),
+  //     }));
+
+  //     setTimeout(() => {
+  //       event.chessboard.setPosition(this.game.fen())
+  //     })
+  //   }
+  // };
 
   onButtonTest1 = () => {
     // GET
@@ -76,6 +80,10 @@ class App extends Component {
       // Output: Wed, 21 Jun 2017 09:13:01 GMT
       
       console.log(now + " response received: " + data);
+      this.game.move({from: "a2", to: "a3"});
+      this.fen = this.game.fen();
+      this.board.setPosition(this.fen);
+
     })
   }
 
