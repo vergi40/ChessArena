@@ -62,6 +62,23 @@ class App extends Component {
     }
   };
 
+  onButtonTest1 = () => {
+    // GET
+    fetch("http://localhost:3000/test1")
+    // .then(res => res.json())
+    .then(res => res.text())
+    .then(data => {
+
+      // Add timestamp
+      var now = new Date();
+      // convert date to a string in UTC timezone format:
+      console.log(now.toLocaleTimeString());
+      // Output: Wed, 21 Jun 2017 09:13:01 GMT
+      
+      console.log(now + " response received: " + data);
+    })
+  }
+
   // Frontpage render
   render() {
 
@@ -77,6 +94,12 @@ class App extends Component {
           </div>
           <p className="outline w-25 pa3 mr2">placeholder</p>
         </div>
+        <div className="form pa4 br3 shadow-2">
+					<button 
+						className="w-8 pa3 mr2 "
+						onClick={this.onButtonTest1}> Test 1
+					</button>
+				</div>
       </div>
 
     );
