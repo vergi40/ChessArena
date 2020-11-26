@@ -8,7 +8,7 @@ using CommonNetStandard.Local_implementation;
 
 namespace vergiBlue
 {
-    public class SingleMove
+    public class SingleMove : IEquatable<SingleMove>
     {
         public bool Capture { get; set; }
         public bool Promotion { get; set; }
@@ -61,6 +61,23 @@ namespace vergiBlue
                 CheckMate = CheckMate
             };
             return move;
+        }
+
+        // TODO should be separate comparer for only coordinates and also captures etc
+        /// <summary>
+        /// Move is equal if previous and new positions match
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public bool Equals(SingleMove? other)
+        {
+            if(other == null) throw new NullReferenceException();
+            if (PrevPos.Equals(other.PrevPos) && NewPos.Equals(other.NewPos))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public override string ToString()

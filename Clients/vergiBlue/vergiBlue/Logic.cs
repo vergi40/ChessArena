@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CommandLine;
 using CommonNetStandard;
 using CommonNetStandard.Interface;
 using CommonNetStandard.Local_implementation;
@@ -72,6 +73,7 @@ namespace vergiBlue
 
         public Board Board { get; set; } = new Board();
         public Strategy Strategy { get; set; }
+        private OpeningLibrary Openings { get; } = new OpeningLibrary();
 
         /// <summary>
         /// For testing single next turn, overwrite this.
@@ -126,6 +128,25 @@ namespace vergiBlue
                 var isMaximizing = IsPlayerWhite;
                 Diagnostics.StartMoveCalculations();
 
+                // Opening
+                if (GameHistory.Count < 10)
+                {
+                    var previousMoves = GetPreviousMoves();
+                    var openingMove = Openings.NextMove(previousMoves);
+
+                    if(openingMove != null)
+                    {
+                        Board.ExecuteMove(openingMove);
+                        TurnCount++;
+                        PreviousData = Diagnostics.CollectAndClear();
+
+                        var result  = new PlayerMoveImplementation(
+                            openingMove.ToInterfaceMove(false, false), PreviousData.ToString());
+                        GameHistory.Add(result.Move);
+                        return result;
+                    }
+                }
+
                 // Get all available moves and do necessary filtering
                 List<SingleMove> allMoves = Board.Moves(isMaximizing, true, true).ToList();
                 if (allMoves.Count == 0)
@@ -138,7 +159,7 @@ namespace vergiBlue
 
                 if(MoveHistory.IsLeaningToDraw(GameHistory))
                 {
-                    var repetionMove = GameHistory[GameHistory.Count - 4];
+                    var repetionMove = GameHistory[^4];
                     allMoves.RemoveAll(m =>
                         m.PrevPos.ToAlgebraic() == repetionMove.StartPosition &&
                         m.NewPos.ToAlgebraic() == repetionMove.EndPosition);
@@ -174,6 +195,18 @@ namespace vergiBlue
                 GameHistory.Add(move.Move);
                 return move;
             }
+        }
+
+        private IList<SingleMove> GetPreviousMoves()
+        {
+            var moves = new List<SingleMove>();
+            foreach (var move in GameHistory)
+            {
+                // TODO optimal case would have capture moves tagged also
+                moves.Add(new SingleMove(move));
+            }
+
+            return moves;
         }
 
         /// <summary>
