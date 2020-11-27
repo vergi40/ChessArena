@@ -11,17 +11,20 @@ using System.Threading.Tasks;
 
 namespace vergiBlue.Algorithms
 {
-    public record OpeningStrategy
-    {
-        public string Name { get; } = "";
-        public IList<SingleMove> Moves {get;} = new List<SingleMove>();
-
-        public OpeningStrategy(string name, IList<SingleMove> moves) => (Name, Moves) = (name, moves);
-    }
-
     public class OpeningLibrary
     {
         private IList<OpeningStrategy> Openings { get; }
+
+        /// <summary>
+        /// White has started some common opening but black uses different defensive move to counter
+        /// </summary>
+        private IList<OpeningStrategy> DefensiveOpenings { get; }
+        
+        /// <summary>
+        /// Some attack patterns that black should not follow
+        /// </summary>
+        private IList<OpeningStrategy> OnlyWhiteOpenings { get; }// TODO
+
         private readonly Random _random = new Random();
 
 
@@ -30,14 +33,81 @@ namespace vergiBlue.Algorithms
             // https://www.thesprucecrafts.com/most-common-chess-openings-611517
             Openings = new List<OpeningStrategy>
             {
-                new OpeningStrategy("RuyLopez", new List<SingleMove>
+                new OpeningStrategy("Ruy Lopez", new List<SingleMove>
                 {
                     new SingleMove("e2", "e4"),
                     new SingleMove("e7", "e5"),
                     new SingleMove("g1", "f3"),
                     new SingleMove("b8", "c6"),
                     new SingleMove("f1", "b5")
+                }),
+                new OpeningStrategy("Italian game", new List<SingleMove>
+                {
+                    new SingleMove("e2", "e4"),
+                    new SingleMove("e7", "e5"),
+                    new SingleMove("g1", "f3"),
+                    new SingleMove("b8", "c6"),
+                    new SingleMove("f1", "c4")
+                }),
+                new OpeningStrategy("Queen's gambit", new List<SingleMove>
+                {
+                    new SingleMove("d2", "d4"),
+                    new SingleMove("d7", "d5"),
+                    new SingleMove("c2", "c4")
+                }),
+                new OpeningStrategy("Center game", new List<SingleMove>
+                {
+                    new SingleMove("e2", "e4"),
+                    new SingleMove("e7", "e5"),
+                    new SingleMove("d2", "d4"),
+                    new SingleMove("d5", "d4", true),// capture soldier
+                    new SingleMove("d1", "d4", true)//capture soldier with queen
+                }),
+                new OpeningStrategy("Danish gambit", new List<SingleMove>
+                {
+                    new SingleMove("e2", "e4"),
+                    new SingleMove("e7", "e5"),
+                    new SingleMove("d2", "d4"),
+                    new SingleMove("d5", "d4", true),
+                    new SingleMove("c2", "c3")
                 })
+            };
+
+            DefensiveOpenings = new List<OpeningStrategy>
+            {
+                new OpeningStrategy("Sicilian defense", new List<SingleMove>
+                {
+                    new SingleMove("e2", "e4"),
+                    new SingleMove("c7", "c5")
+                }),
+                new OpeningStrategy("French defense", new List<SingleMove>
+                {
+                    new SingleMove("e2", "e4"),
+                    new SingleMove("e7", "e6")
+                }),
+                new OpeningStrategy("Indian defense", new List<SingleMove>
+                {
+                    new SingleMove("d2", "d4"),
+                    new SingleMove("g8", "f6")
+                })
+            };
+
+            // TODO need a way to add "any"-moves
+            // https://en.wikipedia.org/wiki/Scholar%27s_mate
+            OnlyWhiteOpenings = new List<OpeningStrategy>
+            {
+                // Four-move checkmate
+                // Bishop first
+                new OpeningStrategy("Scholar's mate 1", new List<SingleMove>
+                {
+                    new SingleMove("e2", "e4"),
+                    new SingleMove("e7", "e5"),
+                    new SingleMove("f1", "c4"),
+                    new SingleMove("b8", "c6"),
+                    new SingleMove("d1", "h5"),
+                    new SingleMove("g8", "f6"),
+                    new SingleMove("h5", "f7")
+                }),
             };
         }
 
@@ -76,17 +146,11 @@ namespace vergiBlue.Algorithms
         {
             var list = new List<OpeningStrategy>();
 
-            foreach (var opening in Openings)
+            // Include defensive openings
+            foreach (var opening in Openings.Concat(DefensiveOpenings))
             {
                 if (opening.Moves.Count <= previousMoves.Count) continue;
-
-                for (int i = 0; i < previousMoves.Count; i++)
-                {
-                    if (!previousMoves[i].Equals(opening.Moves[i]))
-                    {
-                        continue;
-                    }
-                }
+                if (!ListMembersEqual(previousMoves, opening.Moves)) continue;
 
                 // All matched
                 list.Add(opening);
@@ -94,6 +158,30 @@ namespace vergiBlue.Algorithms
 
             return list;
         }
+
+        private bool ListMembersEqual<T>(IList<T> list1, IList<T> list2) where T : IEquatable<T>
+        {
+            for (int i = 0; i < list1.Count; i++)
+            {
+                if (!list1[i].Equals(list2[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+
+        // C# 9.0 new data structure. Minimum boiler plate
+        public record OpeningStrategy
+        {
+            public string Name { get; } = "";
+        public IList<SingleMove> Moves { get; } = new List<SingleMove>();
+
+        public OpeningStrategy(string name, IList<SingleMove> moves) => (Name, Moves) = (name, moves);
+    }
     }
 
 
