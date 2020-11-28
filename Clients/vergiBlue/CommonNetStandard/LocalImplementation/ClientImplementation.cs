@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CommonNetStandard.Interface;
+using CommonNetStandard.Client;
 using GameManager;
 using Grpc.Core;
 
-namespace CommonNetStandard.Connection
+namespace CommonNetStandard.LocalImplementation
 {
-    class ClientImplementation
+    internal class ClientImplementation
     {
         readonly GameService.GameServiceClient _client;
 

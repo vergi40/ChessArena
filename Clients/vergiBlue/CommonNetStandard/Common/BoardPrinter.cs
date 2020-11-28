@@ -1,18 +1,22 @@
-﻿using CommonNetStandard;
+﻿using System.Collections.Generic;
+using CommonNetStandard;
+using CommonNetStandard.Interface;
+using CommonNetStandard.LocalImplementation;
 
-namespace vergiBlue.ConsoleTools
+namespace CommonNetStandard.Common
 {
-    class BoardPrinter
+    public class BoardPrinter
     {
         private ConsoleColors Colors { get; }
         public const string PreviousTileValue = "[ ]";
 
         public string[,] Tiles { get; set; }
-        public BoardPrinter(Board board)
+
+        public BoardPrinter(IEnumerable<IPiece> pieces, bool isWindows = false)
         {
-            Colors = new ConsoleColors();
+            Colors = new ConsoleColors(isWindows);
             Tiles = new string[8, 8];
-            foreach (var piece in board.PieceList)
+            foreach (var piece in pieces)
             {
                 var color = 'w';
                 if (!piece.IsWhite) color = 'b';

@@ -1,10 +1,9 @@
-﻿using CommonNetStandard.Connection;
-using CommonNetStandard.Interface;
+﻿using CommonNetStandard.Interface;
 
-namespace CommonNetStandard
+namespace CommonNetStandard.Client
 {
     /// <summary>
-    /// Inherit custom AI logic from this class and inject it to <see cref="ConnectionModule"/>
+    /// Inherit custom AI logic from this class and inject it to <see cref="grpcClientConnection"/>
     /// </summary>
     public abstract class LogicBase
     {

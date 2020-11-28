@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CommonNetStandard;
+using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using CommonNetStandard.Local_implementation;
+using CommonNetStandard.LocalImplementation;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
@@ -24,7 +25,7 @@ namespace vergiBlue.ConsoleTools
             var info1 = new StartInformationImplementation() { WhitePlayer = true };
 
             var player1 = new Logic(info1, false, null, overrideBoard);
-            var board = new BoardPrinter(player1.Board);
+            var board = new BoardPrinter(player1.Board.InterfacePieces, OperatingSystem.IsWindows());
 
             var firstMove = player1.CreateMove();
             moveHistory.Add(firstMove);

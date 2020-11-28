@@ -60,7 +60,7 @@ namespace vergiBlue.Algorithms
                     new SingleMove("e2", "e4"),
                     new SingleMove("e7", "e5"),
                     new SingleMove("d2", "d4"),
-                    new SingleMove("d5", "d4", true),// capture soldier
+                    new SingleMove("e5", "d4", true),// capture soldier
                     new SingleMove("d1", "d4", true)//capture soldier with queen
                 }),
                 new OpeningStrategy("Danish gambit", new List<SingleMove>
@@ -68,7 +68,7 @@ namespace vergiBlue.Algorithms
                     new SingleMove("e2", "e4"),
                     new SingleMove("e7", "e5"),
                     new SingleMove("d2", "d4"),
-                    new SingleMove("d5", "d4", true),
+                    new SingleMove("e5", "d4", true),
                     new SingleMove("c2", "c3")
                 })
             };

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Reflection;
 using CommonNetStandard;
-using CommonNetStandard.Connection;
 using CommandLine;
+using CommonNetStandard.Client;
 using vergiBlue.ConsoleTools;
 
 namespace vergiBlue
@@ -73,9 +73,8 @@ namespace vergiBlue
 
                 if (_gameMode == 1)
                 {
-                    var connection = new ConnectionModule(_fullAddress);
+                    using var connection = new grpcClientConnection(_fullAddress);
                     NetworkGame.Start(connection, _playerName, false);
-                    connection.CloseConnection();
                 }
                 else if (_gameMode == 2)
                 {
@@ -84,9 +83,8 @@ namespace vergiBlue
                     Console.Write(" > "); 
                     var playerName = Console.ReadLine() ?? _playerName;
                     Log($"Chess ai {playerName} [{_currentVersion}]");
-                    var connection = new ConnectionModule(_fullAddress);
+                    using var connection = new grpcClientConnection(_fullAddress);
                     NetworkGame.Start(connection, playerName, false);
-                    connection.CloseConnection();
                 }
                 else if (_gameMode == 3)
                 {
@@ -102,9 +100,8 @@ namespace vergiBlue
                 }
                 else if (_gameMode == 9)
                 {
-                    var connection = new ConnectionModule(_fullAddress);
+                    using var connection = new grpcClientConnection(_fullAddress);
                     NetworkGame.Start(connection, "Connection test AI", true);
-                    connection.CloseConnection();
                 }
                 else break;
 

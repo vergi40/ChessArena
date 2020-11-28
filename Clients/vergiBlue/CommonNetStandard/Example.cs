@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CommonNetStandard.Connection;
+using CommonNetStandard.Client;
 using CommonNetStandard.Interface;
 
 namespace CommonNetStandard
@@ -13,7 +13,7 @@ namespace CommonNetStandard
     {
         static void Main()
         {
-            var connection = new ConnectionModule("127.0.0.1:30052");
+            using var connection = new grpcClientConnection("127.0.0.1:30052");
             var startInformation = connection.Initialize("example player");
 
             // Wait for the server to respond
@@ -31,7 +31,8 @@ namespace CommonNetStandard
             playTask.Wait();
 
             // Game finished
-            connection.CloseConnection();
+            // Dispose should handle connection closing
+            // connection.CloseConnection();
         }
 
         /// <summary>

@@ -4,18 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard;
-using CommonNetStandard.Connection;
+using CommonNetStandard.Client;
 
 namespace vergiBlue.ConsoleTools
 {
     class NetworkGame
     {
         private static void Log(string message, bool writeToConsole = true) => Logger.Log(message, writeToConsole);
-        public static void Start(ConnectionModule connection, string playerName, bool connectionTesting)
+        public static void Start(grpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
         {
             Log(Environment.NewLine);
             // TODO async
-            var startInformation = connection.Initialize(playerName);
+            var startInformation = grpcClientConnection.Initialize(playerName);
+
+            // TODO exception catching here
+            // DebugException="Grpc.Core.Internal.CoreErrorDetailException: 
             startInformation.Wait();
 
             Log($"Received game start information.");
@@ -30,7 +33,7 @@ namespace vergiBlue.ConsoleTools
             Log("Start game loop");
 
             // Inject ai to connection module and play game
-            var playTask = connection.Play(ai);
+            var playTask = grpcClientConnection.Play(ai);
             playTask.Wait();
         }
     }

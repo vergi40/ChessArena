@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using CommonNetStandard.Local_implementation;
+using CommonNetStandard.Common;
+using CommonNetStandard.LocalImplementation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;

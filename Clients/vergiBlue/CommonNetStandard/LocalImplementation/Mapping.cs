@@ -1,11 +1,11 @@
 ﻿using System;
+using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using CommonNetStandard.Local_implementation;
 using GameManager;
 
-namespace CommonNetStandard.Connection
+namespace CommonNetStandard.LocalImplementation
 {
-    public class Mapping
+    internal class Mapping
     {
         public static ChessMove ToGrpc(IMove move)
         {
@@ -33,7 +33,7 @@ namespace CommonNetStandard.Connection
 
         public static IMove ToCommon(Move grpcMove)
         {
-            if (grpcMove == null || grpcMove.Chess == null) throw new ArgumentException($"Expected chess parameter was null.", nameof(grpcMove));
+            if (grpcMove.Chess == null) throw new ArgumentException($"Expected chess parameter was null.", nameof(grpcMove));
             var chessMove = grpcMove.Chess;
             
             var move = new MoveImplementation()

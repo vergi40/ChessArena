@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
 using CommonNetStandard;
+using CommonNetStandard.Client;
+using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using CommonNetStandard.Local_implementation;
+using CommonNetStandard.LocalImplementation;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 

@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CommonNetStandard.Interface;
+﻿using CommonNetStandard.Interface;
 
-namespace CommonNetStandard.Local_implementation
+namespace CommonNetStandard.Common
 {
     public class MoveImplementation : IMove
     {
-        public IMove Clone()
-        {
-            throw new NotImplementedException();
-        }
-
         public string StartPosition { get; set; } = "";
         public string EndPosition { get; set; } = "";
         public bool Check { get; set; }

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using CommonNetStandard.Interface;
 
 namespace vergiBlue.Pieces
 {
-    public abstract class PieceBase
+    public abstract class PieceBase : IPiece
     {
         public bool IsWhite { get; }
 

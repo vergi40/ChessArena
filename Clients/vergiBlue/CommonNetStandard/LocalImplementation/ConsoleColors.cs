@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace vergiBlue.ConsoleTools
+namespace CommonNetStandard.LocalImplementation
 {
     /// <summary>
     /// Modify console output foreground and background colors.
     /// </summary>
-    class ConsoleColors
+    internal class ConsoleColors
     {
         // https://stackoverflow.com/questions/7937256/custom-text-color-in-c-sharp-console-application
         private readonly bool _isWindowsOS;
@@ -59,9 +59,9 @@ namespace vergiBlue.ConsoleTools
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr GetStdHandle(int handle);
 
-        public ConsoleColors()
+        public ConsoleColors(bool isWindows)
         {
-            if (OperatingSystem.IsWindows())
+            if (isWindows)
             {
                 System.Console.SetWindowSize(180, 40);
                 

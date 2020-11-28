@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard;
+using CommonNetStandard.Interface;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
@@ -26,6 +27,23 @@ namespace vergiBlue
         /// Track kings for whole game
         /// </summary>
         public (King? white, King? black) Kings { get; set; }
+
+        /// <summary>
+        /// Return pieces in the <see cref="IPiece"/> format
+        /// </summary>
+        public IList<IPiece> InterfacePieces
+        {
+            get
+            {
+                IList<IPiece> list = new List<IPiece>();
+                foreach (var piece in PieceList)
+                {
+                    list.Add(piece);
+                }
+
+                return list;
+            }
+        }
 
         /// <summary>
         /// Start game initialization

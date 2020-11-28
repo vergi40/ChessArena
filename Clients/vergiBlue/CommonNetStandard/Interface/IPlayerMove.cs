@@ -2,7 +2,6 @@ namespace CommonNetStandard.Interface
 {
     public interface IPlayerMove
     {
-        IPlayerMove Clone();
         IMove Move { get; set; }
 
         /// <summary>

@@ -11,8 +11,6 @@ namespace CommonNetStandard.Interface
 
     public interface IMove
     {
-        IMove Clone();
-
         /// <summary>
         /// Standard chess notation (file, rank), e.g. "f5"
         /// </summary>
