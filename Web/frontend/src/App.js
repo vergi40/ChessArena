@@ -18,6 +18,7 @@ class App extends Component {
     this.state = {
       fen: 'start',
       history: [],
+      inspectionMode: false
     };
   }
 
@@ -81,10 +82,88 @@ class App extends Component {
       
       console.log(now + " response received: " + data);
       this.game.move({from: "a2", to: "a3"});
-      this.fen = this.game.fen();
+      this.setState ({fen: this.game.fen()});
       this.board.setPosition(this.fen);
-
     })
+  }
+
+  onButtonResetState = () => {
+    this.game = new Chess();
+    this.board.setPosition(this.game.fen());
+    this.setState ({
+      fen: this.game.fen(),
+      history: [],
+      inspectionMode: false
+    });
+  }
+
+  onButtonLoadPGN = () => {
+    console.log("Not implemented yet")
+
+    const pgn = [
+      '[Event "Casual Game"]',
+      '[Site "Berlin GER"]',
+      '[Date "1852.??.??"]',
+      '[EventDate "?"]',
+      '[Round "?"]',
+      '[Result "1-0"]',
+      '[White "Adolf Anderssen"]',
+      '[Black "Jean Dufresne"]',
+      '[ECO "C52"]',
+      '[WhiteElo "?"]',
+      '[BlackElo "?"]',
+      '[PlyCount "47"]',
+      '',
+      '1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.b4 Bxb4 5.c3 Ba5 6.d4 exd4 7.O-O',
+      'd3 8.Qb3 Qf6 9.e5 Qg6 10.Re1 Nge7 11.Ba3 b5 12.Qxb5 Rb8 13.Qa4',
+      'Bb6 14.Nbd2 Bb7 15.Ne4 Qf5 16.Bxd3 Qh5 17.Nf6+ gxf6 18.exf6',
+      'Rg8 19.Rad1 Qxf3 20.Rxe7+ Nxe7 21.Qxd7+ Kxd7 22.Bf5+ Ke8',
+      '23.Bd7+ Kf8 24.Bxe7# 1-0'
+    ]
+  
+    this.game.load_pgn(pgn.join('\n'))
+    console.log(this.game.history({verbose: true}))
+    this.board.setPosition(this.game.fen());
+
+    // Jump to last position
+    this.setState ({
+      fen: this.game.fen(),
+      history: this.game.history({verbose: true}),
+      inspectionMode: true
+    });
+  }
+
+  onButtonLoadFEN = () => {
+    console.log("Not implemented yet")
+    
+  }
+
+  onButtonDebug = () => {
+    console.log("debug 1")
+    console.log("inspectionMode: " + this.state.inspectionMode);
+    this.setState({inspectionMode: true});
+    console.log("inspectionMode: " + this.state.inspectionMode);
+
+  }
+
+  onButtonStepBack = () => {
+    console.log("Not implemented yet")
+    
+  }
+
+  onButtonStepForward = () => {
+    console.log("Not implemented yet")
+    
+  }
+
+  onButtonStepStart = () => {
+    console.log("Not implemented yet")
+    
+  }
+
+  onButtonStepEnd = () => {
+    console.log("Not implemented yet")
+    
   }
 
   // Frontpage render
@@ -102,15 +181,59 @@ class App extends Component {
           </div>
           <p className="outline w-25 pa3 mr2">placeholder</p>
         </div>
-        <div className="form pa4 br3 shadow-2">
-					<button 
+        <button 
 						className="w-8 pa3 mr2 "
-						onClick={this.onButtonTest1}> Test 1
-					</button>
-				</div>
+						onClick={this.onButtonTest1}> Start streaming
+				</button>
+        <button 
+						className="w-8 pa3 mr2 "
+						onClick={this.onButtonResetState}> Reset state
+				</button>
+        <button 
+						className="w-8 pa3 mr2 "
+						onClick={this.onButtonLoadPGN}> Load full PGN game
+				</button>
+        <button 
+						className="w-8 pa3 mr2 "
+						onClick={this.onButtonDebug}> Debug tests
+				</button>
+        {this.state.inspectionMode ? <ControlButtons 
+          stepStart = {this.onButtonStepStart} 
+          stepBack = {this.onButtonStepBack} 
+          stepForward = {this.onButtonStepForward} 
+          stepEnd = {this.onButtonStepEnd} /> : null}        
       </div>
 
     );
+  }
+}
+
+// Game history controls
+class ControlButtons extends Component {
+  constructor (props) {
+    super(props);
+  }
+
+  render(){
+    return(
+      <div className="control-buttons pa3 mr2">
+        <button
+          className="w-8 pa3 mr2 "
+          onClick={this.props.stepStart}> Go to start
+        </button>
+        <button
+          className="w-8 pa3 mr2 "
+          onClick={this.props.stepBack}> Step back
+        </button>
+        <button
+          className="w-8 pa3 mr2 "
+          onClick={this.props.stepForward}> Step forward
+        </button>
+        <button
+          className="w-8 pa3 mr2 "
+          onClick={this.props.stepEnd}> Go to end
+        </button>
+      </div>);
   }
 }
 
