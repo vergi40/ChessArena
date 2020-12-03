@@ -16,6 +16,14 @@ service GameService {
     rpc Act(stream Move) returns (stream Move) {}
 }
 
+service WebService {
+    // Web server ensures that GameManager is running
+    rpc Ping(PingMessage) returns (PingMessage) {}
+
+    // Web server start listening to move updates
+    rpc ListenMoveUpdates(PingMessage) returns (stream Move) {}
+}
+
 // Initialize game manager with wanted game
 message GameInformation {
     string name = 1;
@@ -58,4 +66,8 @@ message ChessMove {
     }
     // Set to non-zero if pawn has reached 8th rank.
     PromotionPieceType promotion_result = 6;
+}
+
+message PingMessage {
+    string message = 1;
 }
