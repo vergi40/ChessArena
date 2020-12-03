@@ -4,16 +4,19 @@
   "description": "Backend node server for grpc and frontend communication",
   "main": "server.js",
   "dependencies": {
+    "@grpc/proto-loader": "^0.5.5",
+    "async": "^3.2.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "grpc": "^1.24.4"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
   },
   "scripts": {
-    "test": "hello",
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "test": "nodemon nodeserver.js"
   },
   "author": "",
   "license": "ISC"
