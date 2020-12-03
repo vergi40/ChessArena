@@ -15,10 +15,11 @@ import 'tachyons';
 class App extends Component {
   constructor() {
     super();
+    this.fen = "start";
+    this.history = [];
+    this.moveIndex = 0;
     this.state = {
-      fen: 'start',
-      history: [],
-      inspectionMode: false
+      inspectionMode: false,
     };
   }
 
@@ -38,34 +39,7 @@ class App extends Component {
         grid: 40 // the sprite is tiled with one piece every 40px
     }
     });
-
-    // this.board.enableMoveInput(this.inputHandler);
   }
-
-  // User can create moves by dragging
-  // Waiting for use case
-
-  // inputHandler = (event) => {
-  //   if (event.type === INPUT_EVENT_TYPE.moveDone) {
-
-  //     const move = this.game.move({
-  //       from: event.squareFrom,
-  //       to: event.squareTo,
-  //       promotion: 'q',
-  //     });
-
-  //     if (move === null) return;
-
-  //     this.setState(() => ({
-  //       fen: this.game.fen(),
-  //       history: this.game.history({verbose: true}),
-  //     }));
-
-  //     setTimeout(() => {
-  //       event.chessboard.setPosition(this.game.fen())
-  //     })
-  //   }
-  // };
 
   onButtonTest1 = () => {
     // GET
@@ -82,7 +56,8 @@ class App extends Component {
       
       console.log(now + " response received: " + data);
       this.game.move({from: "a2", to: "a3"});
-      this.setState ({fen: this.game.fen()});
+      this.fen = this.game.fen();
+      this.moveIndex = 1;
       this.board.setPosition(this.fen);
     })
   }
@@ -90,16 +65,15 @@ class App extends Component {
   onButtonResetState = () => {
     this.game = new Chess();
     this.board.setPosition(this.game.fen());
+    this.fen = this.game.fen();
+    this.history = [];
+    this.moveIndex = 0;
     this.setState ({
-      fen: this.game.fen(),
-      history: [],
-      inspectionMode: false
+      inspectionMode: false,
     });
   }
 
   onButtonLoadPGN = () => {
-    console.log("Not implemented yet")
-
     const pgn = [
       '[Event "Casual Game"]',
       '[Site "Berlin GER"]',
@@ -126,10 +100,11 @@ class App extends Component {
     this.board.setPosition(this.game.fen());
 
     // Jump to last position
+    this.fen = this.game.fen();
+    this.history = this.game.history({verbose: true});
+    this.moveIndex = this.history.length - 1
     this.setState ({
-      fen: this.game.fen(),
-      history: this.game.history({verbose: true}),
-      inspectionMode: true
+      inspectionMode: true,
     });
   }
 
@@ -147,23 +122,51 @@ class App extends Component {
   }
 
   onButtonStepBack = () => {
-    console.log("Not implemented yet")
-    
+    if(this.moveIndex > 0){
+      // Replay game from start to given position and set board
+      this.setBoardToGivenIndex(this.moveIndex - 1);
+    }
+    else{
+      console.log("Tried to step back but moveIndex was 0 already.")
+    }    
   }
 
   onButtonStepForward = () => {
-    console.log("Not implemented yet")
-    
-  }
+    if(this.moveIndex < this.history.length - 1){
+      // Replay game to next position
+      this.setBoardToGivenIndex(this.moveIndex + 1);
+    }
+    else{
+      console.log("Tried to step forward but moveIndex was at the end already.")
+    }      
+  }  
 
   onButtonStepStart = () => {
-    console.log("Not implemented yet")
-    
+    this.setBoardToGivenIndex(0);    
   }
 
   onButtonStepEnd = () => {
-    console.log("Not implemented yet")
+    this.setBoardToGivenIndex(this.history.length - 1);    
+  }
+
+  setBoardToGivenIndex = (index) => {
+    // Replay game from start to given position and set board
+    var local = new Chess();
+
+    for (let i = 0; i <= index; i++) {
+      // { color: 'b', from: 'e5', to: 'f4', flags: 'c', piece: 'p', captured: 'p', san: 'exf4' }]
+      let move = local.move(this.history[i].san);
+      
+      if(move === null){
+        console.log("Error - not a valid move: " + this.history[i]);
+        return;
+      }        
+    }
     
+    // Update graphics
+    this.board.setPosition(local.fen());
+    this.fen = local.fen();
+    this.moveIndex = index;
   }
 
   // Frontpage render
@@ -197,11 +200,13 @@ class App extends Component {
 						className="w-8 pa3 mr2 "
 						onClick={this.onButtonDebug}> Debug tests
 				</button>
-        {this.state.inspectionMode ? <ControlButtons 
-          stepStart = {this.onButtonStepStart} 
-          stepBack = {this.onButtonStepBack} 
-          stepForward = {this.onButtonStepForward} 
-          stepEnd = {this.onButtonStepEnd} /> : null}        
+        {this.state.inspectionMode 
+          ? <ControlButtons 
+              stepStart = {this.onButtonStepStart} 
+              stepBack = {this.onButtonStepBack} 
+              stepForward = {this.onButtonStepForward} 
+              stepEnd = {this.onButtonStepEnd} /> 
+          : null}        
       </div>
 
     );
@@ -210,10 +215,7 @@ class App extends Component {
 
 // Game history controls
 class ControlButtons extends Component {
-  constructor (props) {
-    super(props);
-  }
-
+  // https://stackoverflow.com/questions/41488715/how-to-disable-button-in-react-js
   render(){
     return(
       <div className="control-buttons pa3 mr2">
