@@ -13,7 +13,6 @@ const wsServer = new webSocketServer({
 });
 
 
-// I'm maintaining all active connections in this object
 const clients = {};
 
 // This code generates unique userid for everyuser.

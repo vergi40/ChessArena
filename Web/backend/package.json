@@ -17,7 +17,7 @@
     "nodemon": "^2.0.6"
   },
   "scripts": {
-    "start": "nodemon websocketserver.js",
+    "start": "nodemon server.js",
     "test": "nodemon grpcserver.js"
   },
   "author": "",

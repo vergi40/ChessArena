@@ -69,7 +69,7 @@ class App extends Component {
     // { color: 'b', from: 'e5', to: 'f4', flags: 'c', piece: 'p', captured: 'p', san: 'exf4' }]
     var serverMove = this.game.move({from: moveData.from, to: moveData.to});
     if(serverMove === null){
-      console.log("Error - not a valid move: " + moveData);
+      console.log("Error - not a valid move: " + JSON.stringify(moveData, null, 2));
       return;
     }   
 
