@@ -15,10 +15,15 @@ namespace TestServer
         static void Main(string[] args)
         {
             const int Port = 30052;
+            var data = new SharedData();
 
             Server server = new Server
             {
-                Services = { GameService.BindService(new TestServer()) },
+                Services =
+                {
+                    GameService.BindService(new TestServer(data)),
+                    WebService.BindService(new WebServer(data))
+                },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
             server.Start();
@@ -32,6 +37,80 @@ namespace TestServer
     }
 
     /// <summary>
+    /// By registering to <see cref="OnAdd"/>, list changes can be tracked.
+    /// https://stackoverflow.com/questions/1299920/how-to-handle-add-to-list-event
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    class TrackedList<T> : List<T>
+    {
+        public event EventHandler? OnAdd;
+
+        public new void Add(T item)
+        {
+            if (OnAdd != null)
+            {
+                OnAdd(this, EventArgs.Empty);
+            }
+            base.Add(item);
+        }
+    }
+
+    /// <summary>
+    /// Data shared between services
+    /// </summary>
+    class SharedData
+    {
+        public TrackedList<Move> MoveHistory = new TrackedList<Move>();
+
+        public int CurrentMoveIndex => MoveHistory.Count - 1;
+        public int CurrentWebIndex { get; set; } = 0;
+
+    }
+
+    class WebServer : WebService.WebServiceBase
+    {
+        private static readonly Logger _logger = new Logger(typeof(WebServer));
+        public SharedData _shared { get; }
+
+        private bool _pingReceived = false;
+
+        public WebServer(SharedData shared)
+        {
+            _shared = shared;
+            shared.MoveHistory.OnAdd += HandleNewMove;
+        }
+
+        void HandleNewMove(object? sender, EventArgs e)
+        {
+            // 
+        }
+
+        public override Task<PingMessage> Ping(PingMessage request, ServerCallContext context)
+        {
+            _logger.Info("Ping request received.");
+            _pingReceived = true;
+
+            var response = new PingMessage {Message = "pong"};
+            return Task.FromResult(response);
+        }
+
+        public override Task ListenMoveUpdates(PingMessage request, IServerStreamWriter<Move> responseStream, ServerCallContext context)
+        {
+            _logger.Info($"{nameof(ListenMoveUpdates)} request received.");
+            if (!_pingReceived)
+            {
+                _logger.Info($"Did not receive initializing ping request before {nameof(ListenMoveUpdates)}. Cancelling stream.");
+                return Task.CompletedTask;
+            }
+
+            _logger.Info("Starting move stream...");
+
+
+            return base.ListenMoveUpdates(request, responseStream, context);
+        }
+    }
+
+    /// <summary>
     /// Test one player interactions by providing mock data for another player
     /// </summary>
     class TestServer : GameService.GameServiceBase
@@ -40,9 +119,11 @@ namespace TestServer
         public PlayerClass? Player1 { get; set; }
         public PlayerClass? Player2 { get; set; }
         public MockClass MockPlayer { get; set; }
+        public SharedData _shared { get; }
 
-        public TestServer()
+        public TestServer(SharedData shared)
         {
+            _shared = shared;
             MockPlayer = new MockClass()
             {
                 Information = new GameInformation()

@@ -17,7 +17,7 @@ var packageDefinition = protoLoader.loadSync(
     });
 var protoDescription = grpc.loadPackageDefinition(packageDefinition);//namespace
 var manager = protoDescription.GameManager;//namespace
-var stub = new manager.WebService('localhost:50052', grpc.credentials.createInsecure());
+var stub = new manager.WebService('localhost:30052', grpc.credentials.createInsecure());
 
 /**
  * For testing purposes
@@ -35,7 +35,7 @@ function TestInitialize(){
     } 
     else {
       // process feature
-      if(response == "pong"){
+      if(response.message == "pong"){
         console.log("Received ping response from GameManager.")
       }
       else{
