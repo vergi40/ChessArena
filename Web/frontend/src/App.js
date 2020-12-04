@@ -1,6 +1,7 @@
 import './App.css';
 import "./styles/cm-chessboard.css"
 import React, {Component} from 'react';
+import { w3cwebsocket as W3CWebSocket } from "websocket";
 import Chess from "chess.js";
 import {Chessboard, MOVE_INPUT_MODE, COLOR} from "cm-chessboard"
 
@@ -41,7 +42,46 @@ class App extends Component {
     });
   }
 
-  onButtonTest1 = () => {
+
+  onButtonStartListeningServer = () => {
+    const client = new W3CWebSocket('ws://127.0.0.1:8000');
+
+    client.onopen = () => {
+      console.log('WebSocket client connected');
+    };
+
+    client.onmessage = (message) => {
+      var data;
+      try {
+        data = JSON.parse(message.data);
+      } catch(e) {
+        console.log("Failed to parse: " + e)
+        data = "Failed to parse";
+      }
+
+      console.log("Received message from server. Raw data: "+ message.data + ". JSON: " + data);
+      this.executeMove(data);
+
+    };
+  }
+
+  executeMove = (moveData) => {
+    // { color: 'b', from: 'e5', to: 'f4', flags: 'c', piece: 'p', captured: 'p', san: 'exf4' }]
+    var serverMove = this.game.move({from: moveData.from, to: moveData.to});
+    if(serverMove === null){
+      console.log("Error - not a valid move: " + moveData);
+      return;
+    }   
+
+    // Update graphics
+    this.board.setPosition(this.game.fen());
+    this.fen = this.game.fen();
+    this.moveIndex = this.moveIndex + 1;
+  }
+
+
+  // HTTP GET button testing example
+  onButtonHttpTest1 = () => {
     // GET
     fetch("http://localhost:3000/test1")
     // .then(res => res.json())
@@ -186,7 +226,7 @@ class App extends Component {
         </div>
         <button 
 						className="w-8 pa3 mr2 "
-						onClick={this.onButtonTest1}> Start streaming
+						onClick={this.onButtonStartListeningServer}> Start streaming
 				</button>
         <button 
 						className="w-8 pa3 mr2 "
