@@ -32,6 +32,7 @@ function TestInitialize(){
     if (err) {
       // process error
       console.log("Process error: " + err);
+      return;
     } 
     else {
       // process feature
@@ -40,9 +41,35 @@ function TestInitialize(){
       }
       else{
         console.log("Received faulty response from GameManager: " + response)
+        return;
       }
     }
   });
+
+  console.log("Starting to listen move updates")
+  var moveIndex = 0;
+  var call = stub.ListenMoveUpdates(request);
+
+  // Invoked every time new move appears
+  call.on('data', function(move) {
+      console.log(moveIndex + " - Move received: " + move.chess);
+      console.log("Move " + move.chess.start_position + " to " + move.chess.end_position)
+      moveIndex++;
+  });
+  call.on('end', function() {
+    console.log("Stream ended - game over");
+    // The server has finished sending
+  });
+  call.on('error', function(e) {
+    // An error has occurred and the stream has been closed.
+    console.log("Error occured during stream: " + e);
+  });
+  call.on('status', function(status) {
+    // process status
+    console.log("Stream status updated to: " + status);
+  });
+
+
 }
 
 TestInitialize();

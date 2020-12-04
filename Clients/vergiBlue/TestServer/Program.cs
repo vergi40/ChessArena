@@ -60,9 +60,11 @@ namespace TestServer
     /// </summary>
     class SharedData
     {
+        public int CycleDelayInMs { get; } = 100;
+
         public TrackedList<Move> MoveHistory = new TrackedList<Move>();
 
-        public int CurrentMoveIndex => MoveHistory.Count - 1;
+        public int CurrentMoveCount => MoveHistory.Count;
         public int CurrentWebIndex { get; set; } = 0;
 
     }

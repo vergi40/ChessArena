@@ -168,6 +168,7 @@ namespace TestServer
                         if (Player1 == null || _p2ResStream == null) throw new Exception("Logical error");
                         await _p2ResStream.WriteAsync(Player1.LatestMove);
                         _logger.Info($"Sent p1 move to p2");
+                        _shared.MoveHistory.Add(Player1.LatestMove);
                         lock (_stateLock) _nextState = GameState.P2Req;
                     }
                     else if (_nextState == GameState.P2Req)
@@ -184,6 +185,7 @@ namespace TestServer
                         if (Player2 == null || _p1ResStream == null) throw new Exception("Logical error");
                         await _p1ResStream.WriteAsync(Player2.LatestMove);
                         _logger.Info($"Sent p2 move to p1");
+                        _shared.MoveHistory.Add(Player2.LatestMove);
                         lock (_stateLock) _nextState = GameState.P1Req;
                     }
                 }
@@ -193,7 +195,7 @@ namespace TestServer
                     return;
                 }
 
-                await Task.Delay(100);
+                await Task.Delay(_shared.CycleDelayInMs);
             }
         }
     }
