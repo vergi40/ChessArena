@@ -32,6 +32,8 @@ const http = require('http');
 // General variables
 //
 const clients = {};
+let clientConnection;
+let clientConnected = false;
 
 class SharedData{
   movesReceived = 0;
@@ -41,6 +43,7 @@ class SharedData{
   getNextMoveInJSON() {
       // 
       let data = this.moveHistory[this.movesSent];
+      this.movesSent++;
       let json = JSON.stringify({
           from: data.start_position, 
           to: data.end_position,
@@ -95,32 +98,56 @@ wsServer.on('request', function(request) {
     // You can rewrite this part of the code to accept only the requests from allowed origin
     const connection = request.accept(null, request.origin);
     clients[userID] = connection;
+    clientConnection = connection;
+
+    clientConnected = true;
     console.log('connected: ' + userID + ' in ' + Object.getOwnPropertyNames(clients))
     
+    // Reset shared
+    sharedData.movesSent = 0;
     console.log("Sent: " + sharedData.movesSent + ", received: " + sharedData.movesReceived);
+    sendMoves();
 
-    // console.log("Debug history: " + JSON.stringify(sharedData.moveHistory, null, 2));
-    // Start streaming
-    while(true){
-        // setTimeout(() => {
-        //   if(sharedData.movesSent < sharedData.movesReceived){
-        //     // There is a new move available to be sent to frontend
-        //     let move = sharedData.getNextMoveInJSON();
-        //     connection.send(move);
-        //     sharedData.movesSent++;
-        //     console.log("Sent move to frontend: " + move);
-        //   }
-        // }, 2000);  
-        
-        if(sharedData.movesSent < sharedData.movesReceived){
-          // There is a new move available to be sent to frontend
-          let move = sharedData.getNextMoveInJSON();
-          connection.send(move);
-          sharedData.movesSent++;
-          console.log("Sent move to frontend: " + JSON.stringify(move, null, 2));
-        }
-    }
+    connection.on("close", function(reasonCode, description) {
+      console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+      clientConnected = false;
+      clientConnection = null;
+    });
 });
+
+// Call this every time new move is received
+function sendMoves(){
+  if(!clientConnected){
+    console.log("No client connections yet.")
+    return;
+  }
+
+  // console.log("Connection is " + JSON.stringify(frontend, null, 2));
+  console.log("Sending move batch. Sent: " + sharedData.movesSent + ", received: " + sharedData.movesReceived);
+  while(true){
+    // setTimeout(() => {
+    //   if(sharedData.movesSent < sharedData.movesReceived){
+    //     // There is a new move available to be sent to frontend
+    //     let move = sharedData.getNextMoveInJSON();
+    //     connection.send(move);
+    //     sharedData.movesSent++;
+    //     console.log("Sent move to frontend: " + move);
+    //   }
+    // }, 2000);  
+    
+    if(sharedData.movesSent < sharedData.movesReceived){
+      // There is a new move available to be sent to frontend
+      let move = sharedData.getNextMoveInJSON();
+      clientConnection.send(move);
+      console.log("Sent move to frontend: " + JSON.stringify(move, null, 2));
+    }
+    else {
+      // All sent
+      break;
+    }
+  }
+  console.log("Sending finished. Sent: " + sharedData.movesSent + ", received: " + sharedData.movesReceived);
+}
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -165,7 +192,8 @@ function StartListeningMoves(){
         moveIndex++;
         sharedData.movesReceived++;
         sharedData.moveHistory.push(move.chess);
-        console.log("Move count:" + sharedData.moveHistory.length)
+        console.log("Move count:" + sharedData.moveHistory.length);
+        sendMoves();
     });
     call.on('end', function() {
     console.log("Stream ended - game over");

@@ -19,6 +19,7 @@ class App extends Component {
     this.fen = "start";
     this.history = [];
     this.moveIndex = 0;
+    this.connected = false;
     this.state = {
       inspectionMode: false,
     };
@@ -48,9 +49,12 @@ class App extends Component {
 
     client.onopen = () => {
       console.log('WebSocket client connected');
+      this.connected = true;
     };
 
     client.onmessage = (message) => {
+      if(!this.connected) return;
+
       var data;
       try {
         data = JSON.parse(message.data);
@@ -67,9 +71,16 @@ class App extends Component {
 
   executeMove = (moveData) => {
     // { color: 'b', from: 'e5', to: 'f4', flags: 'c', piece: 'p', captured: 'p', san: 'exf4' }]
-    var serverMove = this.game.move({from: moveData.from, to: moveData.to});
+    let moveJson = {from: moveData.from, to: moveData.to};
+    if(moveData.promotion !== "NO_PROMOTION"){
+      moveJson = {from: moveData.from, to: moveData.to, promotion: "q"};
+    }
+
+    var serverMove = this.game.move(moveJson);
     if(serverMove === null){
       console.log("Error - not a valid move: " + JSON.stringify(moveData, null, 2));
+      // Stop connection
+      this.connected = false;
       return;
     }   
 
@@ -77,6 +88,26 @@ class App extends Component {
     this.board.setPosition(this.game.fen());
     this.fen = this.game.fen();
     this.moveIndex = this.moveIndex + 1;
+
+    this.checkGameStatus();
+  }
+
+  checkGameStatus = () => {
+    if(this.game.in_checkmate()){
+      console.log("Game ended in checkmate.")
+    }
+    else if(this.game.in_stalemate()){
+      console.log("Game ended in stalemate.")
+    }
+    else if(this.game.in_draw()){
+      console.log("Game ended in draw.")
+    }
+    else if(this.game.in_threefold_repetition()){
+      console.log("Game ended in threefold repetion.")
+    }
+    else if(this.game.insufficient_material()){
+      console.log("Game ended in insufficient material.")
+    }
   }
 
 

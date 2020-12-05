@@ -55,6 +55,7 @@ namespace TestServer
                     {
                         var move = _shared.MoveHistory[_sentMoveCount];
                         await responseStream.WriteAsync(move);
+                        _logger.Info($"Sent to backend: {PrintMove(move)}");
                         _sentMoveCount++;
                     }
 
@@ -68,6 +69,12 @@ namespace TestServer
             }
 
             return;
+        }
+
+        public string PrintMove(Move move)
+        {
+            var message = $"{move.Chess.StartPosition} to {move.Chess.EndPosition}";
+            return message;
         }
     }
 }

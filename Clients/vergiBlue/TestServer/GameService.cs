@@ -151,9 +151,9 @@ namespace TestServer
 
                         if (Player1 == null || _p1ReqStream == null) throw new Exception("Logical error");
                         Player1.LatestMove = _p1ReqStream.Current;
+                        _shared.MoveHistory.Add(Player1.LatestMove);
                         _logger.Info($"{(Player1.Information.Name + ":").PadRight(12)} Received move {Player1.PrintLatest()}");
                         _logger.Info($"{(Player1.Information.Name + ":").PadRight(12)} {Player1.LatestMove.Diagnostics}");
-
                         if (Player2 == null || !Player2.StreamOpened)
                         {
                             lock (_stateLock) _nextState = GameState.P2NotInitialized;
@@ -168,7 +168,6 @@ namespace TestServer
                         if (Player1 == null || _p2ResStream == null) throw new Exception("Logical error");
                         await _p2ResStream.WriteAsync(Player1.LatestMove);
                         _logger.Info($"Sent p1 move to p2");
-                        _shared.MoveHistory.Add(Player1.LatestMove);
                         lock (_stateLock) _nextState = GameState.P2Req;
                     }
                     else if (_nextState == GameState.P2Req)
@@ -176,6 +175,7 @@ namespace TestServer
                         await _p2ReqStream.MoveNext();
                         if (Player2 == null || _p2ReqStream == null) throw new Exception("Logical error");
                         Player2.LatestMove = _p2ReqStream.Current;
+                        _shared.MoveHistory.Add(Player2.LatestMove);
                         _logger.Info($"{(Player2.Information.Name + ":").PadRight(12)} Received move {Player2.PrintLatest()}");
                         _logger.Info($"{(Player2.Information.Name + ":").PadRight(12)} {Player2.LatestMove.Diagnostics}");
                         lock (_stateLock) _nextState = GameState.P1Res;
@@ -185,7 +185,6 @@ namespace TestServer
                         if (Player2 == null || _p1ResStream == null) throw new Exception("Logical error");
                         await _p1ResStream.WriteAsync(Player2.LatestMove);
                         _logger.Info($"Sent p2 move to p1");
-                        _shared.MoveHistory.Add(Player2.LatestMove);
                         lock (_stateLock) _nextState = GameState.P1Req;
                     }
                 }
