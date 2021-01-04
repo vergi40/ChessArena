@@ -61,22 +61,22 @@ namespace vergiBlue.Pieces
         /// <returns></returns>
         public override IEnumerable<SingleMove> Moves(Board board)
         {
-            var cur = CurrentPosition;
+            var (column, row) = CurrentPosition;
 
             // Basic
-            var move = CanMoveTo((cur.column, cur.row + Direction), board, true);
+            var move = CanMoveTo((column, row + Direction), board, true);
             if (move != null) yield return move;
 
             // Start possibility
-            if (cur.row == 1 || cur.row == 6)
+            if (move != null && (row == 1 || row == 6))
             {
-                move = CanMoveTo((cur.column, cur.row + (Direction * 2)), board, true);
+                move = CanMoveTo((column, row + (Direction * 2)), board, true);
                 if (move != null) yield return move;
             }
 
-            move = CanCapture((cur.column - 1, cur.row + Direction), board);
+            move = CanCapture((column - 1, row + Direction), board);
             if (move != null) yield return move;
-            move = CanCapture((cur.column + 1, cur.row + Direction), board);
+            move = CanCapture((column + 1, row + Direction), board);
             if (move != null) yield return move;
         }
 
