@@ -24,7 +24,7 @@ namespace vergiBlue.ConsoleTools
             var moveHistory = new List<IPlayerMove>();
             var info1 = new StartInformationImplementation() { WhitePlayer = true };
 
-            var player1 = new Logic(info1, false, null, overrideBoard);
+            var player1 = new Logic(info1, null, overrideBoard);
             var board = new BoardPrinter(player1.Board.InterfacePieces, OperatingSystem.IsWindows());
 
             var firstMove = player1.CreateMove();
@@ -33,7 +33,7 @@ namespace vergiBlue.ConsoleTools
             PrintBoardAfterMove(firstMove, "", board);
 
             var info2 = new StartInformationImplementation() { WhitePlayer = false, OpponentMove = firstMove.Move };
-            var player2 = new Logic(info2, false, overrideOpponentMaxDepth, overrideBoard);
+            var player2 = new Logic(info2, overrideOpponentMaxDepth, overrideBoard);
             try
             {
 

@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard;
 using CommonNetStandard.Client;
+using CommonNetStandard.Common;
+using CommonNetStandard.Interface;
 
 namespace vergiBlue.ConsoleTools
 {
@@ -28,13 +30,69 @@ namespace vergiBlue.ConsoleTools
             Log(Environment.NewLine);
 
             Log("Starting logic...");
-            var ai = new Logic(startInformation.Result, connectionTesting);
+            LogicBase ai;
+            if (connectionTesting) ai = new ConnectionTesterLogic(startInformation.Result.WhitePlayer);
+            else  ai = new Logic(startInformation.Result);
 
             Log("Start game loop");
 
             // Inject ai to connection module and play game
             var playTask = grpcClientConnection.Play(ai);
             playTask.Wait();
+        }
+    }
+
+    /// <summary>
+    /// Sends dummy moves
+    /// </summary>
+    class ConnectionTesterLogic : LogicBase
+    {
+        private int _currentIndex;
+        private readonly int _direction;
+
+        private int NextIndex
+        {
+            get
+            {
+                var value = _currentIndex + _direction;
+                _currentIndex += _direction;
+                return value;
+            }
+        }
+
+        public ConnectionTesterLogic(bool isPlayerWhite) : base(isPlayerWhite)
+        {
+            if (isPlayerWhite)
+            {
+                _currentIndex = 1;
+                _direction = 1;
+            }
+            else
+            {
+                _currentIndex = 6;
+                _direction = -1;
+            }
+        }
+
+        public override IPlayerMove CreateMove()
+        {
+            var diagnostics = Diagnostics.CollectAndClear();
+            // Dummy moves for connection testing
+            var move = new PlayerMoveImplementation(
+                new MoveImplementation()
+                {
+                    StartPosition = $"a{_currentIndex}",
+                    EndPosition = $"a{NextIndex}",
+                    PromotionResult = PromotionPieceType.NoPromotion
+                },
+                diagnostics.ToString());
+
+            return move;
+        }
+
+        public override void ReceiveMove(IMove opponentMove)
+        {
+            // Do nothing
         }
     }
 }

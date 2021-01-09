@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using CommandLine;
-using CommonNetStandard;
 using CommonNetStandard.Client;
-using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using CommonNetStandard.LocalImplementation;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
@@ -56,23 +51,9 @@ namespace vergiBlue
             }
         }
 
-        private int _connectionTestIndex = 2;
         public IMove? LatestOpponentMove { get; set; }
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
-
-        private bool _kingInDanger
-        {
-            get
-            {
-                if (LatestOpponentMove?.Check == true)
-                {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-
+        
         public Board Board { get; set; } = new Board();
         public Strategy Strategy { get; set; }
         private OpeningLibrary Openings { get; } = new OpeningLibrary();
@@ -83,25 +64,18 @@ namespace vergiBlue
         public DiagnosticsData PreviousData { get; set; } = new DiagnosticsData();
 
         /// <summary>
-        /// Use dummy moves to test connection with server
-        /// </summary>
-        private readonly bool _connectionTestOverride;
-
-        /// <summary>
         /// For tests. Test environment will handle board initialization
         /// </summary>
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
-            _connectionTestOverride = false;
             Strategy = new Strategy(isPlayerWhite, overrideMaxDepth);
         }
 
-        public Logic(IGameStartInformation startInformation, bool connectionTesting, int? overrideMaxDepth = null, Board? overrideBoard = null) : base(startInformation.WhitePlayer)
+        public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, Board? overrideBoard = null) : base(startInformation.WhitePlayer)
         {
-            _connectionTestOverride = connectionTesting;
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth);
             if(overrideBoard != null) Board = new Board(overrideBoard);
-            else if (!connectionTesting) Board.InitializeEmptyBoard();
+            else Board.InitializeEmptyBoard();
             
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
@@ -109,94 +83,79 @@ namespace vergiBlue
 
         public override IPlayerMove CreateMove()
         {
+            var isMaximizing = IsPlayerWhite;
+            Diagnostics.StartMoveCalculations();
 
-            if (_connectionTestOverride)
+            // Opening
+            if (GameHistory.Count < 10)
             {
-                var diagnostics = Diagnostics.CollectAndClear();
-                // Dummy moves for connection testing
-                var move = new PlayerMoveImplementation(
-                    new MoveImplementation()
-                    {
-                        StartPosition = $"a{_connectionTestIndex--}",
-                        EndPosition = $"a{_connectionTestIndex}",
-                        PromotionResult = PromotionPieceType.NoPromotion
-                    },
-                    diagnostics.ToString());
+                var previousMoves = GetPreviousMoves();
+                var openingMove = Openings.NextMove(previousMoves);
 
-                return move;
+                if (openingMove != null)
+                {
+                    Board.ExecuteMove(openingMove);
+                    TurnCount++;
+                    PreviousData = Diagnostics.CollectAndClear();
+
+                    var result = new PlayerMoveImplementation(
+                        openingMove.ToInterfaceMove(false, false), PreviousData.ToString());
+                    GameHistory.Add(result.Move);
+                    return result;
+                }
             }
-            else
+
+            // Get all available moves and do necessary filtering
+            List<SingleMove> allMoves = Board.Moves(isMaximizing, true, true).ToList();
+            if (allMoves.Count == 0)
             {
-                var isMaximizing = IsPlayerWhite;
-                Diagnostics.StartMoveCalculations();
-
-                // Opening
-                if (GameHistory.Count < 10)
-                {
-                    var previousMoves = GetPreviousMoves();
-                    var openingMove = Openings.NextMove(previousMoves);
-
-                    if(openingMove != null)
-                    {
-                        Board.ExecuteMove(openingMove);
-                        TurnCount++;
-                        PreviousData = Diagnostics.CollectAndClear();
-
-                        var result  = new PlayerMoveImplementation(
-                            openingMove.ToInterfaceMove(false, false), PreviousData.ToString());
-                        GameHistory.Add(result.Move);
-                        return result;
-                    }
-                }
-
-                // Get all available moves and do necessary filtering
-                List<SingleMove> allMoves = Board.Moves(isMaximizing, true, true).ToList();
-                if (allMoves.Count == 0)
-                {
-                    throw new ArgumentException($"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
-                }
-
-                // Reorder moves to improve alpha-beta cutoffs
-                // allMoves = MoveResearch.OrderMoves(allMoves, Board, isMaximizing);
-
-                if(MoveHistory.IsLeaningToDraw(GameHistory))
-                {
-                    var repetionMove = GameHistory[^4];
-                    allMoves.RemoveAll(m =>
-                        m.PrevPos.ToAlgebraic() == repetionMove.StartPosition &&
-                        m.NewPos.ToAlgebraic() == repetionMove.EndPosition);
-
-                }
-                Diagnostics.AddMessage($"Available moves found: {allMoves.Count}. ");
-
-                Strategy.Update(PreviousData, TurnCount);
-                var strategyResult = Strategy.DecideSearchDepth(PreviousData, allMoves, Board);
-                SearchDepth = strategyResult.searchDepth;
-                Phase = strategyResult.gamePhase;
-                var bestMove = AnalyzeBestMove(allMoves);
-
-                if (bestMove == null) throw new ArgumentException($"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
-
-                // Update local
-                Board.ExecuteMove(bestMove);
-                TurnCount++;
-
-                // Endgame checks
-                // TODO should be now read from singlemove
-                var castling = false;
-                var check = Board.IsCheck(IsPlayerWhite);
-                //var checkMate = false;
-                //if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
-                if(bestMove.Promotion) Diagnostics.AddMessage($"Promotion occured at {bestMove.NewPos.ToAlgebraic()}. ");
-
-                PreviousData = Diagnostics.CollectAndClear();
-
-                var move = new PlayerMoveImplementation(
-                    bestMove.ToInterfaceMove(castling, check),
-                    PreviousData.ToString());
-                GameHistory.Add(move.Move);
-                return move;
+                throw new ArgumentException(
+                    $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
             }
+
+            // Reorder moves to improve alpha-beta cutoffs
+            // allMoves = MoveResearch.OrderMoves(allMoves, Board, isMaximizing);
+
+            if (MoveHistory.IsLeaningToDraw(GameHistory))
+            {
+                var repetionMove = GameHistory[^4];
+                allMoves.RemoveAll(m =>
+                    m.PrevPos.ToAlgebraic() == repetionMove.StartPosition &&
+                    m.NewPos.ToAlgebraic() == repetionMove.EndPosition);
+
+            }
+
+            Diagnostics.AddMessage($"Available moves found: {allMoves.Count}. ");
+
+            Strategy.Update(PreviousData, TurnCount);
+            var strategyResult = Strategy.DecideSearchDepth(PreviousData, allMoves, Board);
+            SearchDepth = strategyResult.searchDepth;
+            Phase = strategyResult.gamePhase;
+            var bestMove = AnalyzeBestMove(allMoves);
+
+            if (bestMove == null)
+                throw new ArgumentException(
+                    $"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
+
+            // Update local
+            Board.ExecuteMove(bestMove);
+            TurnCount++;
+
+            // Endgame checks
+            // TODO should be now read from singlemove
+            var castling = false;
+            var check = Board.IsCheck(IsPlayerWhite);
+            //var checkMate = false;
+            //if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
+            if (bestMove.Promotion) Diagnostics.AddMessage($"Promotion occured at {bestMove.NewPos.ToAlgebraic()}. ");
+
+            PreviousData = Diagnostics.CollectAndClear();
+
+            var move = new PlayerMoveImplementation(
+                bestMove.ToInterfaceMove(castling, check),
+                PreviousData.ToString());
+            GameHistory.Add(move.Move);
+            return move;
         }
 
         private IList<SingleMove> GetPreviousMoves()
@@ -222,7 +181,6 @@ namespace vergiBlue
         private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves)
         {
             var isMaximizing = IsPlayerWhite;
-
 
             if (Phase == GamePhase.MidEndGame || Phase == GamePhase.EndGame)
             {
@@ -258,48 +216,34 @@ namespace vergiBlue
 
             LatestOpponentMove = opponentMove;
 
-            if (!_connectionTestOverride)
+            // Basic validation
+            var move = new SingleMove(opponentMove);
+            if (Board.ValueAt(move.PrevPos) == null)
             {
-                // Basic validation
-                var move = new SingleMove(opponentMove);
-                if (Board.ValueAt(move.PrevPos) == null)
-                {
-                    throw new ArgumentException($"Player [isWhite={!IsPlayerWhite}] Tried to move a from position that is empty");
-                }
-
-                if (Board.ValueAt(move.PrevPos) is PieceBase opponentPiece)
-                {
-                    if (opponentPiece.IsWhite == IsPlayerWhite)
-                    {
-                        throw new ArgumentException($"Opponent tried to move player piece");
-                    }
-                }
-
-                // TODO intelligent analyzing what actually happened
-
-                if (Board.ValueAt(move.NewPos) is PieceBase playerPiece)
-                {
-                    // Opponent captures player targetpiece
-                    if (playerPiece.IsWhite == IsPlayerWhite) move.Capture = true;
-                    else throw new ArgumentException("Opponent tried to capture own piece.");
-                }
-
-                Board.ExecuteMove(move);
-                GameHistory.Add(opponentMove);
-                TurnCount++;
+                throw new ArgumentException(
+                    $"Player [isWhite={!IsPlayerWhite}] Tried to move a from position that is empty");
             }
-        }
 
-        private double BestValue(bool isMaximizing)
-        {
-            if (isMaximizing) return 1000000;
-            else return -1000000;
-        }
+            if (Board.ValueAt(move.PrevPos) is PieceBase opponentPiece)
+            {
+                if (opponentPiece.IsWhite == IsPlayerWhite)
+                {
+                    throw new ArgumentException($"Opponent tried to move player piece");
+                }
+            }
 
-        private double WorstValue(bool isMaximizing)
-        {
-            if (isMaximizing) return -1000000;
-            else return 1000000;
+            // TODO intelligent analyzing what actually happened
+
+            if (Board.ValueAt(move.NewPos) is PieceBase playerPiece)
+            {
+                // Opponent captures player targetpiece
+                if (playerPiece.IsWhite == IsPlayerWhite) move.Capture = true;
+                else throw new ArgumentException("Opponent tried to capture own piece.");
+            }
+
+            Board.ExecuteMove(move);
+            GameHistory.Add(opponentMove);
+            TurnCount++;
         }
 
         public static bool IsOutside((int, int) target)
