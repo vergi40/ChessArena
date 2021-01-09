@@ -31,8 +31,8 @@ namespace vergiBlue
     {
         // Game strategic variables
 
-        public GamePhase Phase { get; set; }
         public int SearchDepth { get; set; } = 4;
+        public Strategy Strategy { get; set; }
 
         /// <summary>
         /// Total game turn count
@@ -55,7 +55,6 @@ namespace vergiBlue
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
         
         public Board Board { get; set; } = new Board();
-        public Strategy Strategy { get; set; }
         private OpeningLibrary Openings { get; } = new OpeningLibrary();
 
         /// <summary>
@@ -81,13 +80,32 @@ namespace vergiBlue
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
         }
 
+        /// <summary>
+        /// Create move from arbitral situation
+        /// </summary>
+        /// <param name="searchDepth"></param>
+        /// <param name="checkOpenings"></param>
+        /// <param name="previousMoveCount"></param>
+        /// <returns></returns>
+        public IPlayerMove CreateMoveWithDepth(int searchDepth, bool checkOpenings = false, int previousMoveCount = 0)
+        {
+            TurnCount = previousMoveCount;
+            return CreateNewMove(checkOpenings, searchDepth);
+        }
+
+
         public override IPlayerMove CreateMove()
+        {
+            return CreateNewMove(true);
+        }
+
+        private IPlayerMove CreateNewMove(bool checkOpenings, int? overrideSearchDepth = null)
         {
             var isMaximizing = IsPlayerWhite;
             Diagnostics.StartMoveCalculations();
 
             // Opening
-            if (GameHistory.Count < 10)
+            if (GameHistory.Count < 10 && checkOpenings)
             {
                 var previousMoves = GetPreviousMoves();
                 var openingMove = Openings.NextMove(previousMoves);
@@ -113,24 +131,27 @@ namespace vergiBlue
                     $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
             }
 
-            // Reorder moves to improve alpha-beta cutoffs
-            // allMoves = MoveResearch.OrderMoves(allMoves, Board, isMaximizing);
-
             if (MoveHistory.IsLeaningToDraw(GameHistory))
             {
                 var repetionMove = GameHistory[^4];
                 allMoves.RemoveAll(m =>
                     m.PrevPos.ToAlgebraic() == repetionMove.StartPosition &&
                     m.NewPos.ToAlgebraic() == repetionMove.EndPosition);
-
             }
 
             Diagnostics.AddMessage($"Available moves found: {allMoves.Count}. ");
 
-            Strategy.Update(PreviousData, TurnCount);
-            var strategyResult = Strategy.DecideSearchDepth(PreviousData, allMoves, Board);
-            SearchDepth = strategyResult.searchDepth;
-            Phase = strategyResult.gamePhase;
+            // 
+            if(overrideSearchDepth == null)
+            {
+                Strategy.Update(PreviousData, TurnCount);
+                SearchDepth = Strategy.DecideSearchDepth(PreviousData, allMoves, Board);
+            }
+            else
+            {
+                SearchDepth = overrideSearchDepth.Value;
+            }
+            
             var bestMove = AnalyzeBestMove(allMoves);
 
             if (bestMove == null)
@@ -182,7 +203,7 @@ namespace vergiBlue
         {
             var isMaximizing = IsPlayerWhite;
 
-            if (Phase == GamePhase.MidEndGame || Phase == GamePhase.EndGame)
+            if (Strategy.Phase == GamePhase.MidEndGame || Strategy.Phase == GamePhase.EndGame)
             {
                 var checkMate = MoveResearch.ImmediateCheckMateAvailable(allMoves, Board, isMaximizing);
                 if (checkMate != null) return checkMate;

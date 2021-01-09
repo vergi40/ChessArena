@@ -29,7 +29,7 @@ namespace vergiBlueTests
             // 1
             //  ABCDEFGH
             var player = new Logic(true);
-            player.Phase = GamePhase.EndGame;
+            player.Strategy.Phase = GamePhase.EndGame;
             player.TurnCount = 20;
             player.SearchDepth = 4;
 
@@ -63,9 +63,7 @@ namespace vergiBlueTests
             // 1
             //  ABCDEFGH
             var player = new Logic(true);
-            player.Phase = GamePhase.EndGame;
-            player.TurnCount = 20;
-            player.SearchDepth = 4;
+            player.Strategy.Phase = GamePhase.EndGame;
 
             var board = new Board();
             // 
@@ -84,7 +82,7 @@ namespace vergiBlueTests
 
             player.Board = new Board(board);
 
-            var playerMove = player.CreateMove();
+            var playerMove = player.CreateMoveWithDepth(4);
             playerMove.Move.CheckMate.ShouldBeTrue();
             Logger.LogMessage($"Test: {nameof(WhiteRooksShouldCheckMateInOneTurn)}, diagnostics: {playerMove.Diagnostics}");
         }
@@ -105,14 +103,10 @@ namespace vergiBlueTests
             // 1
             //  ABCDEFGH
             var player = new Logic(true);
-            player.Phase = GamePhase.EndGame;
-            player.TurnCount = 20;
-            player.SearchDepth = 4;
+            player.Strategy.Phase = GamePhase.EndGame;
 
             var opponent = new Logic(false);
-            opponent.Phase = GamePhase.EndGame;
-            opponent.TurnCount = 20;
-            opponent.SearchDepth = 4;
+            opponent.Strategy.Phase = GamePhase.EndGame;
 
             var board = new Board();
             // 
@@ -132,14 +126,14 @@ namespace vergiBlueTests
             player.Board = new Board(board);
             opponent.Board = new Board(board);
 
-            var playerMove = player.CreateMove();
+            var playerMove = player.CreateMoveWithDepth(4);
             opponent.ReceiveMove(playerMove.Move);
 
-            var opponentMove = opponent.CreateMove();
+            var opponentMove = opponent.CreateMoveWithDepth(4);
             player.ReceiveMove(opponentMove.Move);
 
 
-            var playerMove2 = player.CreateMove();
+            var playerMove2 = player.CreateMoveWithDepth(4);
             playerMove2.Move.CheckMate.ShouldBe(true);
             Logger.LogMessage($"Test: {nameof(WhiteRooksShouldCheckMateInTwoTurns)}, diagnostics: {playerMove2.Diagnostics}");
         }
@@ -159,14 +153,12 @@ namespace vergiBlueTests
             // 1
             //  ABCDEFGH
             var player = new Logic(true);
-            player.Phase = GamePhase.EndGame;
+            player.Strategy.Phase = GamePhase.EndGame;
             player.TurnCount = 21;
             player.SearchDepth = 4;
 
             var opponent = new Logic(false);
-            opponent.Phase = GamePhase.EndGame;
-            opponent.TurnCount = 21;
-            opponent.SearchDepth = 4;
+            opponent.Strategy.Phase = GamePhase.EndGame;
             opponent.LatestOpponentMove = new MoveImplementation(){Check = true};
 
             var board = new Board();
@@ -190,7 +182,7 @@ namespace vergiBlueTests
             player.Board = new Board(board);
             opponent.Board = new Board(board);
 
-            var opponentMove = opponent.CreateMove();
+            var opponentMove = opponent.CreateMoveWithDepth(4);
             opponentMove.Move.EndPosition.ShouldBe("g7");
             Logger.LogMessage($"Test: {nameof(KingShouldMoveAwayFromEaten)}, diagnostics: {opponentMove.Diagnostics}");
         }
@@ -213,9 +205,7 @@ namespace vergiBlueTests
             // 1    |
             //  ABCD EFGH
             var player = new Logic(true);
-            player.Phase = GamePhase.EndGame;
-            player.TurnCount = 20;
-            player.SearchDepth = 3;
+            player.Strategy.Phase = GamePhase.EndGame;
 
             var previousMove = new MoveImplementation()
             {
@@ -247,7 +237,7 @@ namespace vergiBlueTests
 
             player.Board = new Board(board);
 
-            var playerMove = player.CreateMove();
+            var playerMove = player.CreateMoveWithDepth(3);
             playerMove.Move.EndPosition.ShouldNotBe("f6");
         }
 

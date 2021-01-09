@@ -32,15 +32,7 @@ namespace vergiBlueTests
 
             var player = new Logic(true);
             var opponent = new Logic(false);
-
-            var data = new DiagnosticsData()
-            {
-                OverrideSearchDepth = 8,
-                OverrideGamePhase = GamePhase.EndGame
-            };
-            player.PreviousData = data;
-            opponent.PreviousData = data;
-
+            
             var board = new Board();
             var pieces = new List<PieceBase>
             {
@@ -70,7 +62,7 @@ namespace vergiBlueTests
             player.Board = new Board(board);
             opponent.Board = new Board(board);
 
-            var playerMove = player.CreateMove();
+            var playerMove = player.CreateMoveWithDepth(8);
             playerMove.Move.EndPosition.ShouldBe("e6");
 
         }

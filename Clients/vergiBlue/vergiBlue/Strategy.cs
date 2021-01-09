@@ -53,15 +53,12 @@ namespace vergiBlue
             TurnCount = turnCount;
         }
 
-        public (int searchDepth, GamePhase gamePhase) DecideSearchDepth(DiagnosticsData previous, List<SingleMove> allMoves, Board board)
+        public int DecideSearchDepth(DiagnosticsData previous, List<SingleMove> allMoves, Board board)
         {
-            // Testing
-            if (previous.OverrideSearchDepth != null) return (previous.OverrideSearchDepth.Value, previous.OverrideGamePhase);
-
             _previous = previous;
 
             AnalyzeGamePhase(allMoves.Count, board);
-            return (SearchDepth, Phase);
+            return SearchDepth;
         }
 
 

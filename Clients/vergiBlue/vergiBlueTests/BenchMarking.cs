@@ -6,7 +6,9 @@ namespace vergiBlueTests
 {
     /// <summary>
     /// Test how much time and evaluations are needed for various situations. Take notes and compare later when
-    /// optimizing and logic is improved
+    /// optimizing and logic is improved.
+    ///
+    /// Manually run after each optimization update. Laptop power mode -> best performance
     /// </summary>
     [TestClass]
     public class BenchMarking
@@ -34,25 +36,11 @@ namespace vergiBlueTests
             board.ExecuteMove(new SingleMove("g1", "f3"));
             board.ExecuteMove(new SingleMove("b8", "c6"));
             board.ExecuteMove(new SingleMove("f1", "b5"));
-
-            var data = new DiagnosticsData()
-            {
-                OverrideSearchDepth = 5
-            };
-
+            
             var player = new Logic(false);
-            player.PreviousData = data;
-
-            //var previousMove = new Move()
-            //{
-            //    StartPosition = "f1",
-            //    EndPosition = "b5"
-            //};
-            //player.LatestOpponentMove = previousMove;
-            //player.GameHistory.Add(previousMove);
             player.Board = new Board(board);
 
-            var playerMove = player.CreateMove();
+            var playerMove = player.CreateMoveWithDepth(5);
             var diagnostics = playerMove.Diagnostics;
             Logger.LogMessage($"Test: {nameof(RuyLopez_SearchDepth5_Black)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. {diagnostics.ToString()}");
 
@@ -101,7 +89,12 @@ namespace vergiBlueTests
             // Test: RuyLopez_SearchDepth5_Black. Move: d8 to f6. Board evaluations: 305334. Check evaluations: 1033. Time elapsed: 1568 ms. Available moves found: 31.
             // Depth 5
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to d4. Board evaluations: 1532458. Check evaluations: 1030. Time elapsed: 7147 ms. Available moves found: 31.
-            // 
+            // --> disabled for now
+
+
+            // Fix pawn bug
+            // 10.1. Depth 5
+            // Test: RuyLopez_SearchDepth5_Black. Move: c6 to d4. Board evaluations: 1345201. Check evaluations: 967. Time elapsed: 5653 ms. Available moves found: 30.
         }
     }
 }
