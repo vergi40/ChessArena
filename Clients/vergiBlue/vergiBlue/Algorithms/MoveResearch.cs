@@ -8,6 +8,22 @@ namespace vergiBlue.Algorithms
 {
     public class MoveResearch
     {
+        public static IEnumerable<(double evaluationScore, SingleMove move)> GetMoveScoreList(IList<SingleMove> moves,
+            int searchDepth, Board board, bool isMaximizing)
+        {
+            var evaluated = new List<(double, SingleMove)>();
+
+            foreach (var move in moves)
+            {
+                var newBoard = new Board(board, move);
+                var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
+                evaluated.Add((value, move));
+            }
+
+            return evaluated;
+        }
+
+
         public static IEnumerable<(double evaluationScore, SingleMove move)> GetMoveScoreListParallel(IList<SingleMove> moves, int searchDepth, Board board, bool isMaximizing)
         {
             var evaluated = new List<(double, SingleMove)>();
@@ -15,17 +31,17 @@ namespace vergiBlue.Algorithms
 
             // https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/how-to-write-a-parallel-for-loop-with-thread-local-variables
             Parallel.ForEach(moves,
-                () => (0.0, new SingleMove("a1", "a1")), // Local initialization. Need to inform compiler the type by initializing
+                () => new List<(double, SingleMove)>(), // Local initialization. Need to inform compiler the type by initializing
                 (move, loopState, localState) => // Predefined lambda expression (Func<SingleMove, ParallelLoopState, thread-local variable, body>)
                 {
                     var newBoard = new Board(board, move);
                     var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
-                    localState = (value, move);
+                    localState.Add((value, move));
                     return localState;
                 },
                 (finalResult) =>
                 {
-                    lock (syncObject) evaluated.Add(finalResult);
+                    lock (syncObject) evaluated.AddRange(finalResult);
                 });
 
             return evaluated;

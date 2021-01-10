@@ -198,8 +198,9 @@ namespace vergiBlue
         /// 
         /// </summary>
         /// <param name="allMoves"></param>
+        /// <param name="useParallelComputation"></param>
         /// <returns></returns>
-        private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves)
+        private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves, bool useParallelComputation = true)
         {
             var isMaximizing = IsPlayerWhite;
 
@@ -220,11 +221,23 @@ namespace vergiBlue
                 }
             }
 
-            // TODO separate logic to different layers. e.g. player depth at 2, 4 and when to use simple isCheckMate
-            var evaluated = MoveResearch.GetMoveScoreListParallel(allMoves, SearchDepth, Board, isMaximizing);
-            SingleMove? bestMove = MoveResearch.SelectBestMove(evaluated, isMaximizing);
+            IList<(double, SingleMove)> evaluated;
+            if (useParallelComputation)
+            {
+                evaluated = MoveResearch
+                    .GetMoveScoreListParallel(allMoves, SearchDepth, Board, isMaximizing).ToList();
+                
+                if(evaluated.Count != allMoves.Count)
+                {
+                    throw new ArgumentException($"Logical error - parallel computing lost moves during evaluation.");
+                }
+            }
+            else
+            {
+                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing).ToList();
+            }
             
-            return bestMove;
+            return MoveResearch.SelectBestMove(evaluated, isMaximizing);
         }
 
 
