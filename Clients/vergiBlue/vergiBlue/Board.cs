@@ -164,6 +164,14 @@ namespace vergiBlue
             }
         }
 
+        public void AddNew(params PieceBase[] pieces)
+        {
+            foreach (var piece in pieces)
+            {
+                AddNew(piece);
+            }
+        }
+
         private int Direction(bool isWhite)
         {
             if (isWhite) return 1;

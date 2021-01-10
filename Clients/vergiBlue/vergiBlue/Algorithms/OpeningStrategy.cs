@@ -124,7 +124,7 @@ namespace vergiBlue.Algorithms
                 var index = _random.Next(Openings.Count);
                 var strategy = Openings[index];
 
-                Diagnostics.AddMessage($"Chosen opening strategy: {strategy.Name}.");
+                Diagnostics.AddMessage($"Chosen opening strategy: {strategy.Name}. ");
                 return strategy.Moves.First();
             }
             else
@@ -137,7 +137,7 @@ namespace vergiBlue.Algorithms
                 var index = _random.Next(similarOpenings.Count);
                 var strategy = similarOpenings[index];
 
-                Diagnostics.AddMessage($"Using opening strategy {strategy.Name}.");
+                Diagnostics.AddMessage($"Using opening strategy {strategy.Name}. ");
                 return strategy.Moves[previousMoves.Count];
             }
         }

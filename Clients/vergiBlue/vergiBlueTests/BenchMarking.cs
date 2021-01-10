@@ -1,6 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Collections.Generic;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using vergiBlue;
+using vergiBlue.Pieces;
 
 namespace vergiBlueTests
 {
@@ -14,7 +16,25 @@ namespace vergiBlueTests
     public class BenchMarking
     {
         [TestMethod]
-        public void RuyLopez_SearchDepth5_Black()
+        public void RunAll()
+        {
+            // Ruy lopez opening
+            RuyLopez_Black(5);
+
+            // https://thechessworld.com/articles/endgame/7-greatest-chess-endings/
+            // #1 at pair23
+            GreatestEndings_1_MidGame(5);
+
+
+        // New benchmarking framework with 2 game tests.
+        // Test: RuyLopez_Black.Move: c6 to d4.Depth 5
+        // Board evaluations: 1345201.Check evaluations: 967.Time elapsed: 5741 ms.Available moves found: 30.
+        // Test: GreatestEndings_1_MidGame.Move: e4 to f3.Depth 5
+        // Board evaluations: 3372180.Check evaluations: 1473.Time elapsed: 11846 ms.Available moves found: 40.
+        }
+
+        [TestMethod]
+        public void RuyLopez_Black(int searchDepth)
         {
             // 8R BQ|KBNR
             // 7PPPP| PPP
@@ -40,10 +60,10 @@ namespace vergiBlueTests
             var player = new Logic(false);
             player.Board = new Board(board);
 
-            var playerMove = player.CreateMoveWithDepth(5);
+            var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;
-            Logger.LogMessage($"Test: {nameof(RuyLopez_SearchDepth5_Black)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. {diagnostics.ToString()}");
-
+            Logger.LogMessage($"Test: {nameof(RuyLopez_Black)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
+            Logger.LogMessage($"{diagnostics.ToString()}");
             // 24.10. depth 4
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to b8. Board evaluations: 2025886. Check evaluations: 1023. Time elapsed: 31392 ms. Available moves found: 31.
 
@@ -95,6 +115,52 @@ namespace vergiBlueTests
             // Fix pawn bug
             // 10.1. Depth 5
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to d4. Board evaluations: 1345201. Check evaluations: 967. Time elapsed: 5653 ms. Available moves found: 30.
+        }
+
+        public void GreatestEndings_1_MidGame(int searchDepth)
+        {
+            var board = new Board();
+            var pieces = new List<PieceBase>
+            {
+                new Pawn(true, "a4"),
+                new Pawn(true, "c3"),
+                new Pawn(true, "c4"),
+                new Pawn(true, "d4"),
+                new Pawn(true, "f4"),
+                new Pawn(true, "g3"),
+                new Pawn(true, "h4"),
+                new Pawn(false, "a7"),
+                new Pawn(false, "b6"),
+                new Pawn(false, "c7"),
+                new Pawn(false, "d5"),
+                new Pawn(false, "e6"),
+                new Pawn(false, "g5"),
+                new Pawn(false, "h7"),
+                new Pawn(false, "c5"),
+                new Rook(true, "a1"),
+                new Rook(true, "e1"),
+                new Rook(false, "e8"),
+                new Rook(false, "f7"),
+                new Bishop(true, "d3"),
+                new Knight(false, "a5"),
+                new Queen(true, "e4"),
+                new Queen(false, "d7")
+            };
+            board.AddNew(pieces);
+
+            // 
+            var whiteKing = new King(true, "g2");
+            var blackKing = new King(false, "f8");
+            board.AddNew(whiteKing, blackKing);
+            board.Kings = (whiteKing, blackKing);
+
+            var player = new Logic(true);
+            player.Board = new Board(board);
+
+            var playerMove = player.CreateMoveWithDepth(searchDepth);
+            var diagnostics = playerMove.Diagnostics;
+            Logger.LogMessage($"Test: {nameof(GreatestEndings_1_MidGame)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
+            Logger.LogMessage($"{diagnostics.ToString()}");
         }
     }
 }
