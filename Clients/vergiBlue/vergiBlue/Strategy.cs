@@ -8,6 +8,12 @@ namespace vergiBlue
 {
     public class Strategy
     {
+        /// <summary>
+        /// Try to do calculations in same time scale as target. Milliseconds.
+        /// Can change for each turn, based on how much total time there is left. 
+        /// </summary>
+        public int TargetTime { get; set; } = 5000;
+        
         public bool IsPlayerWhite { get; }
         private DiagnosticsData _previous { get; set; } = new DiagnosticsData();
         public GamePhase Phase { get; set; }
@@ -56,9 +62,75 @@ namespace vergiBlue
         public int DecideSearchDepth(DiagnosticsData previous, List<SingleMove> allMoves, Board board)
         {
             _previous = previous;
+            var previousDepth = SearchDepth;
 
-            AnalyzeGamePhase(allMoves.Count, board);
-            return SearchDepth;
+            // Previous was opening move from database
+            if (previous.EvaluationCount == 0 && previous.CheckCount == 0)
+            {
+                return SearchDepth;
+            }
+
+            var maxDepth = GetMaxDepthForCurrentBoard(board);
+            var previousEstimate = 0;
+            for (int i = 2; i <= maxDepth; i++)
+            {
+                var estimation = AssessTimeForMiniMaxDepth(i, allMoves, board, previousDepth, previous);
+                
+                // Use 25% tolerance for target time
+                if (estimation > TargetTime * 1.25)
+                {
+                    SearchDepth = i - 1;
+                    Diagnostics.AddMessage($"Using search depth {SearchDepth}. Time estimation was {previousEstimate} ms.");
+                    return SearchDepth;
+                }
+                else previousEstimate = estimation;
+            }
+
+            SearchDepth = maxDepth;
+            Diagnostics.AddMessage($"Failed to assess - using search depth {SearchDepth}. ");
+            return maxDepth;
+            //AnalyzeGamePhase(allMoves.Count, board);
+            //return SearchDepth;
+        }
+
+        private int AssessTimeForMiniMaxDepth(int depth, IList<SingleMove> availableMoves, Board board,
+            int previousDepth, DiagnosticsData previousData)
+        {
+            var previousTime = previousData.TimeElapsed.TotalMilliseconds;
+            var prevousEvalCount = previousData.EvaluationCount + previousData.CheckCount;
+            
+            // Need a equation to model evalcount <-> time
+            // movecount ^ depth = evalcount
+            // evalcount correlates to time
+
+            // Estimated evaluation speed. moves per millisecond
+            // Speed = count / time
+            var previousEvalSpeed = prevousEvalCount / previousTime;
+            
+            var evalCount = Math.Pow(Math.Max(availableMoves.Count, 6), depth);
+            // lets say 20 ^ 5 = 3 200 000
+            
+            // Estimated total time with previous speed
+            // Time = count /  speed
+            var timeEstimate = evalCount / previousEvalSpeed;
+
+            // Increase estimate proportionally depending of piece count
+            // All pieces -> use as is
+            // 1 piece -> 1/16 of the time
+            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+            var factor = (double)powerPieces / 16;
+            //var factor = 0.5 + (double)powerPieces / 32;
+
+            return (int) (timeEstimate * factor);
+        }
+        private int GetMaxDepthForCurrentBoard(Board board)
+        {
+            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+            if (powerPieces > 9) return 5;
+            if (powerPieces > 7) return 6;
+            if (powerPieces > 6) return 7;
+            if (powerPieces > 5) return 9;
+            return 12;
         }
 
 

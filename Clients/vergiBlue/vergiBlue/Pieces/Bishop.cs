@@ -20,7 +20,7 @@ namespace vergiBlue.Pieces
         public Bishop(bool isWhite, string position) : base(isWhite, position)
         {
             Identity = 'B';
-            RelativeStrength = StrengthTable.Pawn * Direction;
+            RelativeStrength = StrengthTable.Bishop * Direction;
         }
 
         public override IEnumerable<SingleMove> Moves(Board board)

@@ -127,6 +127,8 @@ namespace vergiBlue
             List<SingleMove> allMoves = Board.Moves(isMaximizing, true, true).ToList();
             if (allMoves.Count == 0)
             {
+                // Game ended to stalemate
+                
                 throw new ArgumentException(
                     $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
             }
@@ -243,12 +245,7 @@ namespace vergiBlue
 
         public sealed override void ReceiveMove(IMove? opponentMove)
         {
-            if(opponentMove == null)
-            {
-                throw new ArgumentException($"Received null move. Error or game has ended.");
-            }
-
-            LatestOpponentMove = opponentMove;
+            LatestOpponentMove = opponentMove ?? throw new ArgumentException($"Received null move. Error or game has ended.");
 
             // Basic validation
             var move = new SingleMove(opponentMove);
@@ -258,21 +255,26 @@ namespace vergiBlue
                     $"Player [isWhite={!IsPlayerWhite}] Tried to move a from position that is empty");
             }
 
-            if (Board.ValueAt(move.PrevPos) is PieceBase opponentPiece)
+            var from = Board.ValueAt(move.PrevPos);
+            if (from?.IsWhite == IsPlayerWhite)
             {
-                if (opponentPiece.IsWhite == IsPlayerWhite)
-                {
-                    throw new ArgumentException($"Opponent tried to move player piece");
-                }
+                throw new ArgumentException($"Opponent tried to move player piece");
             }
 
             // TODO intelligent analyzing what actually happened
 
-            if (Board.ValueAt(move.NewPos) is PieceBase playerPiece)
+            var targetPosition = Board.ValueAt(move.NewPos);
+            if (targetPosition != null)
             {
-                // Opponent captures player targetpiece
-                if (playerPiece.IsWhite == IsPlayerWhite) move.Capture = true;
-                else throw new ArgumentException("Opponent tried to capture own piece.");
+                if (targetPosition.IsWhite == IsPlayerWhite)
+                {
+                    // Opponent captures player targetpiece
+                    move.Capture = true;
+                }
+                else
+                {
+                    throw new ArgumentException("Opponent tried to capture own piece.");
+                }
             }
 
             Board.ExecuteMove(move);
