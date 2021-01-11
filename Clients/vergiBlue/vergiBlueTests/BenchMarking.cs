@@ -26,14 +26,25 @@ namespace vergiBlueTests
             GreatestEndings_1_MidGame(5);
 
 
-        // New benchmarking framework with 2 game tests.
-        // Test: RuyLopez_Black.Move: c6 to d4.Depth 5
-        // Board evaluations: 1345201.Check evaluations: 967.Time elapsed: 5741 ms.Available moves found: 30.
-        // Test: GreatestEndings_1_MidGame.Move: e4 to f3.Depth 5
-        // Board evaluations: 3372180.Check evaluations: 1473.Time elapsed: 11846 ms.Available moves found: 40.
+            // New benchmarking framework with 2 game tests.
+            // Test: RuyLopez_Black.Move: c6 to d4.Depth 5
+            // Board evaluations: 1345201.Check evaluations: 967.Time elapsed: 5741 ms.Available moves found: 30.
+            // Test: GreatestEndings_1_MidGame.Move: e4 to f3.Depth 5
+            // Board evaluations: 3372180.Check evaluations: 1473.Time elapsed: 11846 ms.Available moves found: 40.
+
+            // 18sec. Changed sort methods to orderBy. Maybe need to revert?
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 1345201. Check evaluations: 967. Time elapsed: 6133 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 3372180. Check evaluations: 1471. Time elapsed: 11884 ms. Available moves found: 40.
+
+            // 16.1 sec. Sort evaluated moves. OrderBy captured moves.
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 1345201. Check evaluations: 967. Time elapsed: 5068 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 3372180. Check evaluations: 1471. Time elapsed: 10984 ms. Available moves found: 40.
         }
 
-        [TestMethod]
         public void RuyLopez_Black(int searchDepth)
         {
             // 8R BQ|KBNR
@@ -62,8 +73,8 @@ namespace vergiBlueTests
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;
-            Logger.LogMessage($"Test: {nameof(RuyLopez_Black)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
-            Logger.LogMessage($"{diagnostics.ToString()}");
+            Logger.LogMessage($"// Test: {nameof(RuyLopez_Black)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
+            Logger.LogMessage($"// {diagnostics.ToString()}");
             // 24.10. depth 4
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to b8. Board evaluations: 2025886. Check evaluations: 1023. Time elapsed: 31392 ms. Available moves found: 31.
 
@@ -159,8 +170,8 @@ namespace vergiBlueTests
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;
-            Logger.LogMessage($"Test: {nameof(GreatestEndings_1_MidGame)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
-            Logger.LogMessage($"{diagnostics.ToString()}");
+            Logger.LogMessage($"// Test: {nameof(GreatestEndings_1_MidGame)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
+            Logger.LogMessage($"// {diagnostics.ToString()}");
         }
     }
 }

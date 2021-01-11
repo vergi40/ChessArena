@@ -215,7 +215,7 @@ namespace vergiBlue
                 if (twoTurnCheckMates.Count > 1)
                 {
                     var evaluatedCheckMates = MoveResearch.GetMoveScoreListParallel(twoTurnCheckMates, SearchDepth, Board, isMaximizing);
-                    return MoveResearch.SelectBestMove(evaluatedCheckMates, isMaximizing);
+                    return MoveResearch.SelectBestMove(evaluatedCheckMates, isMaximizing, true);
                 }
                 else if (twoTurnCheckMates.Count > 0)
                 {
@@ -226,6 +226,7 @@ namespace vergiBlue
             IList<(double, SingleMove)> evaluated;
             if (useParallelComputation)
             {
+                // CPU profiler - first breakpoint here
                 evaluated = MoveResearch
                     .GetMoveScoreListParallel(allMoves, SearchDepth, Board, isMaximizing).ToList();
                 
@@ -239,7 +240,8 @@ namespace vergiBlue
                 evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing).ToList();
             }
             
-            return MoveResearch.SelectBestMove(evaluated, isMaximizing);
+            return MoveResearch.SelectBestMove(evaluated, isMaximizing, true);
+            // CPU profiler - second breakpoint here
         }
 
 

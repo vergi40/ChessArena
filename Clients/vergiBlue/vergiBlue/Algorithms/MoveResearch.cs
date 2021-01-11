@@ -47,34 +47,10 @@ namespace vergiBlue.Algorithms
             return evaluated;
         }
 
-        public static SingleMove? SelectBestMove(IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, bool isMaximizing)
+        public static SingleMove? SelectBestMove(IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, bool isMaximizing, bool prioritizeCaptures)
         {
-            SingleMove? bestMove = null;
-            var bestValue = WorstValue(isMaximizing);
-
-            foreach (var tuple in evaluationList)
-            {
-                var value = tuple.Item1;
-                var singleMove = tuple.Item2;
-                if (isMaximizing)
-                {
-                    if (value > bestValue)
-                    {
-                        bestValue = value;
-                        bestMove = singleMove;
-                    }
-                }
-                else
-                {
-                    if (value < bestValue)
-                    {
-                        bestValue = value;
-                        bestMove = singleMove;
-                    }
-                }
-            }
-
-            return bestMove;
+            var sorted = OrderEvaluatedMoves(evaluationList, isMaximizing, prioritizeCaptures);
+            return sorted.First().move;
         }
 
         private static double BestValue(bool isMaximizing)
@@ -140,17 +116,43 @@ namespace vergiBlue.Algorithms
             return list;
         }
 
-        public static List<SingleMove> OrderMovesByEvaluation(List<SingleMove> moves, Board board, bool isMaximizing)
+        public static IList<SingleMove> OrderMovesByEvaluation(IList<SingleMove> moves, Board board, bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
-            var list = CreateEvaluationList(moves, board, isMaximizing).ToList();
-            list.Sort(Compare);
+            var list = CreateEvaluationList(moves, board, isMaximizing);
+            var sorted = SortEvaluatedMoves(list, isMaximizing, true);
+            return sorted.Select(m => m.move).ToList();
+        }
+
+        /// <summary>
+        /// Use C# Sort. Bit quicker than <see cref="OrderEvaluatedMoves"/>
+        /// </summary>
+        /// <param name="evaluationList"></param>
+        /// <param name="isMaximizing"></param>
+        /// <param name="prioritizeCaptures"></param>
+        /// <returns></returns>
+        private static IList<(double eval, SingleMove move)> SortEvaluatedMoves(IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, 
+            bool isMaximizing, bool prioritizeCaptures)
+        {
+            // Sort moves by evaluation score they produce
+            var sorted = evaluationList.ToList();
+            sorted.Sort(Compare);
 
             int Compare((double eval, SingleMove move) move1, (double eval, SingleMove move) move2)
             {
-                if (Math.Abs(move1.eval - move2.eval) < 1e-6) return 0;
+                if (Math.Abs(move1.eval - move2.eval) < 1e-6)
+                {
+                    if (prioritizeCaptures)
+                    {
+                        return move1.move.Capture.CompareTo(move2.move.Capture);
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
 
-                if(!isMaximizing)
+                if (!isMaximizing)
                 {
                     if (move1.eval > move2.eval) return 1;
                     return -1;
@@ -163,12 +165,51 @@ namespace vergiBlue.Algorithms
             }
 
             // 
-            return list.Select(m => m.move).ToList();
+            return sorted;
         }
 
-        public static List<SingleMove> OrderMovesByCapture(List<SingleMove> moves)
+        /// <summary>
+        /// Uses OrderBy
+        /// </summary>
+        /// <param name="evaluationList"></param>
+        /// <param name="isMaximizing"></param>
+        /// <param name="prioritizeCaptures"></param>
+        /// <returns></returns>
+        private static IList<(double eval, SingleMove move)> OrderEvaluatedMoves(
+            IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, bool isMaximizing,
+            bool prioritizeCaptures)
+        {
+            var sorted = evaluationList.ToList();
+            if (prioritizeCaptures)
+            {
+                sorted = sorted.OrderByDescending(item => item.move.Capture).ToList();
+            }
+
+            if (isMaximizing)
+            {
+                sorted = sorted.OrderByDescending(item => item.evaluationScore).ToList();
+            }
+            else
+            {
+                sorted = sorted.OrderBy(item => item.evaluationScore).ToList();
+            }
+
+            return sorted;
+        }
+
+        public static IList<SingleMove> OrderMovesByCapture(IList<SingleMove> moves)
         {
             return moves.OrderByDescending(m => m.Capture).ToList();
+        }
+
+        /// <summary>
+        /// Really slow compared to OrderBy
+        /// </summary>
+        /// <param name="moves"></param>
+        /// <returns></returns>
+        public static void SortMovesByCapture(List<SingleMove> moves)
+        {
+            moves.Sort((move1, move2) => move1.Capture.CompareTo(move2.Capture));
         }
     }
 }

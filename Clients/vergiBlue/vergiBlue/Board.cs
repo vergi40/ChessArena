@@ -17,7 +17,7 @@ namespace vergiBlue
         /// Pieces are storaged with (column,row) pair. On algebraic notation [0,0] corresponds to the "a1" notations.
         /// Indexes start from 0
         /// </summary>
-        public Dictionary<(int column, int row), PieceBase> Pieces { get; set; } = new Dictionary<(int, int), PieceBase>();
+        private Dictionary<(int column, int row), PieceBase> Pieces { get; set; } = new Dictionary<(int, int), PieceBase>();
 
         // Reference
         public Dictionary<(int, int), PieceBase>.ValueCollection PieceList => Pieces.Values;
@@ -135,12 +135,7 @@ namespace vergiBlue
                 AddNew(newPiece);
             }
         }
-
-        public void InitializeForTesting(Board board)
-        {
-
-        }
-
+        
         /// <summary>
         /// Return piece at coordinates, null if empty.
         /// </summary>
@@ -171,13 +166,7 @@ namespace vergiBlue
                 AddNew(piece);
             }
         }
-
-        private int Direction(bool isWhite)
-        {
-            if (isWhite) return 1;
-            return -1;
-        }
-
+        
         public double Evaluate(bool isMaximizing, int? currentSearchDepth = null)
         {
             // TODO
@@ -202,7 +191,7 @@ namespace vergiBlue
 
         public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false)
         {
-            var list = new List<SingleMove>();
+            IList<SingleMove> list = new List<SingleMove>();
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(this))
@@ -219,7 +208,7 @@ namespace vergiBlue
             }
 
             if (orderMoves) list = MoveResearch.OrderMovesByEvaluation(list, this, forWhite);
-            else list = MoveResearch.OrderMovesByCapture(list);// Light ordering
+            else list = MoveResearch.OrderMovesByCapture(list.ToList());// Light ordering
             return list;
         }
 

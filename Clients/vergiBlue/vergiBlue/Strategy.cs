@@ -76,8 +76,8 @@ namespace vergiBlue
             {
                 var estimation = AssessTimeForMiniMaxDepth(i, allMoves, board, previousDepth, previous);
                 
-                // Use 25% tolerance for target time
-                if (estimation > TargetTime * 1.25)
+                // Use 50% tolerance for target time
+                if (estimation > TargetTime * 1.50)
                 {
                     SearchDepth = i - 1;
                     Diagnostics.AddMessage($"Using search depth {SearchDepth}. Time estimation was {previousEstimate} ms.");
@@ -129,8 +129,8 @@ namespace vergiBlue
             if (powerPieces > 9) return 5;
             if (powerPieces > 7) return 6;
             if (powerPieces > 6) return 7;
-            if (powerPieces > 5) return 9;
-            return 12;
+            if (powerPieces > 4) return 8;
+            return 9;
         }
 
 
