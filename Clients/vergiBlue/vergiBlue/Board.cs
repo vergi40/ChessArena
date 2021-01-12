@@ -14,14 +14,21 @@ namespace vergiBlue
     public class Board
     {
         /// <summary>
-        /// Pieces are storaged with (column,row) pair. On algebraic notation [0,0] corresponds to the "a1" notations.
-        /// Indexes start from 0
+        /// 0-7 indexes are first row (a1, a2, a3...).
+        /// 8-15 second row etc.
         /// </summary>
-        private Dictionary<(int column, int row), PieceBase> Pieces { get; set; } = new Dictionary<(int, int), PieceBase>();
+        private PieceBase?[] BoardArray { get; }
 
-        // Reference
-        public Dictionary<(int, int), PieceBase>.ValueCollection PieceList => Pieces.Values;
-        public Dictionary<(int, int), PieceBase>.KeyCollection OccupiedCoordinates => Pieces.Keys;
+        /// <summary>
+        /// All pieces.
+        /// Required features used in minimax:
+        /// Remove piece with position or reference
+        /// Add
+        /// Get all black or white
+        /// Sum all pieces
+        /// https://stackoverflow.com/questions/454916/performance-of-arrays-vs-lists
+        /// </summary>
+        public List<PieceBase> PieceList { get; set; }
 
         /// <summary>
         /// Track kings for whole game
@@ -48,7 +55,11 @@ namespace vergiBlue
         /// <summary>
         /// Start game initialization
         /// </summary>
-        public Board(){}
+        public Board()
+        {
+            BoardArray = new PieceBase[64];
+            PieceList = new List<PieceBase>();
+        }
 
         /// <summary>
         /// Create board clone for testing purposes. Set kings explicitly
@@ -56,6 +67,9 @@ namespace vergiBlue
         /// <param name="previous"></param>
         public Board(Board previous)
         {
+            BoardArray = new PieceBase[64];
+            PieceList = new List<PieceBase>();
+            
             InitializeFromReference(previous);
             InitializeKingsFromReference(previous.Kings);
         }
@@ -67,6 +81,9 @@ namespace vergiBlue
         /// <param name="move"></param>
         public Board(Board previous, SingleMove move)
         {
+            BoardArray = new PieceBase[64];
+            PieceList = new List<PieceBase>();
+            
             InitializeFromReference(previous);
             InitializeKingsFromReference(previous.Kings);
             ExecuteMove(move);
@@ -75,11 +92,11 @@ namespace vergiBlue
         private void InitializeKingsFromReference((King? white, King? black) previousKings)
         {
             // Need to ensure kings in board are same as these
-            // A bit code smell but works for now
+            // TODO: A bit code smell but works for now
             King? newWhite = previousKings.white?.CreateKingCopy();
-            if (newWhite != null) Pieces[newWhite.CurrentPosition] = newWhite;
+            if (newWhite != null) BoardArray[newWhite.CurrentPosition.ToArray()] = newWhite;
             King? newBlack = previousKings.black?.CreateKingCopy();
-            if (newBlack != null) Pieces[newBlack.CurrentPosition] = newBlack;
+            if (newBlack != null) BoardArray[newBlack.CurrentPosition.ToArray()] = newBlack;
             Kings = (newWhite, newBlack);
         }
 
@@ -89,49 +106,64 @@ namespace vergiBlue
         /// <param name="move"></param>
         public void ExecuteMove(SingleMove move)
         {
+            var piece = ValueAt(move.PrevPos);
+            if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
+
             if (move.Capture)
             {
                 // Ensure validation ends if king is eaten
-                var previousPosValue = ValueAt(move.PrevPos);
-                if (previousPosValue == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
-
-                var isWhite = previousPosValue.IsWhite;
+                var isWhite = piece.IsWhite;
                 if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
                     RemovePieces(!isWhite);
                 }
                 else
                 {
-                    Pieces.Remove(move.NewPos);
+                    RemovePiece(move.NewPos);
                 }
             }
-
-            var piece = Pieces[move.PrevPos];
-            piece.CurrentPosition = move.NewPos;
-            Pieces.Remove(move.PrevPos);
-
-            if (move.Promotion)
-            {
-                // Substitute pawn with upgrade
-                piece = new Queen(piece.IsWhite, move.NewPos);
-            }
-            Pieces.Add(move.NewPos, piece);
+            
+            UpdatePosition(piece, move);
         }
 
+        private void UpdatePosition(PieceBase piece, SingleMove move)
+        {
+            if (move.Promotion)
+            {
+                piece = new Queen(piece.IsWhite, move.NewPos);
+            }
+            else
+            {
+                piece.CurrentPosition = move.NewPos;
+            }
+
+            BoardArray[move.PrevPos.ToArray()] = null;
+            BoardArray[move.NewPos.ToArray()] = piece;
+        }
+
+        private void RemovePiece((int column, int row) position)
+        {
+            var piece = ValueAt(position);
+            if (piece == null) throw new ArgumentException($"Piece in position {position} was null");
+            BoardArray[position.ToArray()] = null;
+
+            PieceList.Remove(piece);
+        }
+        
         private void RemovePieces(bool isWhite)
         {
-            var positions = PieceList.Where(p => p.IsWhite == isWhite).Select(p => p.CurrentPosition).ToList();
-            foreach (var position in positions)
+            var toBeRemoved = PieceList.Where(p => p.IsWhite == isWhite).ToList();
+            foreach (var piece in toBeRemoved)
             {
-                Pieces.Remove(position);
+                RemovePiece(piece.CurrentPosition);
             }
         }
 
         private void InitializeFromReference(Board previous)
         {
-            foreach (var oldPiece in previous.PieceList)
+            foreach (var piece in previous.PieceList)
             {
-                var newPiece = oldPiece.CreateCopy();
+                var newPiece = piece.CreateCopy();
                 AddNew(newPiece);
             }
         }
@@ -142,13 +174,13 @@ namespace vergiBlue
         /// <returns>Can be null</returns>
         public PieceBase? ValueAt((int, int) target)
         {
-            if (Pieces.ContainsKey(target)) return Pieces[target];
-            return null;
+            return BoardArray[target.ToArray()];
         }
 
         public void AddNew(PieceBase piece)
         {
-            Pieces.Add((piece.CurrentPosition), piece);
+            PieceList.Add(piece);
+            BoardArray[piece.CurrentPosition.ToArray()] = piece;
         }
 
         public void AddNew(IEnumerable<PieceBase> pieces)

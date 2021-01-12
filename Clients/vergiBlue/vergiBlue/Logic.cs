@@ -165,7 +165,6 @@ namespace vergiBlue
             TurnCount++;
 
             // Endgame checks
-            // TODO should be now read from singlemove
             var castling = false;
             var check = Board.IsCheck(IsPlayerWhite);
             //var checkMate = false;

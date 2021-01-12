@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,6 +33,31 @@ namespace vergiBlue
             var column = columnChar - _intToAlphabet;
             var row = int.Parse(position[1].ToString());
             return (column, row - 1);
+        }
+
+        public static int ToArray(this (int column, int row) position)
+        {
+            return (position.row * 8) + position.column;
+        }
+
+        /// <summary>
+        /// Transforms array index to (column, row) format
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public static (int column, int row) ToTuple(this int index)
+        {
+            // 1,0 -> 8
+            // 1,1 -> 9
+
+            // 8 -> row = 1
+            // 8 -> column = 0
+            // 9 -> row = 1
+            // 9 -> column = 1
+
+            var row = index / 8;
+            var column = index % 8;
+            return (column, row);
         }
 
     }
