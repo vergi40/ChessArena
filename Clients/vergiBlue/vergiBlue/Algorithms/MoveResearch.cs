@@ -9,15 +9,23 @@ namespace vergiBlue.Algorithms
     public class MoveResearch
     {
         public static EvaluationResult GetMoveScoreList(IList<SingleMove> moves,
-            int searchDepth, Board board, bool isMaximizing)
+            int searchDepth, Board board, bool isMaximizing, bool useTranspositions)
         {
             var result = new EvaluationResult();
 
             foreach (var move in moves)
             {
                 var newBoard = new Board(board, move);
-                var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
-                result.Add(value, move);
+                if(useTranspositions)
+                {
+                    var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, -100000, 100000, !isMaximizing);
+                    result.Add(value, move);
+                }
+                else
+                {
+                    var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
+                    result.Add(value, move);
+                }
             }
 
             return result;

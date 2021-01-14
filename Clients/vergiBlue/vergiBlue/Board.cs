@@ -33,6 +33,11 @@ namespace vergiBlue
         /// Track kings for whole game
         /// </summary>
         public (King? white, King? black) Kings { get; set; }
+        
+        /// <summary>
+        /// Single direction board information. Two hashes match if all pieces are in same position.
+        /// </summary>
+        public ulong BoardHash { get; set; }
 
         /// <summary>
         /// Return pieces in the <see cref="IPiece"/> format
@@ -71,6 +76,9 @@ namespace vergiBlue
             
             InitializeFromReference(previous);
             InitializeKingsFromReference(previous.Kings);
+            
+            Logic.Transpositions.Initialize();
+            BoardHash = Logic.Transpositions.GetHash(this);
         }
 
         /// <summary>
@@ -105,6 +113,7 @@ namespace vergiBlue
         /// <param name="move"></param>
         public void ExecuteMove(SingleMove move)
         {
+            BoardHash = Logic.Transpositions.UpdateHash(move, this, BoardHash);
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
 
@@ -174,6 +183,18 @@ namespace vergiBlue
         public PieceBase? ValueAt((int, int) target)
         {
             return BoardArray[target.Item1, target.Item2];
+        }
+
+        /// <summary>
+        /// Return piece at coordinates. Known to have value
+        /// </summary>
+        /// <returns>Can be null</returns>
+        public PieceBase ValueAtDefinitely((int, int) target)
+        {
+            var piece = BoardArray[target.Item1, target.Item2];
+            if (piece == null) throw new ArgumentException($"Logical error. Value should not be null at {target.ToAlgebraic()}");
+
+            return piece;
         }
 
         public void AddNew(PieceBase piece)
@@ -301,6 +322,8 @@ namespace vergiBlue
             AddNew(blackKing);
             Kings = (whiteKing, blackKing);
 
+            Logic.Transpositions.Initialize();
+            BoardHash = Logic.Transpositions.GetHash(this);
             Logger.Log("Board initialized.");
         }
 

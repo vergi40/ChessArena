@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Transactions;
 using CommonNetStandard.Client;
 using CommonNetStandard.Interface;
 using vergiBlue.Algorithms;
@@ -62,19 +63,30 @@ namespace vergiBlue
         /// </summary>
         public DiagnosticsData PreviousData { get; set; } = new DiagnosticsData();
 
+
+        public static TranspositionTables Transpositions { get; } = new TranspositionTables();
+
+        
+        // Config bools
+        public static bool UseTranspositionTables { get; } = true;
+        public static bool UseParallelComputation { get; } = false;
+
+        
         /// <summary>
         /// For tests. Test environment will handle board initialization
         /// </summary>
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
-            Strategy = new Strategy(isPlayerWhite, overrideMaxDepth);
+            Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, UseTranspositionTables);
+            Transpositions.Initialize();
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, Board? overrideBoard = null) : base(startInformation.WhitePlayer)
         {
-            Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth);
+            Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth, UseTranspositionTables);
             if(overrideBoard != null) Board = new Board(overrideBoard);
             else Board.InitializeEmptyBoard();
+            Transpositions.Initialize();
             
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
@@ -154,7 +166,7 @@ namespace vergiBlue
                 SearchDepth = overrideSearchDepth.Value;
             }
             
-            var bestMove = AnalyzeBestMove(allMoves);
+            var bestMove = AnalyzeBestMove(allMoves, UseTranspositionTables, UseParallelComputation);
 
             if (bestMove == null)
                 throw new ArgumentException(
@@ -201,7 +213,7 @@ namespace vergiBlue
         /// <param name="allMoves"></param>
         /// <param name="useParallelComputation"></param>
         /// <returns></returns>
-        private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves, bool useParallelComputation = true)
+        private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves, bool useTranspositions, bool useParallelComputation = true)
         {
             var isMaximizing = IsPlayerWhite;
 
@@ -236,7 +248,7 @@ namespace vergiBlue
             }
             else
             {
-                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing);
+                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing, useTranspositions);
             }
             
             return MoveResearch.SelectBestMove(evaluated, isMaximizing, true);

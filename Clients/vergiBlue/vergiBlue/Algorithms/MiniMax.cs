@@ -60,6 +60,82 @@ namespace vergiBlue.Algorithms
         }
 
         /// <summary>
+        /// Minimax with transpositions.
+        /// Root1: transposition added at depth 1
+        /// Root2: Same transposition encountered at depth 3.
+        /// -> No need to use
+        ///
+        /// Case: transposition added at depth 4
+        /// Another tree encounters this at depth 3
+        /// -> good
+        /// </summary>
+        public static double ToDepthWithTranspositions(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
+        {
+            if (Logic.Transpositions.Tables.ContainsKey(newBoard.BoardHash))
+            {
+                // Transposition found
+                var transposition = Logic.Transpositions.Tables[newBoard.BoardHash];
+                if (transposition.Depth >= depth)
+                {
+                    // Useful
+                    Logic.Transpositions.Update(transposition.Hash, transposition.Depth, transposition.Evaluation, transposition.Type, true);
+                    return transposition.Evaluation;
+                }
+            }
+            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, depth);
+            
+            var allMoves = newBoard.Moves(maximizingPlayer, false);
+            if (!allMoves.Any()) return newBoard.Evaluate(maximizingPlayer, depth);
+            
+            if (maximizingPlayer)
+            {
+                var value = -100000.0;
+                foreach (var move in allMoves)
+                {
+                    var nextBoard = new Board(newBoard, move);
+                    value = Math.Max(value, ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false));
+                    
+                    // Add to transpositions
+                    Logic.Transpositions.Add(nextBoard.BoardHash, depth - 1, value, NodeType.Exact);
+                    
+                    alpha = Math.Max(alpha, value);
+                    if (alpha >= beta)
+                    {
+                        // Beta cutoff
+                        // Lower bound, cut-node (exact evaluation might be greater)
+                        
+                        Logic.Transpositions.Update(nextBoard.BoardHash, depth - 1, value, NodeType.LowerBound, true);
+                        break;
+                    }
+                }
+                return value;
+            }
+            else
+            {
+                var value = 100000.0;
+                foreach (var move in allMoves)
+                {
+                    var nextBoard = new Board(newBoard, move);
+                    value = Math.Min(value, ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true));
+
+                    // Add to transpositions
+                    Logic.Transpositions.Add(nextBoard.BoardHash, depth - 1, value, NodeType.Exact);
+                    
+                    beta = Math.Min(beta, value);
+                    if (beta < alpha)
+                    {
+                        // Alpha cutoff
+                        // Upper bound, all-node (exact evaluation might be less)
+
+                        Logic.Transpositions.Update(nextBoard.BoardHash, depth - 1, value, NodeType.UpperBound, true);
+                        break;
+                    }
+                }
+                return value;
+            }
+        }
+
+        /// <summary>
         /// Call MiniMax separately on each depth. If checkmate is found, break;
         /// </summary>
         /// <param name="newBoard"></param>

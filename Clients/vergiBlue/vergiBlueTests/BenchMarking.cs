@@ -55,7 +55,7 @@ namespace vergiBlueTests
 
 
             // Array benchmarking ----------
-            
+
             // 17.6 & 16.8 sec. Change board type to array.
             // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
             // Board evaluations: 1328787. Check evaluations: 967. Time elapsed: 5275 ms. Available moves found: 30. 
@@ -79,6 +79,19 @@ namespace vergiBlueTests
             // Board evaluations: 1328787. Check evaluations: 967. Time elapsed: 4040 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
             // Board evaluations: 3331378. Check evaluations: 1472. Time elapsed: 8512 ms. Available moves found: 40.
+
+
+            // 65 ms. Transposition tables on
+            // Test: RuyLopez_Black. Move: a7 to a6. Depth 5
+            // Board evaluations: 98. Check evaluations: 964. Time elapsed: 31 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 145. Check evaluations: 1471. Time elapsed: 18 ms. Available moves found: 40.
+
+            // 916 ms. Transposition tables to 64-bit. More logic to updating
+            // Test: RuyLopez_Black. Move: a7 to a6. Depth 5
+            // Board evaluations: 327. Check evaluations: 964. Time elapsed: 218 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 279. Check evaluations: 1471. Time elapsed: 684 ms. Available moves found: 40.
         }
 
         public void RuyLopez_Black(int searchDepth)
