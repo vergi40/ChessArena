@@ -56,6 +56,18 @@ namespace vergiBlueTests
             // Board evaluations: 1328787. Check evaluations: 967. Time elapsed: 5275 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 3331378. Check evaluations: 1471. Time elapsed: 11549 ms. Available moves found: 40.
+
+            // 14.4 & 17.2. Implement EvaluationResult to get constant time min&max
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 1328787. Check evaluations: 967. Time elapsed: 5157 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: e4 to f3. Depth 5
+            // Board evaluations: 3331378. Check evaluations: 1473. Time elapsed: 12081 ms. Available moves found: 40.
+
+            // 12.3 & 12.8 sec. Skip capture OrderBy with capturelist
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 1328787. Check evaluations: 967. Time elapsed: 4022 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
+            // Board evaluations: 3331378. Check evaluations: 1472. Time elapsed: 8271 ms. Available moves found: 40.
         }
 
         public void RuyLopez_Black(int searchDepth)

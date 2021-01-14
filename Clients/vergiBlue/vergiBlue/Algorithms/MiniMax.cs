@@ -20,7 +20,7 @@ namespace vergiBlue.Algorithms
         /// <returns></returns>
         public static double ToDepth(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
-            var allMoves = newBoard.Moves(maximizingPlayer, false).ToList();
+            var allMoves = newBoard.Moves(maximizingPlayer, false);
 
             if (depth == 0 || !allMoves.Any()) return newBoard.Evaluate(maximizingPlayer, depth);
             if (maximizingPlayer)

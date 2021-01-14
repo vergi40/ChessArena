@@ -221,8 +221,12 @@ namespace vergiBlue
             return evalScore;
         }
 
+        /// <summary>
+        /// Adds capture-moves in front
+        /// </summary>
         public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false)
         {
+            List<SingleMove> captureList = new List<SingleMove>();
             IList<SingleMove> list = new List<SingleMove>();
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
@@ -235,13 +239,14 @@ namespace vergiBlue
                         if (newBoard.IsCheck(!forWhite)) continue;
                     }
 
-                    list.Add(singleMove);
+                    if(singleMove.Capture) captureList.Add(singleMove);
+                    else list.Add(singleMove);
                 }
             }
 
-            if (orderMoves) list = MoveResearch.OrderMovesByEvaluation(list, this, forWhite);
-            else list = MoveResearch.OrderMovesByCapture(list.ToList());// Light ordering
-            return list;
+            captureList.AddRange(list);
+            if (orderMoves) return MoveResearch.OrderMovesByEvaluation(captureList, this, forWhite);
+            else return captureList;
         }
 
         public void InitializeEmptyBoard()

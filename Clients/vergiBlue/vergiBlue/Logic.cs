@@ -222,21 +222,21 @@ namespace vergiBlue
                 }
             }
 
-            IList<(double, SingleMove)> evaluated;
+            EvaluationResult evaluated;
             if (useParallelComputation)
             {
                 // CPU profiler - first breakpoint here
                 evaluated = MoveResearch
-                    .GetMoveScoreListParallel(allMoves, SearchDepth, Board, isMaximizing).ToList();
+                    .GetMoveScoreListParallel(allMoves, SearchDepth, Board, isMaximizing);
                 
-                if(evaluated.Count != allMoves.Count)
+                if(evaluated.Empty)
                 {
                     throw new ArgumentException($"Logical error - parallel computing lost moves during evaluation.");
                 }
             }
             else
             {
-                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing).ToList();
+                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing);
             }
             
             return MoveResearch.SelectBestMove(evaluated, isMaximizing, true);

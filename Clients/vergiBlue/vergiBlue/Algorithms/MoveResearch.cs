@@ -8,24 +8,25 @@ namespace vergiBlue.Algorithms
 {
     public class MoveResearch
     {
-        public static IEnumerable<(double evaluationScore, SingleMove move)> GetMoveScoreList(IList<SingleMove> moves,
+        public static EvaluationResult GetMoveScoreList(IList<SingleMove> moves,
             int searchDepth, Board board, bool isMaximizing)
         {
-            var evaluated = new List<(double, SingleMove)>();
+            var result = new EvaluationResult();
 
             foreach (var move in moves)
             {
                 var newBoard = new Board(board, move);
                 var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
-                evaluated.Add((value, move));
+                result.Add(value, move);
             }
 
-            return evaluated;
+            return result;
         }
 
 
-        public static IEnumerable<(double evaluationScore, SingleMove move)> GetMoveScoreListParallel(IList<SingleMove> moves, int searchDepth, Board board, bool isMaximizing)
+        public static EvaluationResult GetMoveScoreListParallel(IList<SingleMove> moves, int searchDepth, Board board, bool isMaximizing)
         {
+            var result = new EvaluationResult();
             var evaluated = new List<(double, SingleMove)>();
             var syncObject = new object();
 
@@ -43,14 +44,15 @@ namespace vergiBlue.Algorithms
                 {
                     lock (syncObject) evaluated.AddRange(finalResult);
                 });
-
-            return evaluated;
+            
+            result.Add(evaluated);
+            return result;
         }
 
-        public static SingleMove? SelectBestMove(IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, bool isMaximizing, bool prioritizeCaptures)
+        public static SingleMove SelectBestMove(EvaluationResult evaluated, bool isMaximizing, bool prioritizeCaptures)
         {
-            var sorted = OrderEvaluatedMoves(evaluationList, isMaximizing, prioritizeCaptures);
-            return sorted.First().move;
+            if (isMaximizing) return evaluated.MaxMove;
+            else return evaluated.MinMove;
         }
 
         private static double BestValue(bool isMaximizing)
