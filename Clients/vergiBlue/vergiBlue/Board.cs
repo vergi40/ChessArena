@@ -14,10 +14,9 @@ namespace vergiBlue
     public class Board
     {
         /// <summary>
-        /// 0-7 indexes are first row (a1, a2, a3...).
-        /// 8-15 second row etc.
+        /// [column,row}
         /// </summary>
-        private PieceBase?[] BoardArray { get; }
+        private PieceBase?[,] BoardArray { get; }
 
         /// <summary>
         /// All pieces.
@@ -57,7 +56,7 @@ namespace vergiBlue
         /// </summary>
         public Board()
         {
-            BoardArray = new PieceBase[64];
+            BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
         }
 
@@ -67,7 +66,7 @@ namespace vergiBlue
         /// <param name="previous"></param>
         public Board(Board previous)
         {
-            BoardArray = new PieceBase[64];
+            BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             
             InitializeFromReference(previous);
@@ -81,7 +80,7 @@ namespace vergiBlue
         /// <param name="move"></param>
         public Board(Board previous, SingleMove move)
         {
-            BoardArray = new PieceBase[64];
+            BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             
             InitializeFromReference(previous);
@@ -94,9 +93,9 @@ namespace vergiBlue
             // Need to ensure kings in board are same as these
             // TODO: A bit code smell but works for now
             King? newWhite = previousKings.white?.CreateKingCopy();
-            if (newWhite != null) BoardArray[newWhite.CurrentPosition.ToArray()] = newWhite;
+            if (newWhite != null) BoardArray[newWhite.CurrentPosition.column, newWhite.CurrentPosition.row] = newWhite;
             King? newBlack = previousKings.black?.CreateKingCopy();
-            if (newBlack != null) BoardArray[newBlack.CurrentPosition.ToArray()] = newBlack;
+            if (newBlack != null) BoardArray[newBlack.CurrentPosition.column, newBlack.CurrentPosition.row] = newBlack;
             Kings = (newWhite, newBlack);
         }
 
@@ -137,15 +136,15 @@ namespace vergiBlue
                 piece.CurrentPosition = move.NewPos;
             }
 
-            BoardArray[move.PrevPos.ToArray()] = null;
-            BoardArray[move.NewPos.ToArray()] = piece;
+            BoardArray[move.PrevPos.Item1, move.PrevPos.Item2] = null;
+            BoardArray[move.NewPos.Item1, move.NewPos.Item2] = piece;
         }
 
         private void RemovePiece((int column, int row) position)
         {
             var piece = ValueAt(position);
             if (piece == null) throw new ArgumentException($"Piece in position {position} was null");
-            BoardArray[position.ToArray()] = null;
+            BoardArray[position.column, position.row] = null;
 
             PieceList.Remove(piece);
         }
@@ -174,13 +173,13 @@ namespace vergiBlue
         /// <returns>Can be null</returns>
         public PieceBase? ValueAt((int, int) target)
         {
-            return BoardArray[target.ToArray()];
+            return BoardArray[target.Item1, target.Item2];
         }
 
         public void AddNew(PieceBase piece)
         {
             PieceList.Add(piece);
-            BoardArray[piece.CurrentPosition.ToArray()] = piece;
+            BoardArray[piece.CurrentPosition.column, piece.CurrentPosition.row] = piece;
         }
 
         public void AddNew(IEnumerable<PieceBase> pieces)

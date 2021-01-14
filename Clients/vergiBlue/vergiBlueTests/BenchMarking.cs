@@ -25,6 +25,7 @@ namespace vergiBlueTests
             // #1 at pair23
             GreatestEndings_1_MidGame(5);
 
+            // Original dictionary benchmarking ---------------
 
             // New benchmarking framework with 2 game tests.
             // Test: RuyLopez_Black.Move: c6 to d4.Depth 5
@@ -44,14 +45,18 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 3372180. Check evaluations: 1471. Time elapsed: 10984 ms. Available moves found: 40.
 
+            // 14.2 sec. EvaluationResult + capturelist
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 1345201. Check evaluations: 967. Time elapsed: 4752 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
+            // Board evaluations: 3372180. Check evaluations: 1472. Time elapsed: 9432 ms. Available moves found: 40.
 
-            // 18.3 sec. Changed board type to array and piecelist to stack
-            // Test: RuyLopez_Black. Move: g8 to f6. Depth 5
-            // Board evaluations: 1528299. Check evaluations: 960. Time elapsed: 6318 ms. Available moves found: 30. 
-            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
-            // Board evaluations: 3483864. Check evaluations: 1471. Time elapsed: 11951 ms. Available moves found: 40.
 
-            // 17.6 & 16.8 sec. Return piece collection from stack to list
+
+
+            // Array benchmarking ----------
+            
+            // 17.6 & 16.8 sec. Change board type to array.
             // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
             // Board evaluations: 1328787. Check evaluations: 967. Time elapsed: 5275 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
@@ -68,6 +73,12 @@ namespace vergiBlueTests
             // Board evaluations: 1328787. Check evaluations: 967. Time elapsed: 4022 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
             // Board evaluations: 3331378. Check evaluations: 1472. Time elapsed: 8271 ms. Available moves found: 40.
+
+            // 12.6 sec. Array in 2-dimension. 14.1.2021
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 1328787. Check evaluations: 967. Time elapsed: 4040 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
+            // Board evaluations: 3331378. Check evaluations: 1472. Time elapsed: 8512 ms. Available moves found: 40.
         }
 
         public void RuyLopez_Black(int searchDepth)
