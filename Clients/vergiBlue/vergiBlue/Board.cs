@@ -11,6 +11,17 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue
 {
+    public class DataInstance
+    {
+        public TranspositionTables Transpositions { get; }
+
+        public DataInstance()
+        {
+            Transpositions = new TranspositionTables();
+            Transpositions.Initialize();
+        }
+    }
+    
     public class Board
     {
         /// <summary>
@@ -30,14 +41,19 @@ namespace vergiBlue
         public List<PieceBase> PieceList { get; set; }
 
         /// <summary>
-        /// Track kings for whole game
+        /// Track kings at all times
         /// </summary>
-        public (King? white, King? black) Kings { get; set; }
+        public (PieceBase? white, PieceBase? black) Kings { get; set; }
         
         /// <summary>
         /// Single direction board information. Two hashes match if all pieces are in same position.
         /// </summary>
         public ulong BoardHash { get; set; }
+        
+        /// <summary>
+        /// Data reference where all transposition tables etc. should be fetched. Same data shared between all board instances.
+        /// </summary>
+        public DataInstance SharedData { get; }
 
         /// <summary>
         /// Return pieces in the <see cref="IPiece"/> format
@@ -63,6 +79,8 @@ namespace vergiBlue
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
+
+            SharedData = new DataInstance();
         }
 
         /// <summary>
@@ -75,10 +93,10 @@ namespace vergiBlue
             PieceList = new List<PieceBase>();
             
             InitializeFromReference(previous);
-            InitializeKingsFromReference(previous.Kings);
-            
-            Logic.Transpositions.Initialize();
-            BoardHash = Logic.Transpositions.GetHash(this);
+
+            SharedData = previous.SharedData;
+            // Create new hash as tests might not initialize board properly
+            BoardHash = SharedData.Transpositions.GetHash(this);
         }
 
         /// <summary>
@@ -92,28 +110,19 @@ namespace vergiBlue
             PieceList = new List<PieceBase>();
             
             InitializeFromReference(previous);
-            InitializeKingsFromReference(previous.Kings);
+            SharedData = previous.SharedData;
+            BoardHash = previous.BoardHash;
+            
             ExecuteMove(move);
         }
-
-        private void InitializeKingsFromReference((King? white, King? black) previousKings)
-        {
-            // Need to ensure kings in board are same as these
-            // TODO: A bit code smell but works for now
-            King? newWhite = previousKings.white?.CreateKingCopy();
-            if (newWhite != null) BoardArray[newWhite.CurrentPosition.column, newWhite.CurrentPosition.row] = newWhite;
-            King? newBlack = previousKings.black?.CreateKingCopy();
-            if (newBlack != null) BoardArray[newBlack.CurrentPosition.column, newBlack.CurrentPosition.row] = newBlack;
-            Kings = (newWhite, newBlack);
-        }
-
+        
         /// <summary>
         /// Apply single move to board.
         /// </summary>
         /// <param name="move"></param>
         public void ExecuteMove(SingleMove move)
         {
-            BoardHash = Logic.Transpositions.UpdateHash(move, this, BoardHash);
+            BoardHash = SharedData.Transpositions.UpdateHash(move, this, BoardHash);
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
 
@@ -138,7 +147,9 @@ namespace vergiBlue
         {
             if (move.Promotion)
             {
+                RemovePiece(piece.CurrentPosition);
                 piece = new Queen(piece.IsWhite, move.NewPos);
+                PieceList.Add(piece);
             }
             else
             {
@@ -173,6 +184,24 @@ namespace vergiBlue
             {
                 var newPiece = piece.CreateCopy();
                 AddNew(newPiece);
+                
+                if (newPiece.Identity == 'K')
+                {
+                    UpdateKingReference(newPiece);
+                }
+
+            }
+        }
+
+        private void UpdateKingReference(PieceBase king)
+        {
+            if (king.IsWhite)
+            {
+                Kings = (king, Kings.black);
+            }
+            else
+            {
+                Kings = (Kings.white, king);
             }
         }
         
@@ -322,8 +351,8 @@ namespace vergiBlue
             AddNew(blackKing);
             Kings = (whiteKing, blackKing);
 
-            Logic.Transpositions.Initialize();
-            BoardHash = Logic.Transpositions.GetHash(this);
+            SharedData.Transpositions.Initialize();
+            BoardHash = SharedData.Transpositions.GetHash(this);
             Logger.Log("Board initialized.");
         }
 
@@ -332,7 +361,7 @@ namespace vergiBlue
         /// </summary>
         /// <param name="whiteKing"></param>
         /// <returns></returns>
-        private King? KingLocation(bool whiteKing)
+        private PieceBase? KingLocation(bool whiteKing)
         {
             if (whiteKing) return Kings.white;
             else return Kings.black;

@@ -80,6 +80,15 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
             // Board evaluations: 3331378. Check evaluations: 1472. Time elapsed: 8512 ms. Available moves found: 40.
 
+            // 5.7 sec. Small minimax algorithm fix. Don't create moves in leaf0
+            // 18.6 sec non-parallel
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 1345201. Check evaluations: 967. Time elapsed: 2255 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
+            // Board evaluations: 3372180. Check evaluations: 1472. Time elapsed: 3415 ms. Available moves found: 40.
+
+            
+            // Transposition tables. Buggy ------------
 
             // 65 ms. Transposition tables on
             // Test: RuyLopez_Black. Move: a7 to a6. Depth 5
@@ -92,6 +101,15 @@ namespace vergiBlueTests
             // Board evaluations: 327. Check evaluations: 964. Time elapsed: 218 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 279. Check evaluations: 1471. Time elapsed: 684 ms. Available moves found: 40.
+
+
+            // 35 sec. Multiple bugg fixes. Instead of couple thousand tables, now transition tablecount for ruylopez around 1 500 000
+            // Without transposition tables: 48 sec.
+            // Original parallel 15.1sec
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 1118265. Check evaluations: 968. Time elapsed: 9520 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: e4 to f3. Depth 5
+            // Board evaluations: 4685260. Check evaluations: 1473. Time elapsed: 25501 ms. Available moves found: 40.
         }
 
         public void RuyLopez_Black(int searchDepth)

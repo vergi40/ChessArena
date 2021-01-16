@@ -15,6 +15,33 @@ namespace vergiBlueTests
     public class CheckTests
     {
         [TestMethod]
+        public void KingLocationsUpdateOk()
+        {
+            var white = new King(true, "a1");
+            var black = new King(false, "a8");
+
+            var board = new Board();
+            board.AddNew(white, black);
+            board.Kings = (white, black);
+
+            var player1 = new Logic(true);
+            //player1.Board = board;
+
+            var move = new SingleMove("a1", "a2");
+            //player1.Board.ExecuteMove(move);
+            player1.Board = new Board(board, move);
+
+            var kingReference = player1.Board.Kings.white;
+            kingReference.CurrentPosition.ToAlgebraic().ShouldBe("a2");
+
+            var listReference = player1.Board.PieceList.First(p => p.IsWhite);
+            listReference.CurrentPosition.ToAlgebraic().ShouldBe("a2");
+
+            var arrayReference = player1.Board.ValueAtDefinitely("a2".ToTuple());
+            arrayReference.CurrentPosition.ToAlgebraic().ShouldBe("a2");
+        }
+        
+        [TestMethod]
         public void ShouldBeCheckMate()
         {
             // Easy double rook checkmate
@@ -143,6 +170,7 @@ namespace vergiBlueTests
         {
             // King can only go to southeast
 
+            //        F
             // 8R     K
             // 7R     P
             // 6
@@ -154,8 +182,6 @@ namespace vergiBlueTests
             //  ABCDEFGH
             var player = new Logic(true);
             player.Strategy.Phase = GamePhase.EndGame;
-            player.TurnCount = 21;
-            player.SearchDepth = 4;
 
             var opponent = new Logic(false);
             opponent.Strategy.Phase = GamePhase.EndGame;
@@ -163,12 +189,14 @@ namespace vergiBlueTests
 
             var board = new Board();
             // 
-            var rookPositions = new List<string> { "a7", "a8" };
-            var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
-            CreateRooks(asTuples, board, true);
-
-            var pawn = new Pawn(true, "f7");
-            board.AddNew(pawn);
+            var pieces = new List<PieceBase>
+            {
+                new Pawn(true, "f7"),
+                new Rook(true, "a7"),
+                new Rook(true, "a8")
+            };
+            
+            board.AddNew(pieces);
 
             // 
             var blackKing = new King(false, "f8");

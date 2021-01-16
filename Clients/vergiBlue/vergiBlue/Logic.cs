@@ -64,9 +64,6 @@ namespace vergiBlue
         public DiagnosticsData PreviousData { get; set; } = new DiagnosticsData();
 
 
-        public static TranspositionTables Transpositions { get; } = new TranspositionTables();
-
-        
         // Config bools
         public static bool UseTranspositionTables { get; } = true;
         public static bool UseParallelComputation { get; } = false;
@@ -78,7 +75,6 @@ namespace vergiBlue
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, UseTranspositionTables);
-            Transpositions.Initialize();
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, Board? overrideBoard = null) : base(startInformation.WhitePlayer)
@@ -86,7 +82,6 @@ namespace vergiBlue
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth, UseTranspositionTables);
             if(overrideBoard != null) Board = new Board(overrideBoard);
             else Board.InitializeEmptyBoard();
-            Transpositions.Initialize();
             
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
