@@ -13,20 +13,40 @@ namespace vergiBlue.Algorithms
         {
             var result = new EvaluationResult();
 
-            foreach (var move in moves)
+            if (useTranspositions)
             {
-                var newBoard = new Board(board, move);
-                if(useTranspositions)
+                foreach (var move in moves)
                 {
-                    var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, -100000, 100000, !isMaximizing);
-                    result.Add(value, move);
+                    var transposition = board.SharedData.Transpositions.GetTranspositionForMove(board, move);
+                    if (transposition != null && transposition.Depth >= searchDepth)
+                    {
+                        // Saved some time
+                        // TODO extra parameters to evaluationresult if this was lower or upper bound
+                        transposition.ReadOnly = true;
+                        result.Add(transposition.Evaluation, move);
+                    }
+                    else
+                    {
+                        var newBoard = new Board(board, move);
+                        var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, -100000, 100000,
+                            !isMaximizing);
+                        result.Add(value, move);
+
+                        // Add new transposition table
+                        newBoard.SharedData.Transpositions.Add(newBoard.BoardHash, searchDepth, value, NodeType.Exact);
+                    }
                 }
-                else
+            }
+            else
+            {
+                foreach (var move in moves)
                 {
+                    var newBoard = new Board(board, move);
                     var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
                     result.Add(value, move);
                 }
             }
+            
 
             return result;
         }

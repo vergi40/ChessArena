@@ -65,8 +65,8 @@ namespace vergiBlue
 
 
         // Config bools
-        public static bool UseTranspositionTables { get; } = true;
-        public static bool UseParallelComputation { get; } = false;
+        public static bool UseTranspositionTables { get; } = false;
+        public static bool UseParallelComputation { get; } = true;
 
         
         /// <summary>
@@ -244,6 +244,9 @@ namespace vergiBlue
             else
             {
                 evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing, useTranspositions);
+                
+                if(Board.SharedData.Transpositions.Tables.Count > 0)
+                    Diagnostics.AddMessage($"Transposition tables saved: {Board.SharedData.Transpositions.Tables.Count}");
             }
             
             return MoveResearch.SelectBestMove(evaluated, isMaximizing, true);

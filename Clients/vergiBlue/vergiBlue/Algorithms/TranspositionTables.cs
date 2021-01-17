@@ -92,7 +92,10 @@ namespace vergiBlue.Algorithms
             _isInitialized = true;
         }
 
-        public ulong GetHash(Board board)
+        /// <summary>
+        /// Use at start initialization
+        /// </summary>
+        public ulong CreateBoardHash(Board board)
         {
             ulong hash = 0;
             for (int i = 0; i < board.PieceList.Count; i++)
@@ -107,32 +110,32 @@ namespace vergiBlue.Algorithms
         }
 
         /// <summary>
-        /// Call before piece move is executed.
+        /// Get board hash for given move (with pre-move board reference and it's hash)
         /// </summary>
-        public ulong UpdateHash(SingleMove move, Board board, ulong hash)
+        public ulong GetNewBoardHash(SingleMove move, Board oldBoard, ulong oldHash)
         {
             // Erase capture
             if (move.Capture)
             {
-                var captured = board.ValueAtDefinitely(move.NewPos);
+                var captured = oldBoard.ValueAtDefinitely(move.NewPos);
                 var boardIndex = move.NewPos.ToArray();
                 var capturedPieceIndex = GetIndex(captured);
-                hash = hash ^ hashTable[boardIndex, capturedPieceIndex];
+                oldHash = oldHash ^ hashTable[boardIndex, capturedPieceIndex];
             }
             // TODO castling
             
             // Update player position
-            var piece = board.ValueAtDefinitely(move.PrevPos);
+            var piece = oldBoard.ValueAtDefinitely(move.PrevPos);
             var from = move.PrevPos.ToArray();
             var to = move.NewPos.ToArray();
             var pieceIndex = GetIndex(piece);
             
             // Remove old position
-            hash = hash ^ hashTable[from, pieceIndex];
+            oldHash = oldHash ^ hashTable[from, pieceIndex];
             
             // Add new position
-            hash = hash ^ hashTable[to, pieceIndex];
-            return hash;
+            oldHash = oldHash ^ hashTable[to, pieceIndex];
+            return oldHash;
         }
         
         
@@ -166,18 +169,27 @@ namespace vergiBlue.Algorithms
         
         
         private readonly object _tableLock = new object();
-        public void Add(ulong hash, int depth, double evaluation, NodeType nodeType)
+        
+        /// <summary>
+        /// Add new boardhash transposition to tables data.
+        /// If already contained, only update. Don't update if transposition is read-only.
+        /// </summary>
+        /// <param name="boardHash"></param>
+        /// <param name="depth"></param>
+        /// <param name="evaluation"></param>
+        /// <param name="nodeType"></param>
+        public void Add(ulong boardHash, int depth, double evaluation, NodeType nodeType, bool readOnly = false)
         {
-            if (Tables.ContainsKey(hash))
+            if (Tables.ContainsKey(boardHash))
             {
-                Update(hash, depth, evaluation, nodeType);
+                Update(boardHash, depth, evaluation, nodeType, readOnly);
             }
             else
             {
                 lock (_tableLock)
                 {
                     // New hash
-                    Tables.Add(hash, new Transposition(hash, depth, evaluation, nodeType));
+                    Tables.Add(boardHash, new Transposition(boardHash, depth, evaluation, nodeType, readOnly));
                 }
             }
         }
@@ -189,7 +201,10 @@ namespace vergiBlue.Algorithms
         {
             lock (_tableLock)
             {
-                if (!Tables[hash].ReadOnly)
+                // Always replace if cutoff point found. Otherwise:
+                // * Replacement strategy: replace by depth
+                // * Has to be higher depth to be replaced
+                if (nodeType != NodeType.Exact || !Tables[hash].ReadOnly && depth > Tables[hash].Depth)
                 {
                     // We found deeper search, substitute
                     Tables[hash].Depth = depth;
@@ -198,6 +213,32 @@ namespace vergiBlue.Algorithms
                     Tables[hash].ReadOnly = readOnly;
                 }
             }
+        }
+
+        /// <summary>
+        /// Check if the given move is already calculated (with pre-move board reference).
+        /// Fast (could be even faster with tables indexing).
+        /// </summary>
+        public bool ContainsMove(Board oldBoard, SingleMove newMove)
+        {
+            var oldHash = oldBoard.BoardHash;
+            var newHash = GetNewBoardHash(newMove, oldBoard, oldHash);
+
+            if (Tables.ContainsKey(newHash)) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Get value of the already calculated move (with pre-move board reference)
+        /// </summary>
+        /// <returns>Null if no transposition exists</returns>
+        public Transposition? GetTranspositionForMove(Board oldBoard, SingleMove newMove)
+        {
+            var oldHash = oldBoard.BoardHash;
+            var newHash = GetNewBoardHash(newMove, oldBoard, oldHash);
+
+            if (Tables.ContainsKey(newHash)) return Tables[newHash];
+            return null;
         }
     }
 }

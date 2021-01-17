@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard;
@@ -96,7 +97,7 @@ namespace vergiBlue
 
             SharedData = previous.SharedData;
             // Create new hash as tests might not initialize board properly
-            BoardHash = SharedData.Transpositions.GetHash(this);
+            BoardHash = SharedData.Transpositions.CreateBoardHash(this);
         }
 
         /// <summary>
@@ -122,7 +123,7 @@ namespace vergiBlue
         /// <param name="move"></param>
         public void ExecuteMove(SingleMove move)
         {
-            BoardHash = SharedData.Transpositions.UpdateHash(move, this, BoardHash);
+            BoardHash = SharedData.Transpositions.GetNewBoardHash(move, this, BoardHash);
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
 
@@ -298,6 +299,46 @@ namespace vergiBlue
             else return captureList;
         }
 
+        public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false)
+        {
+            // Priority moves like known cutoffs
+            var priorityList = new List<SingleMove>();
+            var captureList = new List<SingleMove>();
+            var otherList = new List<SingleMove>();
+            foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves(this))
+                {
+                    if (kingInDanger)
+                    {
+                        // Only allow moves that don't result in check
+                        var newBoard = new Board(this, singleMove);
+                        if (newBoard.IsCheck(!forWhite)) continue;
+                    }
+
+                    // Check if move has transposition data
+                    // Maximizing player needs lower bound moves
+                    // Minimizing player needs upper bound moves
+                    var transposition = SharedData.Transpositions.GetTranspositionForMove(this, singleMove);
+                    if (transposition != null)
+                    {
+                        if((forWhite && transposition.Type == NodeType.LowerBound) ||
+                            (!forWhite && transposition.Type == NodeType.UpperBound))
+                        {
+                            priorityList.Add(singleMove);
+                            continue;
+                        }
+                    }
+                    if (singleMove.Capture) captureList.Add(singleMove);
+                    else otherList.Add(singleMove);
+                }
+            }
+
+            priorityList.AddRange(captureList);
+            priorityList.AddRange(otherList);
+            return priorityList;
+        }
+
         public void InitializeEmptyBoard()
         {
             // Pawns
@@ -352,7 +393,7 @@ namespace vergiBlue
             Kings = (whiteKing, blackKing);
 
             SharedData.Transpositions.Initialize();
-            BoardHash = SharedData.Transpositions.GetHash(this);
+            BoardHash = SharedData.Transpositions.CreateBoardHash(this);
             Logger.Log("Board initialized.");
         }
 

@@ -20,8 +20,8 @@ namespace vergiBlueTests
             var board = new Board();
             board.InitializeEmptyBoard();
 
-            var hash = transposition.GetHash(board);
-            // 895944902
+            var hash = board.BoardHash;
+            // 121398
         }
 
         [TestMethod]
