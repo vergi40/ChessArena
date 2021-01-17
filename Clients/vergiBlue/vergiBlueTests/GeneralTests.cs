@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using vergiBlue;
+using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
 namespace vergiBlueTests
@@ -10,6 +11,19 @@ namespace vergiBlueTests
     [TestClass]
     public class GeneralTests
     {
+        [TestMethod]
+        public void InitializeBoardHash()
+        {
+            var transposition = new TranspositionTables();
+            transposition.Initialize();
+
+            var board = new Board();
+            board.InitializeEmptyBoard();
+
+            var hash = board.BoardHash;
+            // 121398
+        }
+
         [TestMethod]
         public void PawnAllowedMoves()
         {

@@ -19,6 +19,8 @@ namespace vergiBlue
         public GamePhase Phase { get; set; }
         public int SearchDepth { get; set; }
 
+        private bool _useTranspositionTables { get; } = false;
+
         /// <summary>
         /// Total game turn count
         /// </summary>
@@ -40,10 +42,16 @@ namespace vergiBlue
         public int MaxDepth { get; set; } = 5;
         const int MinDepth = 2;
 
-        public Strategy(bool isWhite, int? overrideMaxDepth)
+        public Strategy(bool isWhite, int? overrideMaxDepth, bool useTranspositionTables)
         {
             IsPlayerWhite = isWhite;
             SearchDepth = 3;
+
+            if (useTranspositionTables)
+            {
+                _useTranspositionTables = true;
+                SearchDepth = 6;
+            }
 
             if (overrideMaxDepth != null) MaxDepth = overrideMaxDepth.Value;
         }
@@ -67,6 +75,14 @@ namespace vergiBlue
             // Previous was opening move from database
             if (previous.EvaluationCount == 0 && previous.CheckCount == 0)
             {
+                return SearchDepth;
+            }
+
+            // Logic needs to be rewritten when using transposition tables, because of how much they affect speed.
+            if (_useTranspositionTables)
+            {
+                SearchDepth = GetMaxDepthForCurrentBoardWithTranspositions(board);
+                Diagnostics.AddMessage($"Using search depth {SearchDepth}.");
                 return SearchDepth;
             }
 
@@ -131,6 +147,18 @@ namespace vergiBlue
             if (powerPieces > 6) return 7;
             if (powerPieces > 4) return 8;
             return 9;
+        }
+
+        private int GetMaxDepthForCurrentBoardWithTranspositions(Board board)
+        {
+            var tempOffset = -1;
+            
+            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+            if (powerPieces > 9) return 6 + tempOffset;
+            if (powerPieces > 7) return 7 + tempOffset;
+            if (powerPieces > 6) return 8 + tempOffset;
+            if (powerPieces > 4) return 9 + tempOffset;
+            return 10 + tempOffset;
         }
 
 

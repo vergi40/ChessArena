@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard;
@@ -11,6 +12,17 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue
 {
+    public class DataInstance
+    {
+        public TranspositionTables Transpositions { get; }
+
+        public DataInstance()
+        {
+            Transpositions = new TranspositionTables();
+            Transpositions.Initialize();
+        }
+    }
+    
     public class Board
     {
         /// <summary>
@@ -30,9 +42,19 @@ namespace vergiBlue
         public List<PieceBase> PieceList { get; set; }
 
         /// <summary>
-        /// Track kings for whole game
+        /// Track kings at all times
         /// </summary>
-        public (King? white, King? black) Kings { get; set; }
+        public (PieceBase? white, PieceBase? black) Kings { get; set; }
+        
+        /// <summary>
+        /// Single direction board information. Two hashes match if all pieces are in same position.
+        /// </summary>
+        public ulong BoardHash { get; set; }
+        
+        /// <summary>
+        /// Data reference where all transposition tables etc. should be fetched. Same data shared between all board instances.
+        /// </summary>
+        public DataInstance SharedData { get; }
 
         /// <summary>
         /// Return pieces in the <see cref="IPiece"/> format
@@ -58,6 +80,8 @@ namespace vergiBlue
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
+
+            SharedData = new DataInstance();
         }
 
         /// <summary>
@@ -70,7 +94,10 @@ namespace vergiBlue
             PieceList = new List<PieceBase>();
             
             InitializeFromReference(previous);
-            InitializeKingsFromReference(previous.Kings);
+
+            SharedData = previous.SharedData;
+            // Create new hash as tests might not initialize board properly
+            BoardHash = SharedData.Transpositions.CreateBoardHash(this);
         }
 
         /// <summary>
@@ -84,27 +111,19 @@ namespace vergiBlue
             PieceList = new List<PieceBase>();
             
             InitializeFromReference(previous);
-            InitializeKingsFromReference(previous.Kings);
+            SharedData = previous.SharedData;
+            BoardHash = previous.BoardHash;
+            
             ExecuteMove(move);
         }
-
-        private void InitializeKingsFromReference((King? white, King? black) previousKings)
-        {
-            // Need to ensure kings in board are same as these
-            // TODO: A bit code smell but works for now
-            King? newWhite = previousKings.white?.CreateKingCopy();
-            if (newWhite != null) BoardArray[newWhite.CurrentPosition.column, newWhite.CurrentPosition.row] = newWhite;
-            King? newBlack = previousKings.black?.CreateKingCopy();
-            if (newBlack != null) BoardArray[newBlack.CurrentPosition.column, newBlack.CurrentPosition.row] = newBlack;
-            Kings = (newWhite, newBlack);
-        }
-
+        
         /// <summary>
         /// Apply single move to board.
         /// </summary>
         /// <param name="move"></param>
         public void ExecuteMove(SingleMove move)
         {
+            BoardHash = SharedData.Transpositions.GetNewBoardHash(move, this, BoardHash);
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
 
@@ -129,7 +148,9 @@ namespace vergiBlue
         {
             if (move.Promotion)
             {
+                RemovePiece(piece.CurrentPosition);
                 piece = new Queen(piece.IsWhite, move.NewPos);
+                PieceList.Add(piece);
             }
             else
             {
@@ -164,6 +185,24 @@ namespace vergiBlue
             {
                 var newPiece = piece.CreateCopy();
                 AddNew(newPiece);
+                
+                if (newPiece.Identity == 'K')
+                {
+                    UpdateKingReference(newPiece);
+                }
+
+            }
+        }
+
+        private void UpdateKingReference(PieceBase king)
+        {
+            if (king.IsWhite)
+            {
+                Kings = (king, Kings.black);
+            }
+            else
+            {
+                Kings = (Kings.white, king);
             }
         }
         
@@ -174,6 +213,18 @@ namespace vergiBlue
         public PieceBase? ValueAt((int, int) target)
         {
             return BoardArray[target.Item1, target.Item2];
+        }
+
+        /// <summary>
+        /// Return piece at coordinates. Known to have value
+        /// </summary>
+        /// <returns>Can be null</returns>
+        public PieceBase ValueAtDefinitely((int, int) target)
+        {
+            var piece = BoardArray[target.Item1, target.Item2];
+            if (piece == null) throw new ArgumentException($"Logical error. Value should not be null at {target.ToAlgebraic()}");
+
+            return piece;
         }
 
         public void AddNew(PieceBase piece)
@@ -248,6 +299,46 @@ namespace vergiBlue
             else return captureList;
         }
 
+        public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false)
+        {
+            // Priority moves like known cutoffs
+            var priorityList = new List<SingleMove>();
+            var captureList = new List<SingleMove>();
+            var otherList = new List<SingleMove>();
+            foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves(this))
+                {
+                    if (kingInDanger)
+                    {
+                        // Only allow moves that don't result in check
+                        var newBoard = new Board(this, singleMove);
+                        if (newBoard.IsCheck(!forWhite)) continue;
+                    }
+
+                    // Check if move has transposition data
+                    // Maximizing player needs lower bound moves
+                    // Minimizing player needs upper bound moves
+                    var transposition = SharedData.Transpositions.GetTranspositionForMove(this, singleMove);
+                    if (transposition != null)
+                    {
+                        if((forWhite && transposition.Type == NodeType.LowerBound) ||
+                            (!forWhite && transposition.Type == NodeType.UpperBound))
+                        {
+                            priorityList.Add(singleMove);
+                            continue;
+                        }
+                    }
+                    if (singleMove.Capture) captureList.Add(singleMove);
+                    else otherList.Add(singleMove);
+                }
+            }
+
+            priorityList.AddRange(captureList);
+            priorityList.AddRange(otherList);
+            return priorityList;
+        }
+
         public void InitializeEmptyBoard()
         {
             // Pawns
@@ -301,6 +392,8 @@ namespace vergiBlue
             AddNew(blackKing);
             Kings = (whiteKing, blackKing);
 
+            SharedData.Transpositions.Initialize();
+            BoardHash = SharedData.Transpositions.CreateBoardHash(this);
             Logger.Log("Board initialized.");
         }
 
@@ -309,7 +402,7 @@ namespace vergiBlue
         /// </summary>
         /// <param name="whiteKing"></param>
         /// <returns></returns>
-        private King? KingLocation(bool whiteKing)
+        private PieceBase? KingLocation(bool whiteKing)
         {
             if (whiteKing) return Kings.white;
             else return Kings.black;
