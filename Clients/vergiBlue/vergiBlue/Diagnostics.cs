@@ -14,6 +14,10 @@ namespace vergiBlue
         public int AlphaCutoffs { get; set; } = 0;
         public int BetaCutoffs { get; set; } = 0;
         public int CheckCount { get; set; } = 0;
+        public int PriorityMovesFound { get; set; } = 0;
+        public int TranspositionsFound { get; set; } = 0;
+
+
         public TimeSpan TimeElapsed = TimeSpan.Zero;
 
         public List<string> Messages = new List<string>();
@@ -26,6 +30,10 @@ namespace vergiBlue
         {
             var result = $"Board evaluations: {EvaluationCount}. ";
             if (CheckCount > 0) result += $"Check evaluations: {CheckCount}. ";
+            if (AlphaCutoffs > 0) result += $"Alpha cutoffs: {AlphaCutoffs}. ";
+            if (BetaCutoffs > 0) result += $"Beta cutoffs: {BetaCutoffs}. ";
+            if (PriorityMovesFound > 0) result += $"Priority moves found: {PriorityMovesFound}. ";
+            if (TranspositionsFound > 0) result += $"Transpositions used: {TranspositionsFound}. ";
 
             result += $"Time elapsed: {TimeElapsed.TotalMilliseconds:F0} ms. ";
             //result += $"Alphas: {AlphaCutoffs}, betas: {BetaCutoffs}. ";
@@ -53,6 +61,8 @@ namespace vergiBlue
         private static int _alphaCutoffs = 0;
         private static int _betaCutoffs = 0;
         private static int _checkCount = 0;
+        private static int _priorityMovesFound = 0;
+        private static int _transpositionsFound = 0;
 
         private static List<string> _messages = new List<string>();
 
@@ -96,6 +106,22 @@ namespace vergiBlue
         }
 
         /// <summary>
+        /// Found move that will be ordered to front of move-list to cause quick cutoffs.
+        /// </summary>
+        public static void IncrementPriorityMoves()
+        {
+            Interlocked.Increment(ref _priorityMovesFound);
+        }
+
+        /// <summary>
+        /// Found move that will be ordered to front of move-list to cause quick cutoffs.
+        /// </summary>
+        public static void IncrementTranspositionsFound()
+        {
+            Interlocked.Increment(ref _transpositionsFound);
+        }
+
+        /// <summary>
         /// Thread-safe message operation. Slow
         /// </summary>
         public static void AddMessage(string message)
@@ -119,6 +145,8 @@ namespace vergiBlue
                 _currentData.CheckCount = _checkCount;
                 _currentData.AlphaCutoffs = _alphaCutoffs;
                 _currentData.BetaCutoffs = _betaCutoffs;
+                _currentData.PriorityMovesFound = _priorityMovesFound;
+                _currentData.TranspositionsFound = _transpositionsFound;
                 _currentData.Messages = _messages;
 
                 _timeElapsed.Stop();
@@ -126,10 +154,13 @@ namespace vergiBlue
                 _timeElapsed.Reset();
 
                 // Some overhead maybe?
+                // Increment ref calls need to point to local property, so cant reference _currentData in those
                 _evaluationCount = 0;
                 _checkCount = 0;
                 _alphaCutoffs = 0;
                 _betaCutoffs = 0;
+                _priorityMovesFound = 0;
+                _transpositionsFound = 0;
                 _messages = new List<string>();
 
                 return _currentData;

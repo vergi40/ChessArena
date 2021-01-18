@@ -325,6 +325,7 @@ namespace vergiBlue
                         if((forWhite && transposition.Type == NodeType.LowerBound) ||
                             (!forWhite && transposition.Type == NodeType.UpperBound))
                         {
+                            Diagnostics.IncrementPriorityMoves();
                             priorityList.Add(singleMove);
                             continue;
                         }

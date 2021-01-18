@@ -65,8 +65,8 @@ namespace vergiBlue
 
 
         // Config bools
-        public static bool UseTranspositionTables { get; } = false;
-        public static bool UseParallelComputation { get; } = true;
+        public static bool UseTranspositionTables { get; } = true;
+        public static bool UseParallelComputation { get; } = false;
 
         
         /// <summary>
@@ -142,6 +142,7 @@ namespace vergiBlue
 
             if (MoveHistory.IsLeaningToDraw(GameHistory))
             {
+                // Take 4th from the end of list
                 var repetionMove = GameHistory[^4];
                 allMoves.RemoveAll(m =>
                     m.PrevPos.ToAlgebraic() == repetionMove.StartPosition &&

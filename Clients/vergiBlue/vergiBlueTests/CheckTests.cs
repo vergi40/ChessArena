@@ -32,6 +32,8 @@ namespace vergiBlueTests
             player1.Board = new Board(board, move);
 
             var kingReference = player1.Board.Kings.white;
+            kingReference.ShouldNotBeNull();
+            if (kingReference == null) throw new ArgumentException();
             kingReference.CurrentPosition.ToAlgebraic().ShouldBe("a2");
 
             var listReference = player1.Board.PieceList.First(p => p.IsWhite);

@@ -180,6 +180,7 @@ namespace vergiBlue.Algorithms
         /// <param name="nodeType"></param>
         public void Add(ulong boardHash, int depth, double evaluation, NodeType nodeType, bool readOnly = false)
         {
+            if (boardHash == 0) throw new ArgumentException($"Board hash was empty.");
             if (Tables.ContainsKey(boardHash))
             {
                 Update(boardHash, depth, evaluation, nodeType, readOnly);
@@ -199,18 +200,20 @@ namespace vergiBlue.Algorithms
         /// </summary>
         public void Update(ulong hash, int depth, double evaluation, NodeType nodeType, bool readOnly = false)
         {
+            if (hash == 0) throw new ArgumentException($"Board hash was empty.");
             lock (_tableLock)
             {
                 // Always replace if cutoff point found. Otherwise:
                 // * Replacement strategy: replace by depth
                 // * Has to be higher depth to be replaced
-                if (nodeType != NodeType.Exact || !Tables[hash].ReadOnly && depth > Tables[hash].Depth)
+                var transposition = Tables[hash];
+                if (nodeType != NodeType.Exact || (!transposition.ReadOnly && depth > transposition.Depth))
                 {
                     // We found deeper search, substitute
-                    Tables[hash].Depth = depth;
-                    Tables[hash].Evaluation = evaluation;
-                    Tables[hash].Type = nodeType;
-                    Tables[hash].ReadOnly = readOnly;
+                    transposition.Depth = depth;
+                    transposition.Evaluation = evaluation;
+                    transposition.Type = nodeType;
+                    transposition.ReadOnly = readOnly;
                 }
             }
         }

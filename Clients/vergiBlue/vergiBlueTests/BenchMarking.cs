@@ -42,10 +42,49 @@ namespace vergiBlueTests
 
             // 21 sec normal search using transposition tables. Still needs some tuning
             // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
-            // Board evaluations: 1099116. Check evaluations: 968. Time elapsed: 6635 ms. Available moves found: 30. Transposition tables saved: 668577
+            // Board evaluations: 1099116. Check evaluations: 968. Alpha cutoffs: 34157. Beta cutoffs: 103867. Priority moves found: 68067. Time elapsed: 6283 ms. Available moves found: 30. Transposition tables saved: 668577
             // Test: GreatestEndings_1_MidGame. Move: e4 to e5. Depth 5
-            // Board evaluations: 2959711. Check evaluations: 1475. Time elapsed: 14691 ms. Available moves found: 40. Transposition tables saved: 1569299
+            // Board evaluations: 2959711. Check evaluations: 1475. Alpha cutoffs: 257178. Beta cutoffs: 65191. Priority moves found: 198480. Time elapsed: 14003 ms. Available moves found: 40. Transposition tables saved: 1569299
 
+            // 20 sec. more logging items
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 1099116. Check evaluations: 968. Alpha cutoffs: 34157. Beta cutoffs: 103867. Priority moves found: 68067. Transpositions used: 34501.
+            // Time elapsed: 6445 ms. Available moves found: 30. Transposition tables saved: 668577
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e5. Depth 5
+            // Board evaluations: 2959711. Check evaluations: 1475. Alpha cutoffs: 257178. Beta cutoffs: 65191. Priority moves found: 198480. Transpositions used: 197693.
+            // Time elapsed: 14777 ms. Available moves found: 40. Transposition tables saved: 1569299
+
+            // 13.2 sec. Fixed search depth when saving transposition results
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 565904. Check evaluations: 968. Alpha cutoffs: 33954. Beta cutoffs: 92882. Priority moves found: 54774. Transpositions used: 379962.
+            // Time elapsed: 4444 ms. Available moves found: 30. Transposition tables saved: 657111
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e5. Depth 5
+            // Board evaluations: 1233950. Check evaluations: 1475. Alpha cutoffs: 221560. Beta cutoffs: 63950. Priority moves found: 103245. Transpositions used: 1033679.
+            // Time elapsed: 8690 ms. Available moves found: 40. Transposition tables saved: 1426815
+
+        }
+
+        internal static Board CreateRuyLopezOpeningBoard()
+        {
+            // 8R BQ|KBNR
+            // 7PPPP| PPP
+            // 6  N |
+            // 5 B  |P
+            // 4    |P
+            // 3    | N
+            // 2PPPP| PPP
+            // 1RNBQ|K  R
+            //  ABCD EFGH
+            var board = new Board();
+            board.InitializeEmptyBoard();
+
+            // 1.e4 e5 2.Nf3 Nc6 3.Bb5
+            board.ExecuteMove(new SingleMove("e2", "e4"));
+            board.ExecuteMove(new SingleMove("e7", "e5"));
+            board.ExecuteMove(new SingleMove("g1", "f3"));
+            board.ExecuteMove(new SingleMove("b8", "c6"));
+            board.ExecuteMove(new SingleMove("f1", "b5"));
+            return board;
         }
 
         public void RuyLopez_Black(int searchDepth)
@@ -59,20 +98,8 @@ namespace vergiBlueTests
             // 2PPPP| PPP
             // 1RNBQ|K  R
             //  ABCD EFGH
-            
-
-            var board = new Board();
-            board.InitializeEmptyBoard();
-
-            // 1.e4 e5 2.Nf3 Nc6 3.Bb5
-            board.ExecuteMove(new SingleMove("e2", "e4"));
-            board.ExecuteMove(new SingleMove("e7", "e5"));
-            board.ExecuteMove(new SingleMove("g1", "f3"));
-            board.ExecuteMove(new SingleMove("b8", "c6"));
-            board.ExecuteMove(new SingleMove("f1", "b5"));
-            
             var player = new Logic(false);
-            player.Board = new Board(board);
+            player.Board = new Board(CreateRuyLopezOpeningBoard());
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;

@@ -88,6 +88,7 @@ namespace vergiBlue.Algorithms
                         // Saved some time
                         transposition.ReadOnly = true;
                         value = Math.Max(value, transposition.Evaluation);
+                        Diagnostics.IncrementTranspositionsFound();
                     }
                     else
                     {
@@ -95,8 +96,7 @@ namespace vergiBlue.Algorithms
                         var deeperValue = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false);
                         
                         // Add new transposition table
-                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
-                        
+                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth, deeperValue, NodeType.Exact);
                         value = Math.Max(value, deeperValue);
                     }
 
@@ -109,6 +109,7 @@ namespace vergiBlue.Algorithms
 
                         // Move at previous depth is really bad. Break search.
                         board.SharedData.Transpositions.Add(board.BoardHash, depth, value, NodeType.UpperBound, true);
+                        Diagnostics.IncrementBeta();
                         break;
                     }
                 }
@@ -125,6 +126,7 @@ namespace vergiBlue.Algorithms
                         // Saved some time
                         transposition.ReadOnly = true;
                         value = Math.Min(value, transposition.Evaluation);
+                        Diagnostics.IncrementTranspositionsFound();
                     }
                     else
                     {
@@ -132,8 +134,7 @@ namespace vergiBlue.Algorithms
                         var deeperValue = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true);
 
                         // Add new transposition table
-                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
-                        
+                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth, deeperValue, NodeType.Exact);
                         value = Math.Min(value, deeperValue);
                     }
 
@@ -146,6 +147,7 @@ namespace vergiBlue.Algorithms
 
                         // Save previous level as cut node
                         board.SharedData.Transpositions.Add(board.BoardHash, depth, value, NodeType.UpperBound, true);
+                        Diagnostics.IncrementAlpha();
                         break;
                     }
                 }
