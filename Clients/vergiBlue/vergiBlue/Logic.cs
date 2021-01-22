@@ -65,8 +65,8 @@ namespace vergiBlue
 
 
         // Config bools
-        public static bool UseTranspositionTables { get; } = true;
-        public static bool UseParallelComputation { get; } = false;
+        public bool UseTranspositionTables { get; set; } = true;
+        public bool UseParallelComputation { get; set; } = false;
 
         
         /// <summary>

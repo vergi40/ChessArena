@@ -16,15 +16,54 @@ namespace vergiBlueTests
     [TestClass]
     public class BenchMarking
     {
+        // Separated different config runs 22.1.2021 
+        
         [TestMethod]
-        public void RunAll()
+        public void RunAll_Parallel_NoTranspositions()
+        {
+            RunAll(5, true, false);
+
+            // 4.9 sec. 22.1.2021
+            // Test: RuyLopez_Black. Move: g8 to e7. Depth 5
+            // Board evaluations: 1265055. Check evaluations: 953. Time elapsed: 1929 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
+            // Board evaluations: 2765487. Check evaluations: 1472. Time elapsed: 3004 ms. Available moves found: 40.
+        }
+
+        [TestMethod]
+        public void RunAll_NoParallel_NoTranspositions()
+        {
+            RunAll(5, false, false);
+
+            // 15 sec. 22.1.2021
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 1265055. Check evaluations: 968. Time elapsed: 5705 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 2765487. Check evaluations: 1471. Time elapsed: 9276 ms. Available moves found: 40.
+        }
+
+        [TestMethod]
+        public void RunAll_NoParallel_Transpositions()
+        {
+            RunAll(5, false, true);
+
+            // 13 sec. 22.1.2021
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 565904. Check evaluations: 968. Alpha cutoffs: 33954. Beta cutoffs: 92882. Priority moves found: 54774.
+            // Transpositions used: 379962. Time elapsed: 4338 ms. Available moves found: 30. Transposition tables saved: 657111
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e5. Depth 5
+            // Board evaluations: 1233950. Check evaluations: 1475. Alpha cutoffs: 221560. Beta cutoffs: 63950. Priority moves found: 103245.
+            // Transpositions used: 1033679. Time elapsed: 8738 ms. Available moves found: 40. Transposition tables saved: 1426815
+        }
+
+        private void RunAll(int searchDepth, bool parallel, bool transpositions)
         {
             // Ruy lopez opening
-            RuyLopez_Black(5);
+            RuyLopez_Black(searchDepth, parallel, transpositions);
 
             // https://thechessworld.com/articles/endgame/7-greatest-chess-endings/
             // #1 at pair23
-            GreatestEndings_1_MidGame(5);
+            GreatestEndings_1_MidGame(searchDepth, parallel, transpositions);
 
             // Current standings 17.1.2021 -----------------
 
@@ -87,7 +126,7 @@ namespace vergiBlueTests
             return board;
         }
 
-        public void RuyLopez_Black(int searchDepth)
+        public void RuyLopez_Black(int searchDepth, bool parallel, bool transpositions)
         {
             // 8R BQ|KBNR
             // 7PPPP| PPP
@@ -100,6 +139,9 @@ namespace vergiBlueTests
             //  ABCD EFGH
             var player = new Logic(false);
             player.Board = new Board(CreateRuyLopezOpeningBoard());
+
+            player.UseParallelComputation = parallel;
+            player.UseTranspositionTables = transpositions;
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;
@@ -158,7 +200,7 @@ namespace vergiBlueTests
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to d4. Board evaluations: 1345201. Check evaluations: 967. Time elapsed: 5653 ms. Available moves found: 30.
         }
 
-        public void GreatestEndings_1_MidGame(int searchDepth)
+        public void GreatestEndings_1_MidGame(int searchDepth, bool parallel, bool transpositions)
         {
             var board = new Board();
             var pieces = new List<PieceBase>
@@ -197,6 +239,9 @@ namespace vergiBlueTests
 
             var player = new Logic(true);
             player.Board = new Board(board);
+
+            player.UseParallelComputation = parallel;
+            player.UseTranspositionTables = transpositions;
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;
