@@ -50,7 +50,8 @@ namespace vergiBlue
             if (useTranspositionTables)
             {
                 _useTranspositionTables = true;
-                SearchDepth = 6;
+                //SearchDepth = 6;
+                SearchDepth = 5;
             }
 
             if (overrideMaxDepth != null) MaxDepth = overrideMaxDepth.Value;

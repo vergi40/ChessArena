@@ -181,9 +181,18 @@ namespace vergiBlue.Algorithms
         public void Add(ulong boardHash, int depth, double evaluation, NodeType nodeType, bool readOnly = false)
         {
             if (boardHash == 0) throw new ArgumentException($"Board hash was empty.");
-            if (Tables.ContainsKey(boardHash))
+            if(Tables.TryGetValue(boardHash, out var transposition))
             {
-                Update(boardHash, depth, evaluation, nodeType, readOnly);
+                // No need to lock, since we directly just update values
+                //lock (_tableLock) { }
+                if (nodeType != NodeType.Exact || (!transposition.ReadOnly && depth > transposition.Depth))
+                {
+                    // We found deeper search, substitute
+                    transposition.Depth = depth;
+                    transposition.Evaluation = evaluation;
+                    transposition.Type = nodeType;
+                    transposition.ReadOnly = readOnly;
+                }
             }
             else
             {
@@ -240,7 +249,21 @@ namespace vergiBlue.Algorithms
             var oldHash = oldBoard.BoardHash;
             var newHash = GetNewBoardHash(newMove, oldBoard, oldHash);
 
-            if (Tables.ContainsKey(newHash)) return Tables[newHash];
+            if (Tables.TryGetValue(newHash, out var transposition))
+            {
+                return transposition;
+            }
+            return null;
+        }
+
+        public Transposition? GetTranspositionForBoard(ulong boardHash)
+        {
+            if (boardHash == 0) throw new ArgumentException($"Board hash was empty.");
+            if (Tables.TryGetValue(boardHash, out var transposition))
+            {
+                return transposition;
+            }
+            
             return null;
         }
     }

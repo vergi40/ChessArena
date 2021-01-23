@@ -70,9 +70,17 @@ namespace vergiBlue.Algorithms
         /// Another tree encounters this at depth 3
         /// -> good
         /// </summary>
-        public static double ToDepthWithTranspositions(Board board, int depth, double alpha, double beta, bool maximizingPlayer)
+        public static double ToDepthWithTranspositions(Board board, int depth, double alpha, double beta, bool maximizingPlayer, bool createStartTranspositionCheck = false)
         {
             if (depth == 0) return board.Evaluate(maximizingPlayer, depth);
+            if (createStartTranspositionCheck)
+            {
+                var transposition = board.SharedData.Transpositions.GetTranspositionForBoard(board.BoardHash);
+                if (transposition != null && transposition.Depth >= depth)
+                {
+                    return transposition.Evaluation;
+                }
+            }
             
             var allMoves = board.MovesWithTranspositionOrder(maximizingPlayer, false);
             if (!allMoves.Any()) return board.Evaluate(maximizingPlayer, depth);
@@ -96,7 +104,7 @@ namespace vergiBlue.Algorithms
                         var deeperValue = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false);
                         
                         // Add new transposition table
-                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth, deeperValue, NodeType.Exact);
+                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
                         value = Math.Max(value, deeperValue);
                     }
 
@@ -108,7 +116,7 @@ namespace vergiBlue.Algorithms
                         // Lower bound, cut-node (exact evaluation might be greater)
 
                         // Move at previous depth is really bad. Break search.
-                        board.SharedData.Transpositions.Add(board.BoardHash, depth, value, NodeType.UpperBound, true);
+                        board.SharedData.Transpositions.Add(board.BoardHash, depth - 1, value, NodeType.UpperBound, true);
                         Diagnostics.IncrementBeta();
                         break;
                     }
@@ -134,7 +142,7 @@ namespace vergiBlue.Algorithms
                         var deeperValue = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true);
 
                         // Add new transposition table
-                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth, deeperValue, NodeType.Exact);
+                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
                         value = Math.Min(value, deeperValue);
                     }
 
@@ -146,7 +154,7 @@ namespace vergiBlue.Algorithms
                         // Upper bound, all-node (exact evaluation might be less)
 
                         // Save previous level as cut node
-                        board.SharedData.Transpositions.Add(board.BoardHash, depth, value, NodeType.UpperBound, true);
+                        board.SharedData.Transpositions.Add(board.BoardHash, depth - 1, value, NodeType.UpperBound, true);
                         Diagnostics.IncrementAlpha();
                         break;
                     }
@@ -154,58 +162,5 @@ namespace vergiBlue.Algorithms
                 return value;
             }
         }
-
-        /// <summary>
-        /// Call MiniMax separately on each depth. If checkmate is found, break;
-        /// </summary>
-        /// <param name="newBoard"></param>
-        /// <param name="depth"></param>
-        /// <param name="alpha"></param>
-        /// <param name="beta"></param>
-        /// <param name="maximizingPlayer"></param>
-        /// <returns></returns>
-        public static double IterateToDepth(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
-        {
-            const double minIterations = 2;//TODO need tweaking
-            const double maxIterations = 3;//TODO need tweaking
-            var bestValue = WorstValue(maximizingPlayer);
-            for (int i = 1; i <= Math.Min(maxIterations, Math.Max(minIterations, depth)); i++)
-            {
-                var value = ToDepth(newBoard, i, alpha, beta, maximizingPlayer);
-                if (maximizingPlayer)
-                {
-                    // Checkmate
-                    //if (value > StrengthTable.King / 2) return value;
-                    if (value > bestValue)
-                    {
-                        bestValue = value;
-                    }
-                }
-                else
-                {
-                    // Checkmate
-                    //if (value < -StrengthTable.King / 2) return value;
-                    if (value < bestValue)
-                    {
-                        bestValue = value;
-                    }
-                }
-            }
-
-            return bestValue;
-        }
-
-        private static double BestValue(bool isMaximizing)
-        {
-            if (isMaximizing) return 1000000;
-            else return -1000000;
-        }
-
-        private static double WorstValue(bool isMaximizing)
-        {
-            if (isMaximizing) return -1000000;
-            else return 1000000;
-        }
-
     }
 }

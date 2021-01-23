@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Transactions;
 using CommonNetStandard.Client;
 using CommonNetStandard.Interface;
 using vergiBlue.Algorithms;
-using vergiBlue.Pieces;
 
 namespace vergiBlue
 {
@@ -65,10 +63,11 @@ namespace vergiBlue
 
 
         // Config bools
-        public bool UseTranspositionTables { get; set; } = true;
-        public bool UseParallelComputation { get; set; } = false;
+        public bool UseTranspositionTables { get; set; } = false;
+        public bool UseParallelComputation { get; set; } = true;
+        public bool UseIterativeDeepening { get; set; } = false;
 
-        
+
         /// <summary>
         /// For tests. Test environment will handle board initialization
         /// </summary>
@@ -162,7 +161,7 @@ namespace vergiBlue
                 SearchDepth = overrideSearchDepth.Value;
             }
             
-            var bestMove = AnalyzeBestMove(allMoves, UseTranspositionTables, UseParallelComputation);
+            var bestMove = AnalyzeBestMove(allMoves);
 
             if (bestMove == null)
                 throw new ArgumentException(
@@ -207,9 +206,8 @@ namespace vergiBlue
         /// 
         /// </summary>
         /// <param name="allMoves"></param>
-        /// <param name="useParallelComputation"></param>
         /// <returns></returns>
-        private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves, bool useTranspositions, bool useParallelComputation = true)
+        private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves)
         {
             var isMaximizing = IsPlayerWhite;
 
@@ -229,9 +227,15 @@ namespace vergiBlue
                     return twoTurnCheckMates.First();
                 }
             }
+            
+            if(UseIterativeDeepening)
+            {
+                return MoveResearch.SelectBestWithIterativeDeepening(allMoves, SearchDepth, Board, isMaximizing,
+                    UseTranspositionTables);
+            }
 
             EvaluationResult evaluated;
-            if (useParallelComputation)
+            if (UseParallelComputation)
             {
                 // CPU profiler - first breakpoint here
                 evaluated = MoveResearch
@@ -244,7 +248,7 @@ namespace vergiBlue
             }
             else
             {
-                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing, useTranspositions);
+                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing, UseTranspositionTables);
                 
                 if(Board.SharedData.Transpositions.Tables.Count > 0)
                     Diagnostics.AddMessage($"Transposition tables saved: {Board.SharedData.Transpositions.Tables.Count}");

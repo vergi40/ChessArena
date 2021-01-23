@@ -27,13 +27,14 @@ namespace vergiBlue.Algorithms
                     }
                     else
                     {
+                        // Board evaluation at current depth
                         var newBoard = new Board(board, move);
                         var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, -100000, 100000,
-                            !isMaximizing);
+                            !isMaximizing, true);
                         result.Add(value, move);
 
                         // Add new transposition table
-                        newBoard.SharedData.Transpositions.Add(newBoard.BoardHash, searchDepth, value, NodeType.Exact);
+                        newBoard.SharedData.Transpositions.Add(newBoard.BoardHash, searchDepth, value, NodeType.Exact, true);
                     }
                 }
             }
@@ -41,6 +42,7 @@ namespace vergiBlue.Algorithms
             {
                 foreach (var move in moves)
                 {
+                    // Board evaluation at current depth
                     var newBoard = new Board(board, move);
                     var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
                     result.Add(value, move);
@@ -240,6 +242,109 @@ namespace vergiBlue.Algorithms
         public static void SortMovesByCapture(List<SingleMove> moves)
         {
             moves.Sort((move1, move2) => move1.Capture.CompareTo(move2.Capture));
+        }
+
+        /// <summary>
+        /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ...
+        /// 
+        /// </summary>
+        public static SingleMove SelectBestWithIterativeDeepening(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, bool useTranspositions)
+        {
+            if (useTranspositions)
+            {
+                return IterativeDeepeningWithTranspositions(allMoves, searchDepth, board, isMaximizing);
+            }
+            else
+            {
+                return IterativeDeepeningBasic(allMoves, searchDepth, board, isMaximizing);
+            }
+        }
+
+        /// <summary>
+        /// Iterative deepening sub-method.
+        /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ... 
+        /// </summary>
+        private static SingleMove IterativeDeepeningBasic(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing)
+        {
+            //var result1 = new List<(double, SingleMove)>();
+            //var evaluationResult = new EvaluationResult();
+            var midResult = new List<(double, SingleMove)>();
+            var previousOrder = new List<SingleMove>(allMoves);
+
+            // Initial depth 2
+            for (int i = 2; i <= searchDepth; i++)
+            {
+                midResult.Clear();
+                foreach (var move in allMoves)
+                {
+                    var newBoard = new Board(board, move);
+                    var evaluation = MiniMax.ToDepth(newBoard, i, -100000, 100000, !isMaximizing);
+                    //evaluationResult.Add(evaluation, move);
+                    midResult.Add((evaluation, move));
+                }
+
+                //var bestStart = evaluationResult.Best(isMaximizing);
+
+                midResult = OrderEvaluatedMoves(midResult, isMaximizing, true).ToList();
+                allMoves = midResult.Select(item => item.Item2).ToList();
+
+                if (allMoves.Any())
+                {
+                    // Save previous level in case of time running out or empty result
+                    previousOrder = new List<SingleMove>(allMoves);
+                }
+                else
+                {
+                    // TODO delete first and try search with second
+                    return previousOrder.First();
+                }
+            }
+
+            // Search finished
+            return allMoves.First();
+        }
+
+        /// <summary>
+        /// Iterative deepening sub-method.
+        /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ...
+        /// 
+        /// </summary>
+        private static SingleMove IterativeDeepeningWithTranspositions(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing)
+        {
+            var midResult = new List<(double, SingleMove)>();
+            var previousOrder = new List<SingleMove>(allMoves);
+
+            // Initial depth 2
+            for (int i = 2; i <= searchDepth; i++)
+            {
+                midResult.Clear();
+                foreach (var move in allMoves)
+                {
+                    var newBoard = new Board(board, move);
+                    var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, -100000, 100000, !isMaximizing, true);
+                    
+                    // Top-level result should always be saved with priority
+                    newBoard.SharedData.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, true);
+                    midResult.Add((evaluation, move));
+                }
+
+                midResult = OrderEvaluatedMoves(midResult, isMaximizing, true).ToList();
+                allMoves = midResult.Select(item => item.Item2).ToList();
+
+                if (allMoves.Any())
+                {
+                    // Save previous level in case of time running out or empty result
+                    previousOrder = new List<SingleMove>(allMoves);
+                }
+                else
+                {
+                    // TODO delete first and try search with second
+                    return previousOrder.First();
+                }
+            }
+
+            // Search finished
+            return allMoves.First();
         }
     }
 }

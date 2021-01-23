@@ -17,11 +17,54 @@ namespace vergiBlueTests
     public class BenchMarking
     {
         // Separated different config runs 22.1.2021 
-        
+
+        [TestMethod]
+        public void RunAll_IterativeDeepening()
+        {
+            RunAll(5, false, true, true);
+
+            // 17.4 sec. 22.1.2021 initial algorithm
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 1447494. Check evaluations: 968. Time elapsed: 6706 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 3118588. Check evaluations: 1471. Time elapsed: 10654 ms. Available moves found: 40.
+
+
+            // 45 sec. transpositions
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 2193664. Check evaluations: 968. Alpha cutoffs: 85401. Beta cutoffs: 172214. Priority moves found: 213821.
+            // Transpositions used: 59818. Time elapsed: 12252 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 6602273. Check evaluations: 1471. Alpha cutoffs: 744282. Beta cutoffs: 181376. Priority moves found: 594487.
+            // Transpositions used: 246214. Time elapsed: 35217 ms. Available moves found: 40.
+
+            // DEBUG Depth 4 totals
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 4
+            // Board evaluations: 221443. Check evaluations: 968. Alpha cutoffs: 44068. Beta cutoffs: 8947. Priority moves found: 58400.
+            // Transpositions used: 5459. Time elapsed: 2361 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 4
+            // Board evaluations: 629749. Check evaluations: 1471. Alpha cutoffs: 14272. Beta cutoffs: 86230. Priority moves found: 32417.
+            // Transpositions used: 30434. Time elapsed: 3423 ms. Available moves found: 40.
+            // DEBUG
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 4
+            // Board evaluations: 221522. Check evaluations: 968. Alpha cutoffs: 44341. Beta cutoffs: 8942. Priority moves found: 59691.
+            // Transpositions used: 5950. Time elapsed: 1804 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 4
+            // Board evaluations: 630001. Check evaluations: 1471. Alpha cutoffs: 14300. Beta cutoffs: 86228. Priority moves found: 32468.
+            // Transpositions used: 30463. Time elapsed: 3666 ms. Available moves found: 40.
+
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 2194191. Check evaluations: 968. Alpha cutoffs: 85609. Beta cutoffs: 172275. Priority moves found: 214735.
+            // Transpositions used: 59079. Time elapsed: 12294 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 6598637. Check evaluations: 1471. Alpha cutoffs: 743992. Beta cutoffs: 181305. Priority moves found: 590768.
+            // Transpositions used: 245099. Time elapsed: 33549 ms. Available moves found: 40.
+        }
+
         [TestMethod]
         public void RunAll_Parallel_NoTranspositions()
         {
-            RunAll(5, true, false);
+            RunAll(5, true, false, false);
 
             // 4.9 sec. 22.1.2021
             // Test: RuyLopez_Black. Move: g8 to e7. Depth 5
@@ -33,9 +76,9 @@ namespace vergiBlueTests
         [TestMethod]
         public void RunAll_NoParallel_NoTranspositions()
         {
-            RunAll(5, false, false);
+            RunAll(5, false, false, false);
 
-            // 15 sec. 22.1.2021
+            // 14-15 sec. 22.1.2021
             // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
             // Board evaluations: 1265055. Check evaluations: 968. Time elapsed: 5705 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
@@ -45,25 +88,25 @@ namespace vergiBlueTests
         [TestMethod]
         public void RunAll_NoParallel_Transpositions()
         {
-            RunAll(5, false, true);
+            RunAll(5, false, true, false);
 
-            // 13 sec. 22.1.2021
+            // 22 sec. 22.1.2021
             // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
-            // Board evaluations: 565904. Check evaluations: 968. Alpha cutoffs: 33954. Beta cutoffs: 92882. Priority moves found: 54774.
-            // Transpositions used: 379962. Time elapsed: 4338 ms. Available moves found: 30. Transposition tables saved: 657111
-            // Test: GreatestEndings_1_MidGame. Move: e4 to e5. Depth 5
-            // Board evaluations: 1233950. Check evaluations: 1475. Alpha cutoffs: 221560. Beta cutoffs: 63950. Priority moves found: 103245.
-            // Transpositions used: 1033679. Time elapsed: 8738 ms. Available moves found: 40. Transposition tables saved: 1426815
+            // Board evaluations: 1723082. Check evaluations: 968. Alpha cutoffs: 43644. Beta cutoffs: 140662. Priority moves found: 107279.
+            // Transpositions used: 55172. Time elapsed: 9151 ms. Available moves found: 30. Transposition tables saved: 907124
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 2970965. Check evaluations: 1471. Alpha cutoffs: 222308. Beta cutoffs: 64828. Priority moves found: 81349.
+            // Transpositions used: 124315. Time elapsed: 13191 ms. Available moves found: 40. Transposition tables saved: 1441064
         }
 
-        private void RunAll(int searchDepth, bool parallel, bool transpositions)
+        private void RunAll(int searchDepth, bool parallel, bool transpositions, bool iterativeDeepening)
         {
             // Ruy lopez opening
-            RuyLopez_Black(searchDepth, parallel, transpositions);
+            RuyLopez_Black(searchDepth, parallel, transpositions, iterativeDeepening);
 
             // https://thechessworld.com/articles/endgame/7-greatest-chess-endings/
             // #1 at pair23
-            GreatestEndings_1_MidGame(searchDepth, parallel, transpositions);
+            GreatestEndings_1_MidGame(searchDepth, parallel, transpositions, iterativeDeepening);
 
             // Current standings 17.1.2021 -----------------
 
@@ -92,14 +135,7 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: e4 to e5. Depth 5
             // Board evaluations: 2959711. Check evaluations: 1475. Alpha cutoffs: 257178. Beta cutoffs: 65191. Priority moves found: 198480. Transpositions used: 197693.
             // Time elapsed: 14777 ms. Available moves found: 40. Transposition tables saved: 1569299
-
-            // 13.2 sec. Fixed search depth when saving transposition results
-            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
-            // Board evaluations: 565904. Check evaluations: 968. Alpha cutoffs: 33954. Beta cutoffs: 92882. Priority moves found: 54774. Transpositions used: 379962.
-            // Time elapsed: 4444 ms. Available moves found: 30. Transposition tables saved: 657111
-            // Test: GreatestEndings_1_MidGame. Move: e4 to e5. Depth 5
-            // Board evaluations: 1233950. Check evaluations: 1475. Alpha cutoffs: 221560. Beta cutoffs: 63950. Priority moves found: 103245. Transpositions used: 1033679.
-            // Time elapsed: 8690 ms. Available moves found: 40. Transposition tables saved: 1426815
+            
 
         }
 
@@ -126,7 +162,7 @@ namespace vergiBlueTests
             return board;
         }
 
-        public void RuyLopez_Black(int searchDepth, bool parallel, bool transpositions)
+        public void RuyLopez_Black(int searchDepth, bool parallel, bool transpositions, bool iterativeDeepening)
         {
             // 8R BQ|KBNR
             // 7PPPP| PPP
@@ -142,6 +178,7 @@ namespace vergiBlueTests
 
             player.UseParallelComputation = parallel;
             player.UseTranspositionTables = transpositions;
+            player.UseIterativeDeepening = iterativeDeepening;
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;
@@ -200,7 +237,7 @@ namespace vergiBlueTests
             // Test: RuyLopez_SearchDepth5_Black. Move: c6 to d4. Board evaluations: 1345201. Check evaluations: 967. Time elapsed: 5653 ms. Available moves found: 30.
         }
 
-        public void GreatestEndings_1_MidGame(int searchDepth, bool parallel, bool transpositions)
+        public void GreatestEndings_1_MidGame(int searchDepth, bool parallel, bool transpositions, bool iterativeDeepening)
         {
             var board = new Board();
             var pieces = new List<PieceBase>
@@ -242,6 +279,7 @@ namespace vergiBlueTests
 
             player.UseParallelComputation = parallel;
             player.UseTranspositionTables = transpositions;
+            player.UseIterativeDeepening = iterativeDeepening;
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;

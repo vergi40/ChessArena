@@ -31,11 +31,29 @@ namespace vergiBlue.Algorithms
         //private IList<SingleMove> _moves = new List<SingleMove>();
         public bool Empty { get; set; } = true;
 
+        /// <summary>
+        /// Lowest value first, highest last. Others random.
+        /// </summary>
+        public List<SingleMove> OrderedEndsAscending { get; set; } = new List<SingleMove>();
+        
+        /// <summary>
+        /// Highest value first, lowest last. Others random.
+        /// </summary>
+        public List<SingleMove> OrderedEndsDescending 
+        { 
+            get
+            {
+                var list = new List<SingleMove>(OrderedEndsAscending);
+                list.Reverse();
+                return list;
+            } 
+        }
+        
         public void Add(double evaluation, SingleMove move)
         {
             if (Empty)
             {
-                //_moves.Add(move);
+                OrderedEndsAscending.Add(move);
                 MinMove = move;
                 MaxMove = move;
                 Min = evaluation;
@@ -48,26 +66,28 @@ namespace vergiBlue.Algorithms
                 Min = evaluation;
                 MinMove = move;
                 _minIsCapture = move.Capture;
-                //_moves.Insert(0, move);
+                OrderedEndsAscending.Insert(0, move);
             }
             else if(Math.Abs(evaluation - Min) < Double.Epsilon && !_minIsCapture && move.Capture)
             {
                 Min = evaluation;
                 MinMove = move;
                 _minIsCapture = true;
-                //_moves.Insert(0, move);
+                OrderedEndsAscending.Insert(0, move);
             }
             else if (evaluation > Max)
             {
                 Max = evaluation;
                 MaxMove = move;
                 _maxIsCapture = move.Capture;
+                OrderedEndsAscending.Add(move);
             }
             else if (Math.Abs(evaluation - Max) < Double.Epsilon && _maxIsCapture && move.Capture)
             {
                 Max = evaluation;
                 MaxMove = move;
                 _maxIsCapture = true;
+                OrderedEndsAscending.Add(move);
             }
         }
 
@@ -77,6 +97,12 @@ namespace vergiBlue.Algorithms
             {
                 Add(evaluation, move);
             }
+        }
+
+        public SingleMove Best(bool isMaximizing)
+        {
+            if (isMaximizing) return MaxMove;
+            return MinMove;
         }
     }
 }
