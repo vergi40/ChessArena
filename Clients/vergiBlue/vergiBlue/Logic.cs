@@ -26,6 +26,35 @@ namespace vergiBlue
         EndGame
     }
 
+    public class LogicSettings
+    {
+        // Config bools
+        public bool UseTranspositionTables { get; set; } = false;
+        public bool UseParallelComputation { get; set; } = true;
+        public bool UseIterativeDeepening { get; set; } = false;
+
+        /// <summary>
+        /// Log more data, like alpha-betas
+        /// </summary>
+        public bool UseFullDiagnostics { get; set; } = false;
+
+
+        /// <summary>
+        /// For tests. Keep parameters intact. After logic constructor, this initialization can be used to set any logical aspect.
+        /// LTS - Long Time Support. Parameters will be kept the same.
+        /// </summary>
+        /// <param name="useParallelComputation"></param>
+        /// <param name="useTranspositionTables"></param>
+        /// <param name="useIterativeDeepening"></param>
+        public void SetConfigLTS(bool? useParallelComputation = null, bool? useTranspositionTables = null, bool? useIterativeDeepening = null, bool? useFullDiagnostics = null)
+        {
+            if (useParallelComputation != null) UseParallelComputation = useParallelComputation.Value;
+            if (useTranspositionTables != null) UseTranspositionTables = useTranspositionTables.Value;
+            if (useIterativeDeepening != null) UseIterativeDeepening = useIterativeDeepening.Value;
+            if (useFullDiagnostics != null) UseFullDiagnostics = useFullDiagnostics.Value;
+        }
+    }
+
     public class Logic : LogicBase
     {
         // Game strategic variables
@@ -62,23 +91,36 @@ namespace vergiBlue
         public DiagnosticsData PreviousData { get; set; } = new DiagnosticsData();
 
 
-        // Config bools
-        public bool UseTranspositionTables { get; set; } = false;
-        public bool UseParallelComputation { get; set; } = true;
-        public bool UseIterativeDeepening { get; set; } = false;
+        public LogicSettings Settings { get; set; } = new LogicSettings();
 
 
         /// <summary>
-        /// For tests. Test environment will handle board initialization
+        /// For tests. Need to set board explicitly. Test environment handles initializations.
+        /// Custom set <see cref="UseParallelComputation"/>.
+        /// Custom set <see cref="UseTranspositionTables"/>.
+        /// Custom set <see cref="UseIterativeDeepening"/>.
         /// </summary>
+        [Obsolete("For tests, use constructor with Board parameter.")]
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
-            Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, UseTranspositionTables);
+            Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, Settings.UseTranspositionTables);
+        }
+
+        /// <summary>
+        /// For tests. Start board known. Test environment handles initializations.
+        /// Custom set <see cref="UseParallelComputation"/>.
+        /// Custom set <see cref="UseTranspositionTables"/>.
+        /// Custom set <see cref="UseIterativeDeepening"/>.
+        /// </summary>
+        public Logic(bool isPlayerWhite, Board board, int? overrideMaxDepth = null) : base(isPlayerWhite)
+        {
+            Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, Settings.UseTranspositionTables);
+            Board = new Board(board);
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, Board? overrideBoard = null) : base(startInformation.WhitePlayer)
         {
-            Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth, UseTranspositionTables);
+            Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth, Settings.UseTranspositionTables);
             if(overrideBoard != null) Board = new Board(overrideBoard);
             else Board.InitializeEmptyBoard();
             
@@ -178,7 +220,7 @@ namespace vergiBlue
             //if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
             if (bestMove.Promotion) Diagnostics.AddMessage($"Promotion occured at {bestMove.NewPos.ToAlgebraic()}. ");
 
-            PreviousData = Diagnostics.CollectAndClear();
+            PreviousData = Diagnostics.CollectAndClear(Settings.UseFullDiagnostics);
 
             var move = new PlayerMoveImplementation(
                 bestMove.ToInterfaceMove(castling, check),
@@ -228,14 +270,14 @@ namespace vergiBlue
                 }
             }
             
-            if(UseIterativeDeepening)
+            if(Settings.UseIterativeDeepening)
             {
                 return MoveResearch.SelectBestWithIterativeDeepening(allMoves, SearchDepth, Board, isMaximizing,
-                    UseTranspositionTables);
+                    Settings.UseTranspositionTables);
             }
 
             EvaluationResult evaluated;
-            if (UseParallelComputation)
+            if (Settings.UseParallelComputation)
             {
                 // CPU profiler - first breakpoint here
                 evaluated = MoveResearch
@@ -248,7 +290,7 @@ namespace vergiBlue
             }
             else
             {
-                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing, UseTranspositionTables);
+                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing, Settings.UseTranspositionTables);
                 
                 if(Board.SharedData.Transpositions.Tables.Count > 0)
                     Diagnostics.AddMessage($"Transposition tables saved: {Board.SharedData.Transpositions.Tables.Count}");
@@ -303,6 +345,20 @@ namespace vergiBlue
             if (target.Item1 < 0 || target.Item1 > 7 || target.Item2 < 0 || target.Item2 > 7)
                 return true;
             return false;
+        }
+
+        /// <summary>
+        /// For tests. Keep parameters intact. After logic constructor, this initialization can be used to set any logical aspect.
+        /// LTS - Long Time Support. Parameters will be kept the same.
+        /// </summary>
+        /// <param name="useParallelComputation"></param>
+        /// <param name="useTranspositionTables"></param>
+        /// <param name="useIterativeDeepening"></param>
+        public void SetConfigLTS(bool? useParallelComputation = null, bool? useTranspositionTables = null, bool? useIterativeDeepening = null)
+        {
+            if (useParallelComputation != null) Settings.UseParallelComputation = useParallelComputation.Value;
+            if (useTranspositionTables != null) Settings.UseTranspositionTables = useTranspositionTables.Value;
+            if (useIterativeDeepening != null) Settings.UseIterativeDeepening = useIterativeDeepening.Value;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
@@ -63,6 +64,14 @@ namespace vergiBlueTests
             var player = new Logic(false);
             player.Board = new Board(BenchMarking.CreateRuyLopezOpeningBoard());
 
+            player.Settings = new LogicSettings()
+            {
+                UseParallelComputation = false,
+                UseTranspositionTables = true,
+                UseIterativeDeepening = false,
+                UseFullDiagnostics = true
+            };
+
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;
             Logger.LogMessage($"// Test: {nameof(Transpositions_Depth1)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
@@ -70,6 +79,72 @@ namespace vergiBlueTests
 
             // Test: Transpositions_Depth1. Move: c6 to a5. Depth 1
             // Board evaluations: 962. Check evaluations: 961. Time elapsed: 21 ms. Available moves found: 30. Transposition tables saved: 962
+        }
+
+        [TestMethod]
+        public void Transpositions_BoardHashTests()
+        {
+            // 8
+            // 7
+            // 6  K
+            // 5
+            // 4P
+            // 3  K
+            // 2
+            // 1
+            //  ABCDEFGH
+            
+            // Obvious board.
+            // If white starts, pawn is sure to be lost
+
+            var depth = 5;
+            var whiteBoard = new Board();
+            var pieces = new List<PieceBase>
+            {
+                new Pawn(false, "a4"),
+                new King(true, "c3"),
+                new King(false, "c6")
+            };
+            whiteBoard.AddNew(pieces);
+
+            var white = new Logic(true, whiteBoard);
+
+            white.Settings = new LogicSettings()
+            {
+                UseParallelComputation = false,
+                UseTranspositionTables = true,
+                UseIterativeDeepening = false,
+                UseFullDiagnostics = true
+            };
+            
+            // TODO to be implemented
+            //var move = white.CreateMoveWithDepth(depth);
+            white.Board.ExecuteMove(new SingleMove("c3", "b4"));
+
+            // Calculate optimal move hash beforehand and compare to choice made
+            var expectedBoard = new Board();
+            var expectedPieces = new List<PieceBase>
+            {
+                new Pawn(false, "a4"),
+                new King(true, "b4"),
+                new King(false, "c6")
+            };
+            expectedBoard.AddNew(expectedPieces);
+            
+            // Refresh hash
+            expectedBoard = new Board(expectedBoard);
+            
+            white.Board.BoardHash.ShouldBe(expectedBoard.BoardHash);
+
+            //var diagnostics = move.Diagnostics;
+            //Logger.LogMessage($"// Test: {nameof(Transpositions_BoardHashTests)}. Move: {move.Move.StartPosition} to {move.Move.EndPosition}. Depth {depth}");
+            //Logger.LogMessage($"// {diagnostics.ToString()}");
+
+            // Test: Transpositions_BoardHashTests. Move: c3 to c4. Depth 5
+            // Board evaluations: 3814. Check evaluations: 72. Alpha cutoffs: 854. Beta cutoffs: 683. Priority moves found: 2900.
+            // Transpositions used: 3307. Time elapsed: 35 ms. Available moves found: 7. Transposition tables saved: 1294
+
+
         }
 
         [TestMethod]

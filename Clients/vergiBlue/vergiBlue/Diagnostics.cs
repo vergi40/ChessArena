@@ -137,14 +137,18 @@ namespace vergiBlue
         /// Call in end of each player turn
         /// </summary>
         /// <returns></returns>
-        public static DiagnosticsData CollectAndClear()
+        public static DiagnosticsData CollectAndClear(bool fullDiagnostics = false)
         {
             lock (messageLock)
             {
                 _currentData.EvaluationCount = _evaluationCount;
                 _currentData.CheckCount = _checkCount;
-                _currentData.AlphaCutoffs = _alphaCutoffs;
-                _currentData.BetaCutoffs = _betaCutoffs;
+                
+                if(fullDiagnostics)
+                {
+                    _currentData.AlphaCutoffs = _alphaCutoffs;
+                    _currentData.BetaCutoffs = _betaCutoffs;
+                }
                 _currentData.PriorityMovesFound = _priorityMovesFound;
                 _currentData.TranspositionsFound = _transpositionsFound;
                 _currentData.Messages = _messages;

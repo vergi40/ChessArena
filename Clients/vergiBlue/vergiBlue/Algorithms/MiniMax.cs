@@ -35,7 +35,7 @@ namespace vergiBlue.Algorithms
                     if (alpha >= beta)
                     {
                         // Saved some time by noticing this branch is a dead end
-                        //Diagnostics.IncrementAlpha();
+                        Diagnostics.IncrementAlpha();
                         break;
                     }
                 }
@@ -52,7 +52,7 @@ namespace vergiBlue.Algorithms
                     if (beta <= alpha)
                     {
                         // Saved some time by noticing this branch is a dead end
-                        //Diagnostics.IncrementBeta();
+                        Diagnostics.IncrementBeta();
                         break;
                     }
                 }
@@ -97,6 +97,12 @@ namespace vergiBlue.Algorithms
                         transposition.ReadOnly = true;
                         value = Math.Max(value, transposition.Evaluation);
                         Diagnostics.IncrementTranspositionsFound();
+                        
+                        if(transposition.Type == NodeType.UpperBound)
+                        {
+                            // Saved big time
+                            break;
+                        }
                     }
                     else
                     {
@@ -135,6 +141,12 @@ namespace vergiBlue.Algorithms
                         transposition.ReadOnly = true;
                         value = Math.Min(value, transposition.Evaluation);
                         Diagnostics.IncrementTranspositionsFound();
+
+                        if (transposition.Type == NodeType.LowerBound)
+                        {
+                            // Saved big time
+                            break;
+                        }
                     }
                     else
                     {

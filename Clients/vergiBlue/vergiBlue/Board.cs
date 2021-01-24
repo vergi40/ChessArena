@@ -231,6 +231,11 @@ namespace vergiBlue
         {
             PieceList.Add(piece);
             BoardArray[piece.CurrentPosition.column, piece.CurrentPosition.row] = piece;
+
+            if (piece.Identity == 'K')
+            {
+                UpdateKingReference(piece);
+            }
         }
 
         public void AddNew(IEnumerable<PieceBase> pieces)
