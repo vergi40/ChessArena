@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard;
@@ -253,21 +254,49 @@ namespace vergiBlue
                 AddNew(piece);
             }
         }
-        
-        public double Evaluate(bool isMaximizing, int? currentSearchDepth = null)
+
+        public double Evaluate(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null,
+            int? moveCount = null)
         {
-            // TODO
+            if (simpleEvaluation) return EvaluateSimple(isMaximizing, currentSearchDepth, moveCount);
+            return EvaluateIntelligent(isMaximizing, currentSearchDepth, moveCount);
+        }
+
+
+        public double EvaluateSimple(bool isMaximizing, int? currentSearchDepth = null, int? moveCount = null)
+        {
             Diagnostics.IncrementEvalCount();
             var evalScore = PieceList.Sum(p => p.RelativeStrength);
 
             // Checkmate (in good or bad) should have more priority the sooner it occurs
             if(currentSearchDepth != null)
             {
-                if (evalScore > StrengthTable.King / 2)
+                if (evalScore > PieceBaseStrength.King / 2)
                 {
                     evalScore += 10 * (currentSearchDepth.Value + 1);
                 }
-                else if (evalScore < -StrengthTable.King / 2)
+                else if (evalScore < -PieceBaseStrength.King / 2)
+                {
+                    evalScore -= 10 * (currentSearchDepth.Value + 1);
+                }
+            }
+
+            return evalScore;
+        }
+
+        public double EvaluateIntelligent(bool isMaximizing, int? currentSearchDepth = null, int? moveCount = null)
+        {
+            Diagnostics.IncrementEvalCount();
+            var evalScore = PieceList.Sum(p => p.PositionStrength);
+
+            // Checkmate (in good or bad) should have more priority the sooner it occurs
+            if (currentSearchDepth != null)
+            {
+                if (evalScore > PieceBaseStrength.King / 2)
+                {
+                    evalScore += 10 * (currentSearchDepth.Value + 1);
+                }
+                else if (evalScore < -PieceBaseStrength.King / 2)
                 {
                     evalScore -= 10 * (currentSearchDepth.Value + 1);
                 }

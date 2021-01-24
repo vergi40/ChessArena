@@ -161,7 +161,7 @@ namespace vergiBlue.Algorithms
             foreach (var singleMove in moves)
             {
                 var newBoard = new Board(board, singleMove);
-                var eval = newBoard.Evaluate(isMaximizing);
+                var eval = newBoard.Evaluate(isMaximizing, false);
                 list.Add((eval, singleMove));
             }
 

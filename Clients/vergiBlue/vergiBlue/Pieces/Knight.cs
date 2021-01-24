@@ -10,17 +10,20 @@ namespace vergiBlue.Pieces
     {
         public override char Identity { get; }
         public override double RelativeStrength { get; }
-        
+
+        public override double PositionStrength =>
+            RelativeStrength + vergiBlue.PositionStrength.Knight(IsWhite, CurrentPosition);
+
         public Knight(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
             Identity = 'N';
-            RelativeStrength = StrengthTable.Knight * Direction;
+            RelativeStrength = PieceBaseStrength.Knight * Direction;
         }
 
         public Knight(bool isWhite, string position) : base(isWhite, position)
         {
             Identity = 'N';
-            RelativeStrength = StrengthTable.Knight * Direction;
+            RelativeStrength = PieceBaseStrength.Knight * Direction;
         }
         
         public override IEnumerable<SingleMove> Moves(Board board)

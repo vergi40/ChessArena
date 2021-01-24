@@ -10,17 +10,19 @@ namespace vergiBlue.Pieces
     {
         public override char Identity { get; }
         public override double RelativeStrength { get; }
-        
+        public override double PositionStrength =>
+            RelativeStrength + vergiBlue.PositionStrength.Bishop(IsWhite, CurrentPosition);
+
         public Bishop(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
             Identity = 'B';
-            RelativeStrength = StrengthTable.Bishop * Direction;
+            RelativeStrength = PieceBaseStrength.Bishop * Direction;
         }
 
         public Bishop(bool isWhite, string position) : base(isWhite, position)
         {
             Identity = 'B';
-            RelativeStrength = StrengthTable.Bishop * Direction;
+            RelativeStrength = PieceBaseStrength.Bishop * Direction;
         }
 
         public override IEnumerable<SingleMove> Moves(Board board)

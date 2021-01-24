@@ -10,17 +10,19 @@ namespace vergiBlue.Pieces
     {
         public override char Identity { get; }
         public override double RelativeStrength { get; }
+        public override double PositionStrength =>
+            RelativeStrength + vergiBlue.PositionStrength.KingStartToMiddleGame(IsWhite, CurrentPosition);
 
         public King(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
             Identity = 'K';
-            RelativeStrength = StrengthTable.King * Direction;
+            RelativeStrength = PieceBaseStrength.King * Direction;
         }
 
         public King(bool isWhite, string position) : base(isWhite, position)
         {
             Identity = 'K';
-            RelativeStrength = StrengthTable.King * Direction;
+            RelativeStrength = PieceBaseStrength.King * Direction;
         }
         
         public override IEnumerable<SingleMove> Moves(Board board)

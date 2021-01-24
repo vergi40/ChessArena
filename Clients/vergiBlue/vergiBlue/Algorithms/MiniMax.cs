@@ -20,10 +20,10 @@ namespace vergiBlue.Algorithms
         /// <returns></returns>
         public static double ToDepth(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
-            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, depth);
+            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, depth);
             var allMoves = newBoard.Moves(maximizingPlayer, false);
 
-            if (!allMoves.Any()) return newBoard.Evaluate(maximizingPlayer, depth);
+            if (!allMoves.Any()) return newBoard.Evaluate(maximizingPlayer, false, depth);
             if (maximizingPlayer)
             {
                 var value = -100000.0;
@@ -72,7 +72,7 @@ namespace vergiBlue.Algorithms
         /// </summary>
         public static double ToDepthWithTranspositions(Board board, int depth, double alpha, double beta, bool maximizingPlayer, bool createStartTranspositionCheck = false)
         {
-            if (depth == 0) return board.Evaluate(maximizingPlayer, depth);
+            if (depth == 0) return board.Evaluate(maximizingPlayer, false, depth);
             if (createStartTranspositionCheck)
             {
                 var transposition = board.SharedData.Transpositions.GetTranspositionForBoard(board.BoardHash);
@@ -83,7 +83,7 @@ namespace vergiBlue.Algorithms
             }
             
             var allMoves = board.MovesWithTranspositionOrder(maximizingPlayer, false);
-            if (!allMoves.Any()) return board.Evaluate(maximizingPlayer, depth);
+            if (!allMoves.Any()) return board.Evaluate(maximizingPlayer, false, depth);
             
             if (maximizingPlayer)
             {

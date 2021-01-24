@@ -12,7 +12,16 @@ namespace vergiBlue.Pieces
         /// Upper case K, Q, R, N, B, P
         /// </summary>
         public abstract char Identity { get; }
+        
+        /// <summary>
+        /// Static strength for piece type. White positive, black negative.
+        /// </summary>
         public abstract double RelativeStrength { get; }
+        
+        /// <summary>
+        /// Static strenght for combination of piece type and position.
+        /// </summary>
+        public abstract double PositionStrength { get; }
 
         /// <summary>
         /// Sign of general direction. Can also be used to classify white as positive and black as negative value.

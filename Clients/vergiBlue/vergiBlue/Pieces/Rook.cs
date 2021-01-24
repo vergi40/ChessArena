@@ -10,17 +10,19 @@ namespace vergiBlue.Pieces
     {
         public override char Identity { get; }
         public override double RelativeStrength { get; }
+        public override double PositionStrength =>
+            RelativeStrength + vergiBlue.PositionStrength.Rook(IsWhite, CurrentPosition);
 
         public Rook(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
             Identity = 'R';
-            RelativeStrength = StrengthTable.Rook * Direction;
+            RelativeStrength = PieceBaseStrength.Rook * Direction;
         }
 
         public Rook(bool isWhite, string position) : base(isWhite, position)
         {
             Identity = 'R';
-            RelativeStrength = StrengthTable.Rook * Direction;
+            RelativeStrength = PieceBaseStrength.Rook * Direction;
         }
 
         public override IEnumerable<SingleMove> Moves(Board board)

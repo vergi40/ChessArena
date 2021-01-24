@@ -10,17 +10,19 @@ namespace vergiBlue.Pieces
     {
         public override char Identity { get; }
         public override double RelativeStrength { get; }
+        public override double PositionStrength =>
+            RelativeStrength + vergiBlue.PositionStrength.Pawn(IsWhite, CurrentPosition);
 
         public Pawn(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
             Identity = 'P';
-            RelativeStrength = StrengthTable.Pawn * Direction;
+            RelativeStrength = PieceBaseStrength.Pawn * Direction;
         }
 
         public Pawn(bool isWhite, string position) : base(isWhite, position)
         {
             Identity = 'P';
-            RelativeStrength = StrengthTable.Pawn * Direction;
+            RelativeStrength = PieceBaseStrength.Pawn * Direction;
         }
 
         protected override SingleMove? CanMoveTo((int, int) target, Board board, bool validateBorders = false)

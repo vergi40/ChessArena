@@ -140,7 +140,7 @@ namespace vergiBlue
             // Increase estimate proportionally depending of piece count
             // All pieces -> use as is
             // 1 piece -> 1/16 of the time
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
             var factor = (double)powerPieces / 16;
             //var factor = 0.5 + (double)powerPieces / 32;
 
@@ -150,7 +150,7 @@ namespace vergiBlue
         {
             var tempOffset = -1;
 
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
             if (powerPieces > 9) return 6 + tempOffset;
             if (powerPieces > 7) return 7 + tempOffset;
             if (powerPieces > 6) return 8 + tempOffset;
@@ -162,7 +162,7 @@ namespace vergiBlue
         {
             var tempOffset = 0;
             
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
             if (powerPieces > 9) return 6 + tempOffset;
             if (powerPieces > 7) return 7 + tempOffset;
             if (powerPieces > 6) return 8 + tempOffset;
@@ -173,7 +173,7 @@ namespace vergiBlue
 
         private void AnalyzeGamePhase(int movePossibilities, Board board)
         {
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
+            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
 
             if (powerPieces > 10)
             {
