@@ -12,6 +12,8 @@ namespace vergiBlue.Algorithms
             int searchDepth, Board board, bool isMaximizing, bool useTranspositions)
         {
             var result = new EvaluationResult();
+            var alpha = -100000.0;
+            var beta = 100000.0;
 
             if (useTranspositions)
             {
@@ -29,12 +31,21 @@ namespace vergiBlue.Algorithms
                     {
                         // Board evaluation at current depth
                         var newBoard = new Board(board, move);
-                        var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, -100000, 100000,
+                        var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, alpha, beta,
                             !isMaximizing, true);
                         result.Add(value, move);
 
                         // Add new transposition table
                         newBoard.SharedData.Transpositions.Add(newBoard.BoardHash, searchDepth, value, NodeType.Exact, true);
+
+                        if (isMaximizing)
+                        {
+                            alpha = Math.Max(alpha, value);
+                        }
+                        else
+                        {
+                            beta = Math.Min(beta, value);
+                        }
                     }
                 }
             }
@@ -44,8 +55,17 @@ namespace vergiBlue.Algorithms
                 {
                     // Board evaluation at current depth
                     var newBoard = new Board(board, move);
-                    var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
+                    var value = MiniMax.ToDepth(newBoard, searchDepth, alpha, beta, !isMaximizing);
                     result.Add(value, move);
+
+                    if (isMaximizing)
+                    {
+                        alpha = Math.Max(alpha, value);
+                    }
+                    else
+                    {
+                        beta = Math.Min(beta, value);
+                    }
                 }
             }
             
@@ -266,8 +286,6 @@ namespace vergiBlue.Algorithms
         /// </summary>
         private static SingleMove IterativeDeepeningBasic(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing)
         {
-            //var result1 = new List<(double, SingleMove)>();
-            //var evaluationResult = new EvaluationResult();
             var midResult = new List<(double, SingleMove)>();
             var previousOrder = new List<SingleMove>(allMoves);
 
@@ -275,12 +293,25 @@ namespace vergiBlue.Algorithms
             for (int i = 2; i <= searchDepth; i++)
             {
                 midResult.Clear();
+
+                // Initialize for each cycle
+                var alpha = -100000.0;
+                var beta = 100000.0;
+                
                 foreach (var move in allMoves)
                 {
                     var newBoard = new Board(board, move);
-                    var evaluation = MiniMax.ToDepth(newBoard, i, -100000, 100000, !isMaximizing);
-                    //evaluationResult.Add(evaluation, move);
+                    var evaluation = MiniMax.ToDepth(newBoard, i, alpha, beta, !isMaximizing);
                     midResult.Add((evaluation, move));
+
+                    if (isMaximizing)
+                    {
+                        alpha = Math.Max(alpha, evaluation);
+                    }
+                    else
+                    {
+                        beta = Math.Min(beta, evaluation);
+                    }
                 }
 
                 //var bestStart = evaluationResult.Best(isMaximizing);
@@ -318,14 +349,28 @@ namespace vergiBlue.Algorithms
             for (int i = 2; i <= searchDepth; i++)
             {
                 midResult.Clear();
+                
+                // Initialize for each cycle
+                var alpha = -100000.0;
+                var beta = 100000.0;
+                
                 foreach (var move in allMoves)
                 {
                     var newBoard = new Board(board, move);
-                    var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, -100000, 100000, !isMaximizing, true);
+                    var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, alpha, beta, !isMaximizing, true);
                     
                     // Top-level result should always be saved with priority
                     newBoard.SharedData.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, true);
                     midResult.Add((evaluation, move));
+
+                    if (isMaximizing)
+                    {
+                        alpha = Math.Max(alpha, evaluation);
+                    }
+                    else
+                    {
+                        beta = Math.Min(beta, evaluation);
+                    }
                 }
 
                 midResult = OrderEvaluatedMoves(midResult, isMaximizing, true).ToList();

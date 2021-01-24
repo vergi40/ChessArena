@@ -45,7 +45,7 @@ namespace vergiBlue
         public Strategy(bool isWhite, int? overrideMaxDepth, bool useTranspositionTables)
         {
             IsPlayerWhite = isWhite;
-            SearchDepth = 3;
+            SearchDepth = 5;
 
             if (useTranspositionTables)
             {
@@ -76,6 +76,7 @@ namespace vergiBlue
             // Previous was opening move from database
             if (previous.EvaluationCount == 0 && previous.CheckCount == 0)
             {
+                Diagnostics.AddMessage($"Using search depth {SearchDepth}.");
                 return SearchDepth;
             }
 
@@ -88,8 +89,13 @@ namespace vergiBlue
             }
 
             var maxDepth = GetMaxDepthForCurrentBoard(board);
+            SearchDepth = maxDepth;
+            // TODO Skip until correlated to new speeds
+            Diagnostics.AddMessage($"Using search depth {SearchDepth}.");
+            return maxDepth;
+
             var previousEstimate = 0;
-            for (int i = 2; i <= maxDepth; i++)
+            for (int i = 3; i <= maxDepth; i++)
             {
                 var estimation = AssessTimeForMiniMaxDepth(i, allMoves, board, previousDepth, previous);
                 
@@ -142,17 +148,19 @@ namespace vergiBlue
         }
         private int GetMaxDepthForCurrentBoard(Board board)
         {
+            var tempOffset = -1;
+
             var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
-            if (powerPieces > 9) return 5;
-            if (powerPieces > 7) return 6;
-            if (powerPieces > 6) return 7;
-            if (powerPieces > 4) return 8;
-            return 9;
+            if (powerPieces > 9) return 6 + tempOffset;
+            if (powerPieces > 7) return 7 + tempOffset;
+            if (powerPieces > 6) return 8 + tempOffset;
+            if (powerPieces > 4) return 9 + tempOffset;
+            return 10 + tempOffset;
         }
 
         private int GetMaxDepthForCurrentBoardWithTranspositions(Board board)
         {
-            var tempOffset = -1;
+            var tempOffset = 0;
             
             var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > StrengthTable.Pawn);
             if (powerPieces > 9) return 6 + tempOffset;

@@ -48,13 +48,6 @@ namespace vergiBlueTests
 
             // DEBUG Depth 4 totals
             // Test: RuyLopez_Black. Move: d8 to f6. Depth 4
-            // Board evaluations: 221443. Check evaluations: 968. Alpha cutoffs: 44068. Beta cutoffs: 8947. Priority moves found: 58400.
-            // Transpositions used: 5459. Time elapsed: 2361 ms. Available moves found: 30. 
-            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 4
-            // Board evaluations: 629749. Check evaluations: 1471. Alpha cutoffs: 14272. Beta cutoffs: 86230. Priority moves found: 32417.
-            // Transpositions used: 30434. Time elapsed: 3423 ms. Available moves found: 40.
-            // DEBUG
-            // Test: RuyLopez_Black. Move: d8 to f6. Depth 4
             // Board evaluations: 221522. Check evaluations: 968. Alpha cutoffs: 44341. Beta cutoffs: 8942. Priority moves found: 59691.
             // Transpositions used: 5950. Time elapsed: 1804 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 4
@@ -67,6 +60,14 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 6598637. Check evaluations: 1471. Alpha cutoffs: 743992. Beta cutoffs: 181305. Priority moves found: 590768.
             // Transpositions used: 245099. Time elapsed: 33549 ms. Available moves found: 40.
+
+            // 7.8 sec. 24.1.2021 - Keep tabs on alpha&beta values on the minimax launching function
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 223201. Check evaluations: 968. Alpha cutoffs: 5931. Beta cutoffs: 63272. Priority moves found: 37437.
+            // Transpositions used: 4810. Time elapsed: 2087 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 882658. Check evaluations: 1471. Alpha cutoffs: 212237. Beta cutoffs: 17395. Priority moves found: 75884.
+            // Transpositions used: 25212. Time elapsed: 5729 ms. Available moves found: 40.
         }
 
         [TestMethod]
@@ -86,6 +87,12 @@ namespace vergiBlueTests
             // Board evaluations: 1447494. Check evaluations: 968. Alpha cutoffs: 103126. Beta cutoffs: 76564. Time elapsed: 6762 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 3118588. Check evaluations: 1471. Alpha cutoffs: 130994. Beta cutoffs: 180534. Time elapsed: 10460 ms. Available moves found: 40.
+
+            // 3.6 sec. 24.1.2021 - Keep tabs on alpha&beta values on the minimax launching function
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 231069. Check evaluations: 968. Alpha cutoffs: 62084. Beta cutoffs: 5624. Time elapsed: 1530 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 423044. Check evaluations: 1471. Alpha cutoffs: 11542. Beta cutoffs: 106093. Time elapsed: 2018 ms. Available moves found: 40.
         }
 
         [TestMethod]
@@ -124,6 +131,12 @@ namespace vergiBlueTests
             // Board evaluations: 1265055. Check evaluations: 968. Time elapsed: 5705 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 2765487. Check evaluations: 1471. Time elapsed: 9276 ms. Available moves found: 40.
+
+            // 2.7 sec. 24.1.2021 - Keep tabs on alpha&beta values on the minimax launching function
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 155504. Check evaluations: 968. Alpha cutoffs: 58928. Beta cutoffs: 2906. Time elapsed: 1238 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 239509. Check evaluations: 1471. Alpha cutoffs: 3275. Beta cutoffs: 100822. Time elapsed: 1482 ms. Available moves found: 40.
         }
 
         [TestMethod]
@@ -153,6 +166,14 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 2969534. Check evaluations: 1471. Alpha cutoffs: 221404. Beta cutoffs: 64788. Priority moves found: 79907.
             // Transpositions used: 124164. Time elapsed: 13357 ms. Available moves found: 40. Transposition tables saved: 1440379
+
+            // 4.2 sec. 24.1.2021 - Keep tabs on alpha&beta values on the minimax launching function
+            // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
+            // Board evaluations: 152653. Check evaluations: 968. Alpha cutoffs: 2900. Beta cutoffs: 59817. Priority moves found: 32683.
+            // Transpositions used: 2800. Time elapsed: 1660 ms. Available moves found: 30. Transposition tables saved: 115932
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 315657. Check evaluations: 1471. Alpha cutoffs: 127543. Beta cutoffs: 4328. Priority moves found: 12446.
+            // Transpositions used: 6965. Time elapsed: 2569 ms. Available moves found: 40. Transposition tables saved: 211831
         }
 
         private void RunAll(int searchDepth, LogicSettings settings)

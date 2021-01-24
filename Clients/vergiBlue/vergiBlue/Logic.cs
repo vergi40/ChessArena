@@ -28,9 +28,9 @@ namespace vergiBlue
 
     public class LogicSettings
     {
-        // Config bools
+        // Config bools. Default values used in real game
         public bool UseTranspositionTables { get; set; } = false;
-        public bool UseParallelComputation { get; set; } = true;
+        public bool UseParallelComputation { get; set; } = false;
         public bool UseIterativeDeepening { get; set; } = false;
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace vergiBlue
     {
         // Game strategic variables
 
-        public int SearchDepth { get; set; } = 4;
+        public int SearchDepth { get; set; } = 5;
         public Strategy Strategy { get; set; }
 
         /// <summary>
