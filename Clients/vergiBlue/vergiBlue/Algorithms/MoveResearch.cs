@@ -153,117 +153,7 @@ namespace vergiBlue.Algorithms
 
             return checkMates;
         }
-
-        private static IList<(double eval, SingleMove move)> CreateEvaluationList(IEnumerable<SingleMove> moves,
-            Board board, bool isMaximizing)
-        {
-            IList<(double eval, SingleMove move)> list = new List<(double eval, SingleMove move)>();
-            foreach (var singleMove in moves)
-            {
-                var newBoard = new Board(board, singleMove);
-                var eval = newBoard.Evaluate(isMaximizing, false);
-                list.Add((eval, singleMove));
-            }
-
-            return list;
-        }
-
-        public static IList<SingleMove> OrderMovesByEvaluation(IList<SingleMove> moves, Board board, bool isMaximizing)
-        {
-            // Sort moves by evaluation score they produce
-            var list = CreateEvaluationList(moves, board, isMaximizing);
-            var sorted = SortEvaluatedMoves(list, isMaximizing, true);
-            return sorted.Select(m => m.move).ToList();
-        }
-
-        /// <summary>
-        /// Use C# Sort. Bit quicker than <see cref="OrderEvaluatedMoves"/>
-        /// </summary>
-        /// <param name="evaluationList"></param>
-        /// <param name="isMaximizing"></param>
-        /// <param name="prioritizeCaptures"></param>
-        /// <returns></returns>
-        private static IList<(double eval, SingleMove move)> SortEvaluatedMoves(IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, 
-            bool isMaximizing, bool prioritizeCaptures)
-        {
-            // Sort moves by evaluation score they produce
-            var sorted = evaluationList.ToList();
-            sorted.Sort(Compare);
-
-            int Compare((double eval, SingleMove move) move1, (double eval, SingleMove move) move2)
-            {
-                if (Math.Abs(move1.eval - move2.eval) < 1e-6)
-                {
-                    if (prioritizeCaptures)
-                    {
-                        return move1.move.Capture.CompareTo(move2.move.Capture);
-                    }
-                    else
-                    {
-                        return 0;
-                    }
-                }
-
-                if (!isMaximizing)
-                {
-                    if (move1.eval > move2.eval) return 1;
-                    return -1;
-                }
-                else
-                {
-                    if (move1.eval < move2.eval) return 1;
-                    return -1;
-                }
-            }
-
-            // 
-            return sorted;
-        }
-
-        /// <summary>
-        /// Uses OrderBy
-        /// </summary>
-        /// <param name="evaluationList"></param>
-        /// <param name="isMaximizing"></param>
-        /// <param name="prioritizeCaptures"></param>
-        /// <returns></returns>
-        private static IList<(double eval, SingleMove move)> OrderEvaluatedMoves(
-            IEnumerable<(double evaluationScore, SingleMove move)> evaluationList, bool isMaximizing,
-            bool prioritizeCaptures)
-        {
-            var sorted = evaluationList.ToList();
-            if (prioritizeCaptures)
-            {
-                sorted = sorted.OrderByDescending(item => item.move.Capture).ToList();
-            }
-
-            if (isMaximizing)
-            {
-                sorted = sorted.OrderByDescending(item => item.evaluationScore).ToList();
-            }
-            else
-            {
-                sorted = sorted.OrderBy(item => item.evaluationScore).ToList();
-            }
-
-            return sorted;
-        }
-
-        public static IList<SingleMove> OrderMovesByCapture(IList<SingleMove> moves)
-        {
-            return moves.OrderByDescending(m => m.Capture).ToList();
-        }
-
-        /// <summary>
-        /// Really slow compared to OrderBy
-        /// </summary>
-        /// <param name="moves"></param>
-        /// <returns></returns>
-        public static void SortMovesByCapture(List<SingleMove> moves)
-        {
-            moves.Sort((move1, move2) => move1.Capture.CompareTo(move2.Capture));
-        }
-
+        
         /// <summary>
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ...
         /// 
@@ -316,7 +206,7 @@ namespace vergiBlue.Algorithms
 
                 //var bestStart = evaluationResult.Best(isMaximizing);
 
-                midResult = OrderEvaluatedMoves(midResult, isMaximizing, true).ToList();
+                midResult = MoveOrdering.SortWeightedMovesWithOrderBy(midResult, isMaximizing, true).ToList();
                 allMoves = midResult.Select(item => item.Item2).ToList();
 
                 if (allMoves.Any())
@@ -373,7 +263,7 @@ namespace vergiBlue.Algorithms
                     }
                 }
 
-                midResult = OrderEvaluatedMoves(midResult, isMaximizing, true).ToList();
+                midResult = MoveOrdering.SortWeightedMovesWithOrderBy(midResult, isMaximizing, true).ToList();
                 allMoves = midResult.Select(item => item.Item2).ToList();
 
                 if (allMoves.Any())

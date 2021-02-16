@@ -286,6 +286,10 @@ namespace vergiBlue
 
         public double EvaluateIntelligent(bool isMaximizing, int? currentSearchDepth = null, int? moveCount = null)
         {
+            // TODO position evaluation
+            // TODO pawn structure
+            // TODO king position
+
             Diagnostics.IncrementEvalCount();
             var evalScore = PieceList.Sum(p => p.PositionStrength);
 
@@ -310,7 +314,6 @@ namespace vergiBlue
         /// </summary>
         public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false)
         {
-            List<SingleMove> captureList = new List<SingleMove>();
             IList<SingleMove> list = new List<SingleMove>();
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
@@ -323,21 +326,18 @@ namespace vergiBlue
                         if (newBoard.IsCheck(!forWhite)) continue;
                     }
 
-                    if(singleMove.Capture) captureList.Add(singleMove);
-                    else list.Add(singleMove);
+                    list.Add(singleMove);
                 }
             }
 
-            captureList.AddRange(list);
-            if (orderMoves) return MoveResearch.OrderMovesByEvaluation(captureList, this, forWhite);
-            else return captureList;
+            if (orderMoves) return MoveOrdering.SortMovesByEvaluation(list, this, forWhite);
+            else return MoveOrdering.SortMovesByGuessWeight(list, this, forWhite);
         }
 
         public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false)
         {
             // Priority moves like known cutoffs
             var priorityList = new List<SingleMove>();
-            var captureList = new List<SingleMove>();
             var otherList = new List<SingleMove>();
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
@@ -364,13 +364,11 @@ namespace vergiBlue
                             continue;
                         }
                     }
-                    if (singleMove.Capture) captureList.Add(singleMove);
-                    else otherList.Add(singleMove);
+                    otherList.Add(singleMove);
                 }
             }
 
-            priorityList.AddRange(captureList);
-            priorityList.AddRange(otherList);
+            priorityList.AddRange(MoveOrdering.SortMovesByGuessWeight(otherList, this, forWhite));
             return priorityList;
         }
 

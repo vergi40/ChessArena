@@ -174,6 +174,14 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 315657. Check evaluations: 1471. Alpha cutoffs: 127543. Beta cutoffs: 4328. Priority moves found: 12446.
             // Transpositions used: 6965. Time elapsed: 2569 ms. Available moves found: 40. Transposition tables saved: 211831
+
+            // 3.7 sec. 16.2.2021 - small move ordering tweak
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 162426. Check evaluations: 967. Alpha cutoffs: 4019. Beta cutoffs: 40293. Priority moves found: 17948.
+            // Transpositions used: 3488. Time elapsed: 1570 ms. Available moves found: 30. Transposition tables saved: 127679
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 194290. Check evaluations: 1471. Alpha cutoffs: 77853. Beta cutoffs: 3667. Priority moves found: 8410.
+            // Transpositions used: 4316. Time elapsed: 2149 ms. Available moves found: 40. Transposition tables saved: 165471
         }
 
         private void RunAll(int searchDepth, LogicSettings settings)
