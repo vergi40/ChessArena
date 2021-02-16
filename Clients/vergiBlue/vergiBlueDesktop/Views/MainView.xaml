@@ -1,0 +1,81 @@
+﻿<Window x:Class="vergiBlueDesktop.Views.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:vergiBlueDesktop.Views"
+        xmlns:views="clr-namespace:vergiBlueDesktop.Views"
+        xmlns:views1="clr-namespace:vergiBlueDesktop.Views"
+        Width="600"
+        Height="700"
+        mc:Ignorable="d"
+        >
+    <Window.Resources>
+        <ResourceDictionary>
+            <Style TargetType="Button">
+                <Setter Property="Width" Value="80" />
+                <Setter Property="Height" Value="30" />
+                <Setter Property="Margin" Value="3" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+    <StackPanel Orientation="Vertical">
+        <WrapPanel>
+            <Button Command="{Binding StartWhiteCommand}" Content="Start as white" />
+            <Button Command="{Binding StartBlackCommand}" Content="Start as black" />
+            <Button Command="{Binding InitializeCase2Command}" Content="Initialize case 2" />
+            <Button Command="{Binding StartCommand}" Content="Start" />
+            <Button Command="{Binding TestMoveCommand}" Content="Test movement" />
+            <Label
+                Height="50"
+                Margin="10,10,10,10"
+                Content="{Binding Hello}" />
+        </WrapPanel>
+        <Border BorderBrush="SaddleBrown" BorderThickness="10">
+            <Grid Width="480" Height="480">
+                <!--  Background  -->
+                <Canvas x:Name="BoardTileBackground" />
+
+                <!--  Visualize tile possibilities  -->
+                <ItemsControl ItemsSource="{Binding VisualizationTiles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding UiX}" />
+                            <Setter Property="Canvas.Bottom" Value="{Binding UiY}" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border
+                                Width="50"
+                                Height="50"
+                                Margin="5,5,5,5"
+                                Background="Transparent"
+                                BorderBrush="{Binding BorderColor}"
+                                BorderThickness="2" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!--  Chess pieces  -->
+                <ItemsControl ItemsSource="{Binding ViewObjectList}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <views1:DraggableItem />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Border>
+    </StackPanel>
+</Window>

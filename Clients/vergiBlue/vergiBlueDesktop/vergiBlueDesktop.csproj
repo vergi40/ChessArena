@@ -7,7 +7,67 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\alpha\bb.svg" />
+    <None Remove="Resources\alpha\bk.svg" />
+    <None Remove="Resources\alpha\bn.svg" />
+    <None Remove="Resources\alpha\bp.svg" />
+    <None Remove="Resources\alpha\bq.svg" />
+    <None Remove="Resources\alpha\br.svg" />
+    <None Remove="Resources\alpha\wb.svg" />
+    <None Remove="Resources\alpha\wk.svg" />
+    <None Remove="Resources\alpha\wn.svg" />
+    <None Remove="Resources\alpha\wp.svg" />
+    <None Remove="Resources\alpha\wq.svg" />
+    <None Remove="Resources\alpha\wr.svg" />
+    <None Remove="Resources\kosal\bb.svg" />
+    <None Remove="Resources\kosal\bk.svg" />
+    <None Remove="Resources\kosal\bn.svg" />
+    <None Remove="Resources\kosal\bp.svg" />
+    <None Remove="Resources\kosal\bq.svg" />
+    <None Remove="Resources\kosal\br.svg" />
+    <None Remove="Resources\kosal\license.txt" />
+    <None Remove="Resources\kosal\wb.svg" />
+    <None Remove="Resources\kosal\wk.svg" />
+    <None Remove="Resources\kosal\wn.svg" />
+    <None Remove="Resources\kosal\wp.svg" />
+    <None Remove="Resources\kosal\wq.svg" />
+    <None Remove="Resources\kosal\wr.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpVectors" Version="1.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\vergiBlue\vergiBlue.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\alpha\bb.svg" />
+    <Resource Include="Resources\alpha\bk.svg" />
+    <Resource Include="Resources\alpha\bn.svg" />
+    <Resource Include="Resources\alpha\bp.svg" />
+    <Resource Include="Resources\alpha\bq.svg" />
+    <Resource Include="Resources\alpha\br.svg" />
+    <Resource Include="Resources\alpha\wb.svg" />
+    <Resource Include="Resources\alpha\wk.svg" />
+    <Resource Include="Resources\alpha\wn.svg" />
+    <Resource Include="Resources\alpha\wp.svg" />
+    <Resource Include="Resources\alpha\wq.svg" />
+    <Resource Include="Resources\alpha\wr.svg" />
+    <Resource Include="Resources\kosal\bb.svg" />
+    <Resource Include="Resources\kosal\bk.svg" />
+    <Resource Include="Resources\kosal\bn.svg" />
+    <Resource Include="Resources\kosal\bp.svg" />
+    <Resource Include="Resources\kosal\bq.svg" />
+    <Resource Include="Resources\kosal\br.svg" />
+    <Resource Include="Resources\kosal\license.txt" />
+    <Resource Include="Resources\kosal\wb.svg" />
+    <Resource Include="Resources\kosal\wk.svg" />
+    <Resource Include="Resources\kosal\wn.svg" />
+    <Resource Include="Resources\kosal\wp.svg" />
+    <Resource Include="Resources\kosal\wq.svg" />
+    <Resource Include="Resources\kosal\wr.svg" />
   </ItemGroup>
 
 </Project>
