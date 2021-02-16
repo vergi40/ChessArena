@@ -7,9 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonNetStandard", "Common
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vergiBlue", "vergiBlue\vergiBlue.csproj", "{2E46AC24-61F4-4CF3-AC4B-4D658D2880D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServer", "TestServer\TestServer.csproj", "{4D86C611-4217-4F95-BF92-B1EC29F8E389}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestServer", "TestServer\TestServer.csproj", "{4D86C611-4217-4F95-BF92-B1EC29F8E389}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vergiBlueTests", "vergiBlueTests\vergiBlueTests.csproj", "{085DD035-9F89-4371-8009-F4F7AD8CCE6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vergiBlueTests", "vergiBlueTests\vergiBlueTests.csproj", "{085DD035-9F89-4371-8009-F4F7AD8CCE6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vergiBlueDesktop", "vergiBlueDesktop\vergiBlueDesktop.csproj", "{E0C5800F-EBC8-47D4-B5F7-DD6A555E25E0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{085DD035-9F89-4371-8009-F4F7AD8CCE6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{085DD035-9F89-4371-8009-F4F7AD8CCE6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{085DD035-9F89-4371-8009-F4F7AD8CCE6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0C5800F-EBC8-47D4-B5F7-DD6A555E25E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0C5800F-EBC8-47D4-B5F7-DD6A555E25E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0C5800F-EBC8-47D4-B5F7-DD6A555E25E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0C5800F-EBC8-47D4-B5F7-DD6A555E25E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
