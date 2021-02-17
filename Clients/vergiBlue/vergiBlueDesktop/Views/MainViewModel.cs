@@ -64,7 +64,7 @@ namespace vergiBlueDesktop.Views
             var interfaceMoveData = AiLogic.CreateMove();
             var move = new SingleMove(interfaceMoveData.Move);
             
-            AiTurnFinished(move);
+            TurnFinished(move, false);
         }
 
         private void InitializeBoard()
@@ -87,74 +87,85 @@ namespace vergiBlueDesktop.Views
             }
         }
 
-        public void PlayerTurnFinished((int,int) from, (int,int) to)
-        {
-            var move = new SingleMove(from, to);
-
-            var target = Board.ValueAt(to);
-            if (target != null)
-            {
-                if (target.IsWhite != PlayerIsWhite)
-                {
-                    move.Capture = true;
-                    // TODO promotion
-
-                    var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.Item1 && o.Row == move.NewPos.Item2);
-                    ViewObjectList.Remove(pieceToDelete);
-                }
-                else throw new ArgumentException($"Player tried to capture own piece.");
-            }
-
-            Board.ExecuteMove(move);
-            TurnFinished(move);
-        }
-        
-        public void AiTurnFinished(SingleMove move)
+        private void UpdateGraphics(SingleMove move, bool pieceNotMovedInView)
         {
             // Update view
             if (move.Capture)
             {
-                var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.Item1 && o.Row == move.NewPos.Item2);
+                var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row);
                 ViewObjectList.Remove(pieceToDelete);
             }
-            
-            var viewObject = ViewObjectList.First(o => o.Column == move.PrevPos.Item1 && o.Row == move.PrevPos.Item2);
-            viewObject.UpdatePhysicalLocation(move.NewPos.Item1, move.NewPos.Item2, false);
-            viewObject.UpdateAbstractLocation(move.NewPos.Item1, move.NewPos.Item2);
+
+            if (move.Promotion)
+            {
+
+            }
+
+            if(pieceNotMovedInView)
+            {
+                var viewObject =
+                    ViewObjectList.First(o => o.Column == move.PrevPos.column && o.Row == move.PrevPos.row);
+                viewObject.UpdatePhysicalLocation(move.NewPos.column, move.NewPos.row, false);
+                viewObject.UpdateAbstractLocation(move.NewPos.column, move.NewPos.row);
+            }
+        }
+
+        public void TurnFinished(SingleMove move, bool pieceNotMovedInView)
+        {
+            ValidateMove(move);
+            UpdateGraphics(move, pieceNotMovedInView);
 
             Board.ExecuteMove(move);
-            TurnFinished(move);
-        }
-
-        private void UpdateGraphics(SingleMove move)
-        {
-
-        }
-
-        public void TurnFinished(SingleMove previousMove)
-        {
             IsWhiteTurn = !IsWhiteTurn;
             
             if (IsWhiteTurn != PlayerIsWhite)
             {
                 // Ai turn
-                AiLogic.ReceiveMove(previousMove.ToInterfaceMove(false,false));
+                AiLogic.ReceiveMove(move.ToInterfaceMove(false,false));
                 var interfaceMoveData = AiLogic.CreateMove();
                 var nextMove = new SingleMove(interfaceMoveData.Move);
 
-                var target = Board.ValueAt(nextMove.NewPos);
-                if (target != null)
-                {
-                    if (target.IsWhite == PlayerIsWhite)
-                    {
-                        nextMove.Capture = true;
-                        // TODO promotion
-                    }
-                    else throw new ArgumentException("Ai tried to capture own piece.");
-                }
-
-                AiTurnFinished(nextMove);
+                TurnFinished(nextMove, true);
             }
+        }
+
+        /// <summary>
+        /// Do before value is updated to Board and view
+        /// </summary>
+        /// <param name="move"></param>
+        private void ValidateMove(SingleMove move)
+        {
+            // TODO actual validation
+            // TODO do in vergiBlue project
+            
+            // Now just check there is info missing
+            var targetPiece = Board.ValueAtDefinitely(move.PrevPos);
+            var isWhite = targetPiece.IsWhite;
+
+            // Capture
+            var opponentPiece = Board.ValueAt(move.NewPos);
+            if (opponentPiece != null)
+            {
+                if (opponentPiece.IsWhite != isWhite)
+                {
+                    move.Capture = true;
+                }
+                else throw new ArgumentException($"Player with white={isWhite} tried to capture own piece.");
+            }
+
+            // Promotion
+            if (isWhite && targetPiece.Identity != 'Q' && move.NewPos.column == 7)
+            {
+                move.Promotion = true;
+            }
+            else if (!isWhite && targetPiece.Identity != 'Q' && move.NewPos.column == 0)
+            {
+                move.Promotion = true;
+            }
+            
+            // Castling
+            
+            // 
         }
 
         private void Initialize2(object parameter)

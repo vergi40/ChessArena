@@ -36,7 +36,9 @@ namespace vergiBlueDesktop.Views
 
         public void TurnFinished(Position previousPosition, Position currentPosition)
         {
-            _main.PlayerTurnFinished((previousPosition.Column, previousPosition.Row), (currentPosition.Column, currentPosition.Row));
+            var move = new SingleMove((previousPosition.Column, previousPosition.Row),
+                (currentPosition.Column, currentPosition.Row));
+            _main.TurnFinished(move, false);
         }
     }
 }

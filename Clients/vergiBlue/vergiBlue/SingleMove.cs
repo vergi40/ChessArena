@@ -15,8 +15,8 @@ namespace vergiBlue
         public bool Promotion { get; set; }
         public bool CheckMate { get; set; }
 
-        public (int, int) PrevPos { get; }
-        public (int, int) NewPos { get; }
+        public (int column, int row) PrevPos { get; }
+        public (int column, int row) NewPos { get; }
 
         public SingleMove((int column, int row) previousPosition, (int column, int row) newPosition, bool capture = false, bool promotion = false)
         {
