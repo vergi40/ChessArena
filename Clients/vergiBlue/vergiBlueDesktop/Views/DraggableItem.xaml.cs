@@ -53,11 +53,11 @@ namespace vergiBlueDesktop.Views
 
             Row = 0;
             Column = 0;
-            UpdateAbstractLocation(column, row);
+            UpdateInternalLocation(column, row);
             IsAtStartPosition = true;
 
             InitializeComponent();
-            UpdatePhysicalLocation(column, row, true);
+            UpdateImageLocation(column, row, true);
 
             this.MouseLeftButtonDown += new MouseButtonEventHandler(UserControl_MouseLeftButtonDown);
             this.MouseLeftButtonUp += new MouseButtonEventHandler(UserControl_MouseLeftButtonUp);
@@ -70,7 +70,7 @@ namespace vergiBlueDesktop.Views
         /// <param name="column"></param>
         /// <param name="row"></param>
         /// <param name="initialization"></param>
-        public void UpdatePhysicalLocation(int column, int row, bool initialization)
+        public void UpdateImageLocation(int column, int row, bool initialization)
         {
             var x = column * BlockSize;
             // UserControl transform system has mirrored y-axis
@@ -97,7 +97,7 @@ namespace vergiBlueDesktop.Views
         /// </summary>
         /// <param name="xTransform"></param>
         /// <param name="yTransform"></param>
-        private void UpdateAbstractLocation(double xTransform, double yTransform)
+        private void UpdateInternalLocation(double xTransform, double yTransform)
         {
             var x = xTransform;
             var y = 420 - yTransform;
@@ -105,13 +105,13 @@ namespace vergiBlueDesktop.Views
             var column = (int)Math.Round(x / BlockSize);
             var row = (int)Math.Round(y / BlockSize);
 
-            UpdateAbstractLocation(column, row);
+            UpdateInternalLocation(column, row);
         }
 
         /// <summary>
         /// Update row & column after successful move
         /// </summary>
-        public void UpdateAbstractLocation(int column, int row)
+        public void UpdateInternalLocation(int column, int row)
         {
             // Save previous
             PreviousPosition = new Position(Row, Column);
@@ -142,24 +142,41 @@ namespace vergiBlueDesktop.Views
             var transform = (draggable.RenderTransform as TranslateTransform);
             if (transform != null)
             {
+                if (Model.Main.PlayerIsWhite != Model.IsWhite)
+                {
+                    UpdateImageLocation(CurrentPosition.Column, CurrentPosition.Row, false);
+                    // Return
+                }
                 // Piece in the same position - cancel
-                if (Math.Abs(prevX - transform.X) < double.Epsilon
+                else if (Math.Abs(prevX - transform.X) < double.Epsilon
                     && Math.Abs(prevY - transform.Y) < double.Epsilon)
                 {
-                    //return;
+                    // Return
                 }
                 else
                 {
-                    // Piece in not-allowed position
-                    // TODO
+                    var x = transform.X;
+                    var y = 420 - transform.Y;
 
+                    var column = (int)Math.Round(x / BlockSize);
+                    var row = (int)Math.Round(y / BlockSize);
+                    if(Model.Main.VisualizationTiles.Contains(new Position(row, column)))
+                    {
+                        // Piece in allowed position
+                        prevX = transform.X;
+                        prevY = transform.Y;
 
-                    // Piece in new, allowed position
-                    prevX = transform.X;
-                    prevY = transform.Y;
+                        UpdateInternalLocation(prevX, prevY);
+                        turnFinished = true;
+                    }
+                    else
+                    {
+                        // Piece in not-allowed position
+                        // Revert
+                        UpdateImageLocation(CurrentPosition.Column, CurrentPosition.Row, false);
+                    }
 
-                    UpdateAbstractLocation(prevX, prevY);
-                    turnFinished = true;
+                    
                 }
             }
             draggable.ReleaseMouseCapture();
@@ -208,7 +225,7 @@ namespace vergiBlueDesktop.Views
 
         public void TestIncrRow()
         {
-            UpdatePhysicalLocation(Column, Row + 1, false);
+            UpdateImageLocation(Column, Row + 1, false);
             Row++;
         }
 

@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:vergiBlueDesktop.Views"
         xmlns:views="clr-namespace:vergiBlueDesktop.Views"
         xmlns:views1="clr-namespace:vergiBlueDesktop.Views"
-        Width="600"
+        Width="900"
         Height="700"
         mc:Ignorable="d"
         >
@@ -31,51 +31,115 @@
                 Margin="10,10,10,10"
                 Content="{Binding Hello}" />
         </WrapPanel>
-        <Border BorderBrush="SaddleBrown" BorderThickness="10">
-            <Grid Width="480" Height="480">
-                <!--  Background  -->
-                <Canvas x:Name="BoardTileBackground" />
+        <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Vertical" Width="300" Margin="10">
+                <GroupBox Header="History">
+                    <ListBox ItemsSource="{Binding History}" Height="200">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding }" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </GroupBox>
+                <GroupBox Header="AI diagnostics">
+                    <StackPanel Orientation="Vertical">
+                        <Label Content="Current move"></Label>
+                        <ListBox ItemsSource="{Binding AiMoveDiagnostics}" MinHeight="100">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding }" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Label Content="Previous move" Margin="0,20,0,0"></Label>
+                        <ListBox ItemsSource="{Binding AiPreviousMoveDiagnostics}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding }" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
 
-                <!--  Visualize tile possibilities  -->
-                <ItemsControl ItemsSource="{Binding VisualizationTiles}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemContainerStyle>
-                        <Style TargetType="ContentPresenter">
-                            <Setter Property="Canvas.Left" Value="{Binding UiX}" />
-                            <Setter Property="Canvas.Bottom" Value="{Binding UiY}" />
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border
+            <Border BorderBrush="#362400" CornerRadius="3" BorderThickness="0,0,10,10" Width="500" Height="500">
+                <Border Background="Transparent"  CornerRadius="2" BorderBrush="#5c3e00" BorderThickness="10,10,0,0">
+                    <Grid >
+                        <!--  Background  -->
+                        <Canvas x:Name="BoardTileBackground" />
+
+                        <!--  Visualize previous move. For now juts copied list logic  -->
+                        <ItemsControl ItemsSource="{Binding PreviousPosition}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding UiX}" />
+                                    <Setter Property="Canvas.Bottom" Value="{Binding UiY}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border
+                                    Width="50"
+                                    Height="50"
+                                    Margin="5,5,5,5"
+                                    Background="Transparent"
+                                    BorderBrush="Azure"
+                                    BorderThickness="3" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!--  Visualize allowed moves  -->
+                        <ItemsControl ItemsSource="{Binding VisualizationTiles}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding UiX}" />
+                                    <Setter Property="Canvas.Bottom" Value="{Binding UiY}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border
                                 Width="50"
                                 Height="50"
                                 Margin="5,5,5,5"
                                 Background="Transparent"
                                 BorderBrush="{Binding BorderColor}"
-                                BorderThickness="2" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                                BorderThickness="3" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                <!--  Chess pieces  -->
-                <ItemsControl ItemsSource="{Binding ViewObjectList}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <views1:DraggableItem />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Grid>
-        </Border>
+                        <!--  Chess pieces  -->
+                        <ItemsControl ItemsSource="{Binding ViewObjectList}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <views1:DraggableItem />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Border>
+                
+            </Border>
+        </StackPanel>
+        
     </StackPanel>
 </Window>

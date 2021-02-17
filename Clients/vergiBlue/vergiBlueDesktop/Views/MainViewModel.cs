@@ -10,12 +10,26 @@ using vergiBlue.Pieces;
 
 namespace vergiBlueDesktop.Views
 {
+    /// <summary>
+    /// Update ideas:
+    /// * Restrict own movements to borders
+    /// * Do a click sound when moving
+    /// * Add ability to change board color and piece icons
+    /// * Add settings tab with checkboxes for Logic creation
+    /// * Add timer
+    /// * Add info list of previous moves and checks
+    /// * Ask ai to give hint
+    /// * Endgame scenarios with thumbnail pictures
+    /// * Get all possible moves and compare to made move. Eg king cant be lost on purpose
+    /// </summary>
     public class MainViewModel : NotifyPropertyBase
     {
         private static string IconSet = "kosal";
+        private int TurnCount { get; set; } = 0;
         
-        private bool PlayerIsWhite { get; set; }
-        private bool IsWhiteTurn { get; set; }
+        
+        public bool PlayerIsWhite { get; set; }
+        public bool IsWhiteTurn { get; set; }
         
         private Logic AiLogic { get; set; }
         
@@ -25,6 +39,13 @@ namespace vergiBlueDesktop.Views
         public ObservableCollection<IViewObject> ViewObjectList { get; } = new ObservableCollection<IViewObject>();
 
         public IList<Position> VisualizationTiles { get; } = new ObservableCollection<Position>();
+        
+        // TODO this is really a single object
+        public IList<Position> PreviousPosition { get; } = new ObservableCollection<Position>();
+
+        public IList<string> History { get; } = new ObservableCollection<string>();
+        public IList<string> AiMoveDiagnostics { get; } = new ObservableCollection<string>();
+        public IList<string> AiPreviousMoveDiagnostics { get; } = new ObservableCollection<string>();
 
         public ICommand StartWhiteCommand { get; set; }
         public ICommand StartBlackCommand { get; set; }
@@ -62,18 +83,25 @@ namespace vergiBlueDesktop.Views
             AiLogic = new Logic(!PlayerIsWhite, Board);
             
             var interfaceMoveData = AiLogic.CreateMove();
+            UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
             var move = new SingleMove(interfaceMoveData.Move);
-            
+
             TurnFinished(move, false);
         }
 
         private void InitializeBoard()
         {
+            TurnCount = 0;
+            History.Clear();
+            AiMoveDiagnostics.Clear();
+            AiPreviousMoveDiagnostics.Clear();
+            
             Board = new Board();
             Board.InitializeEmptyBoard();
 
             ViewObjectList.Clear();
             VisualizationTiles.Clear();
+            PreviousPosition.Clear();
             foreach (var piece in Board.PieceList)
             {
                 var viewModel = new PieceViewModel(this)
@@ -89,10 +117,11 @@ namespace vergiBlueDesktop.Views
 
         private void UpdateGraphics(SingleMove move, bool pieceNotMovedInView)
         {
-            // Update view
+            // Update view objects
             if (move.Capture)
             {
-                var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row);
+                // If user move, there exists 2 viewobjects in same square
+                var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row && o.IsWhite != IsWhiteTurn);
                 ViewObjectList.Remove(pieceToDelete);
             }
 
@@ -105,9 +134,14 @@ namespace vergiBlueDesktop.Views
             {
                 var viewObject =
                     ViewObjectList.First(o => o.Column == move.PrevPos.column && o.Row == move.PrevPos.row);
-                viewObject.UpdatePhysicalLocation(move.NewPos.column, move.NewPos.row, false);
-                viewObject.UpdateAbstractLocation(move.NewPos.column, move.NewPos.row);
+                viewObject.UpdateImageLocation(move.NewPos.column, move.NewPos.row, false);
+                viewObject.UpdateInternalLocation(move.NewPos.column, move.NewPos.row);
             }
+            
+            // Update last position
+            PreviousPosition.Clear();
+            PreviousPosition.Add(new Position(move.PrevPos.row, move.PrevPos.column));
+            PreviousPosition.Add(new Position(move.NewPos.row, move.NewPos.column));
         }
 
         public void TurnFinished(SingleMove move, bool pieceNotMovedInView)
@@ -116,6 +150,15 @@ namespace vergiBlueDesktop.Views
             UpdateGraphics(move, pieceNotMovedInView);
 
             Board.ExecuteMove(move);
+            
+            // Game ended?
+            if (Board.IsCheckMate(IsWhiteTurn, false))
+            {
+                History.Insert(0, $"{move.ToString()} - Checkmate.");
+                return;
+            }
+            
+            AppendHistory(move);
             IsWhiteTurn = !IsWhiteTurn;
             
             if (IsWhiteTurn != PlayerIsWhite)
@@ -123,9 +166,37 @@ namespace vergiBlueDesktop.Views
                 // Ai turn
                 AiLogic.ReceiveMove(move.ToInterfaceMove(false,false));
                 var interfaceMoveData = AiLogic.CreateMove();
+                UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
                 var nextMove = new SingleMove(interfaceMoveData.Move);
 
                 TurnFinished(nextMove, true);
+            }
+        }
+
+        private void AppendHistory(SingleMove move)
+        {
+            TurnCount++;
+            var text = TurnCount.ToString() + ": " + move.ToString();
+            if (Board.IsCheck(IsWhiteTurn)) text += " Check.";
+            History.Insert(0, text);
+        }
+
+        private void UpdateAiDiagnostics(string dataString)
+        {
+            if (AiMoveDiagnostics.Any())
+            {
+                AiPreviousMoveDiagnostics.Clear();
+                foreach (var item in AiMoveDiagnostics)
+                {
+                    AiPreviousMoveDiagnostics.Add(item);
+                }
+            }
+            
+            AiMoveDiagnostics.Clear();
+            var list = dataString.Split(". ");
+            foreach (var item in list)
+            {
+                AiMoveDiagnostics.Add(item);
             }
         }
 

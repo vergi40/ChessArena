@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Media;
 using vergiBlue;
+using vergiBlueDesktop.Views;
 
 namespace vergiBlueDesktop
 {
@@ -33,13 +34,14 @@ namespace vergiBlueDesktop
         Position CurrentPosition { get; }
         Position PreviousPosition { get; }
 
-        void UpdatePhysicalLocation(int column, int row, bool initialization);
-        void UpdateAbstractLocation(int column, int row);
+        void UpdateImageLocation(int column, int row, bool initialization);
+        void UpdateInternalLocation(int column, int row);
         void TestIncrRow();
     }
 
     public interface IPieceWithUiControl : IPiece
     {
+        MainViewModel Main { get; }
         void VisualizePossibleTiles();
         void ClearPossibleTiles();
         void TurnFinished(Position previousPosition, Position currentPosition);
@@ -57,7 +59,6 @@ namespace vergiBlueDesktop
 
     public class Position : IEquatable<Position>
     {
-        public double Strength { get; set; }
         public int Row { get; set; }
         public int Column { get; set; }
 
@@ -65,13 +66,12 @@ namespace vergiBlueDesktop
         public double UiY => Row * 60;
         public Brush BorderColor { get; set; }
 
-        public Position(int row, int column)
+        public Position(int row, int column, Brush borderColor = null)
         {
-            Strength = 0;
             Row = row;
             Column = column;
 
-            BorderColor = Brushes.Chartreuse;
+            BorderColor = borderColor ?? Brushes.Chartreuse;
         }
 
         public bool Equals(Position other)
