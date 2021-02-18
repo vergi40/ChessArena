@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Formats.Asn1;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media;
 using vergiBlue;
@@ -21,6 +22,7 @@ namespace vergiBlueDesktop.Views
     /// * Ask ai to give hint
     /// * Endgame scenarios with thumbnail pictures
     /// * Get all possible moves and compare to made move. Eg king cant be lost on purpose
+    /// * Show captured pieces on side
     /// </summary>
     public class MainViewModel : NotifyPropertyBase
     {
@@ -144,7 +146,7 @@ namespace vergiBlueDesktop.Views
             PreviousPosition.Add(new Position(move.NewPos.row, move.NewPos.column));
         }
 
-        public void TurnFinished(SingleMove move, bool pieceNotMovedInView)
+        public async void TurnFinished(SingleMove move, bool pieceNotMovedInView)
         {
             ValidateMove(move);
             UpdateGraphics(move, pieceNotMovedInView);
@@ -165,7 +167,7 @@ namespace vergiBlueDesktop.Views
             {
                 // Ai turn
                 AiLogic.ReceiveMove(move.ToInterfaceMove(false,false));
-                var interfaceMoveData = AiLogic.CreateMove();
+                var interfaceMoveData = await Task.Run(() => AiLogic.CreateMove());
                 UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
                 var nextMove = new SingleMove(interfaceMoveData.Move);
 
