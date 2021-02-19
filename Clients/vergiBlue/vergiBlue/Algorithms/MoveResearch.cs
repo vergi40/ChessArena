@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -174,21 +175,27 @@ namespace vergiBlue.Algorithms
         /// Iterative deepening sub-method.
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ... 
         /// </summary>
-        private static SingleMove IterativeDeepeningBasic(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing)
+        private static SingleMove IterativeDeepeningBasic(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, int timeLimitInMs = 5000)
         {
+            var timeUp = false;
+            int depthUsed = 0;
+            
             var midResult = new List<(double, SingleMove)>();
-            var previousOrder = new List<SingleMove>(allMoves);
+            var currentIterationMoves = new List<SingleMove>(allMoves);
+            var watch = new Stopwatch();
+            watch.Start();
 
             // Initial depth 2
             for (int i = 2; i <= searchDepth; i++)
             {
+                depthUsed = i;
                 midResult.Clear();
 
                 // Initialize for each cycle
                 var alpha = -100000.0;
                 var beta = 100000.0;
-                
-                foreach (var move in allMoves)
+
+                foreach (var move in currentIterationMoves)
                 {
                     var newBoard = new Board(board, move);
                     var evaluation = MiniMax.ToDepth(newBoard, i, alpha, beta, !isMaximizing);
@@ -202,27 +209,27 @@ namespace vergiBlue.Algorithms
                     {
                         beta = Math.Min(beta, evaluation);
                     }
+
+                    if (watch.ElapsedMilliseconds > timeLimitInMs)
+                    {
+                        timeUp = true;
+                        break;
+                    }
                 }
 
-                //var bestStart = evaluationResult.Best(isMaximizing);
-
-                midResult = MoveOrdering.SortWeightedMovesWithOrderBy(midResult, isMaximizing, true).ToList();
-                allMoves = midResult.Select(item => item.Item2).ToList();
-
-                if (allMoves.Any())
-                {
-                    // Save previous level in case of time running out or empty result
-                    previousOrder = new List<SingleMove>(allMoves);
-                }
-                else
-                {
-                    // TODO delete first and try search with second
-                    return previousOrder.First();
-                }
+                if (timeUp) break;
+                
+                // Full search finished for depth
+                midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
+                currentIterationMoves = midResult.Select(item => item.Item2).ToList();
             }
 
-            // Search finished
-            return allMoves.First();
+            // midResult is either partial or full. Just sort and return first.
+            // Awkward results might be produced if had only tie to calculate 1 result in depth...
+            var finalResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
+            Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed} ({midResult.Count}/{allMoves.Count}).");
+            Diagnostics.AddMessage($" Move evaluation: {finalResult.First().weight}.");
+            return finalResult.First().move;
         }
 
         /// <summary>
@@ -263,7 +270,7 @@ namespace vergiBlue.Algorithms
                     }
                 }
 
-                midResult = MoveOrdering.SortWeightedMovesWithOrderBy(midResult, isMaximizing, true).ToList();
+                midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
                 allMoves = midResult.Select(item => item.Item2).ToList();
 
                 if (allMoves.Any())

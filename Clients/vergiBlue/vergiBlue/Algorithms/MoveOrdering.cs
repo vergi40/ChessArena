@@ -91,7 +91,7 @@ namespace vergiBlue.Algorithms
         /// <param name="evaluationList"></param>
         /// <param name="isMaximizing"></param>
         /// <returns></returns>
-        private static IList<(double weight, SingleMove move)> SortWeightedMovesWithSort(IEnumerable<(double weight, SingleMove move)> evaluationList,
+        public static IList<(double weight, SingleMove move)> SortWeightedMovesWithSort(IEnumerable<(double weight, SingleMove move)> evaluationList,
             bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
@@ -127,18 +127,11 @@ namespace vergiBlue.Algorithms
         /// </summary>
         /// <param name="evaluationList"></param>
         /// <param name="isMaximizing"></param>
-        /// <param name="prioritizeCaptures"></param>
         /// <returns></returns>
         public static IList<(double weight, SingleMove move)> SortWeightedMovesWithOrderBy(
-            IEnumerable<(double weight, SingleMove move)> evaluationList, bool isMaximizing,
-            bool prioritizeCaptures)
+            IEnumerable<(double weight, SingleMove move)> evaluationList, bool isMaximizing)
         {
             var sorted = evaluationList.ToList();
-            if (prioritizeCaptures)
-            {
-                sorted = sorted.OrderByDescending(item => item.move.Capture).ToList();
-            }
-
             if (isMaximizing)
             {
                 sorted = sorted.OrderByDescending(item => item.weight).ToList();

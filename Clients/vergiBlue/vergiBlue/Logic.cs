@@ -31,7 +31,7 @@ namespace vergiBlue
         // Config bools. Default values used in real game
         public bool UseTranspositionTables { get; set; } = false;
         public bool UseParallelComputation { get; set; } = false;
-        public bool UseIterativeDeepening { get; set; } = false;
+        public bool UseIterativeDeepening { get; set; } = true;
 
         /// <summary>
         /// Log more data, like alpha-betas

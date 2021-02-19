@@ -93,6 +93,12 @@ namespace vergiBlueTests
             // Board evaluations: 231069. Check evaluations: 968. Alpha cutoffs: 62084. Beta cutoffs: 5624. Time elapsed: 1530 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 423044. Check evaluations: 1471. Alpha cutoffs: 11542. Beta cutoffs: 106093. Time elapsed: 2018 ms. Available moves found: 40.
+
+            // 5.4 sec. 19.2. add timer and midresult check
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5
+            // Board evaluations: 448738. Check evaluations: 967. Alpha cutoffs: 66099. Beta cutoffs: 16213. Time elapsed: 2978 ms. Available moves found: 30. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 330887. Check evaluations: 1471. Alpha cutoffs: 11189. Beta cutoffs: 100620. Time elapsed: 2412 ms. Available moves found: 40.
         }
 
         [TestMethod]
