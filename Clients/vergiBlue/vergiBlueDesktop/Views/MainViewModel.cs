@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Formats.Asn1;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using vergiBlue;
@@ -13,23 +15,54 @@ namespace vergiBlueDesktop.Views
 {
     /// <summary>
     /// Update ideas:
+    /// * Use iterative deepening to avoid long calculations. Remember update diagnostics searchdepth
     /// * Restrict own movements to borders
     /// * Do a click sound when moving
     /// * Add ability to change board color and piece icons
     /// * Add settings tab with checkboxes for Logic creation
     /// * Add timer
-    /// * Add info list of previous moves and checks
     /// * Ask ai to give hint
     /// * Endgame scenarios with thumbnail pictures
     /// * Get all possible moves and compare to made move. Eg king cant be lost on purpose
-    /// * Show captured pieces on side
+    /// * Show captured pieces on top and bottom, in place of buttons
+    /// * - Also highlight player which turn is going
     /// </summary>
     public class MainViewModel : NotifyPropertyBase
     {
+        private bool _gameStarted = false;
+        private bool _isBusy;
+
+
         private static string IconSet = "kosal";
         private int TurnCount { get; set; } = 0;
-        
-        
+
+
+        // --------------
+        // View binded
+
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                _isBusy = value;
+                OnPropertyChanged(() => IsBusy);
+            }
+        }
+
+        public bool GameStarted
+        {
+            get => _gameStarted;
+            set
+            {
+                _gameStarted = value;
+                OnPropertyChanged(() => GameStarted);
+            }
+        }
+
+        // ---------------
+
+
         public bool PlayerIsWhite { get; set; }
         public bool IsWhiteTurn { get; set; }
         
@@ -51,9 +84,10 @@ namespace vergiBlueDesktop.Views
 
         public ICommand StartWhiteCommand { get; set; }
         public ICommand StartBlackCommand { get; set; }
-        public ICommand InitializeCase2Command { get; set; }
-        public ICommand StartCommand { get; set; }
-        public ICommand TestMoveCommand { get; set; }
+        public ICommand ForfeitCommand { get; set; }
+        public ICommand Test1Command { get; set; }
+        public ICommand Test2Command { get; set; }
+        public ICommand Test3Command { get; set; }
         
         public Board Board { get; set; }
 
@@ -61,15 +95,17 @@ namespace vergiBlueDesktop.Views
         {
             StartWhiteCommand = new RelayCommand<object>(StartWhite);
             StartBlackCommand = new RelayCommand<object>(StartBlack);
-            InitializeCase2Command = new RelayCommand<object>(Initialize2);
-            StartCommand = new RelayCommand<object>(Start);
-            TestMoveCommand = new RelayCommand<object>(TestMove);
+            ForfeitCommand = new RelayCommand<object>(Forfeit);
+            Test1Command = new RelayCommand<object>(Test1);
+            Test2Command = new RelayCommand<object>(Test2);
+            Test3Command = new RelayCommand<object>(Test3);
 
         }
 
         private void StartWhite(object parameter)
         {
-            InitializeBoard();
+            ViewUpdateGameStart();
+            InitializeEnvironment();
             PlayerIsWhite = true;
             IsWhiteTurn = true;
 
@@ -78,9 +114,10 @@ namespace vergiBlueDesktop.Views
 
         private void StartBlack(object parameter)
         {
-            InitializeBoard();
+            ViewUpdateGameStart();
+            InitializeEnvironment();
             PlayerIsWhite = false;
-            IsWhiteTurn = false;
+            IsWhiteTurn = true;
             
             AiLogic = new Logic(!PlayerIsWhite, Board);
             
@@ -88,19 +125,39 @@ namespace vergiBlueDesktop.Views
             UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
             var move = new SingleMove(interfaceMoveData.Move);
 
-            TurnFinished(move, false);
+            TurnFinished(move, true);
         }
 
-        private void InitializeBoard()
+        private void Forfeit(object parameter)
+        {
+            ViewUpdateGameEnd();
+        }
+
+        private void ViewUpdateGameStart()
+        {
+            GameStarted = true;
+        }
+
+        private void ViewUpdateGameEnd()
+        {
+            GameStarted = false;
+        }
+
+        private void InitializeEnvironment(Board initializedBoard = null)
         {
             TurnCount = 0;
             History.Clear();
             AiMoveDiagnostics.Clear();
             AiPreviousMoveDiagnostics.Clear();
-            
-            Board = new Board();
-            Board.InitializeEmptyBoard();
 
+            if (initializedBoard == null)
+            {
+                initializedBoard = new Board();
+                initializedBoard.InitializeEmptyBoard();
+            }
+
+            Board = initializedBoard;
+            
             ViewObjectList.Clear();
             VisualizationTiles.Clear();
             PreviousPosition.Clear();
@@ -157,6 +214,7 @@ namespace vergiBlueDesktop.Views
             if (Board.IsCheckMate(IsWhiteTurn, false))
             {
                 History.Insert(0, $"{move.ToString()} - Checkmate.");
+                ViewUpdateGameEnd();
                 return;
             }
             
@@ -166,9 +224,11 @@ namespace vergiBlueDesktop.Views
             if (IsWhiteTurn != PlayerIsWhite)
             {
                 // Ai turn
+                IsBusy = true;
                 AiLogic.ReceiveMove(move.ToInterfaceMove(false,false));
                 var interfaceMoveData = await Task.Run(() => AiLogic.CreateMove());
                 UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
+                IsBusy = false;
                 var nextMove = new SingleMove(interfaceMoveData.Move);
 
                 TurnFinished(nextMove, true);
@@ -241,15 +301,40 @@ namespace vergiBlueDesktop.Views
             // 
         }
 
-        private void Initialize2(object parameter)
+        private void Test1(object parameter)
+        {
+            // 8   K
+            // 7   R
+            // 6
+            // 5   R
+            // 4
+            // 3
+            // 2    K
+            // 1
+            //  ABCDEFGH
+            var board = new Board();
+            var pieces = new List<PieceBase>
+            {
+                new Rook(false, "d5"),
+                new Rook(false, "d7"),
+                new King(true, "e2"),
+                new King(false, "d8")
+            };
+            board.AddNew(pieces);
+            
+            ViewUpdateGameStart();
+            InitializeEnvironment(board);
+            PlayerIsWhite = true;
+            IsWhiteTurn = true;
+
+            AiLogic = new Logic(!PlayerIsWhite, Board);
+        }
+
+        private void Test2(object parameter)
         {
         }
 
-        private void Start(object parameter)
-        {
-        }
-
-        private void TestMove(object parameter)
+        private void Test3(object parameter)
         {
         }
         
