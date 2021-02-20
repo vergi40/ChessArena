@@ -75,7 +75,7 @@ namespace vergiBlue.Algorithms
             if (depth == 0) return board.Evaluate(maximizingPlayer, false, depth);
             if (createStartTranspositionCheck)
             {
-                var transposition = board.SharedData.Transpositions.GetTranspositionForBoard(board.BoardHash);
+                var transposition = board.Shared.Transpositions.GetTranspositionForBoard(board.BoardHash);
                 if (transposition != null && transposition.Depth >= depth)
                 {
                     return transposition.Evaluation;
@@ -90,7 +90,7 @@ namespace vergiBlue.Algorithms
                 var value = -100000.0;
                 foreach (var move in allMoves)
                 {
-                    var transposition = board.SharedData.Transpositions.GetTranspositionForMove(board, move);
+                    var transposition = board.Shared.Transpositions.GetTranspositionForMove(board, move);
                     if (transposition != null && transposition.Depth >= depth)
                     {
                         // Saved some time
@@ -110,7 +110,7 @@ namespace vergiBlue.Algorithms
                         var deeperValue = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false);
                         
                         // Add new transposition table
-                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
+                        nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
                         value = Math.Max(value, deeperValue);
                     }
 
@@ -122,7 +122,7 @@ namespace vergiBlue.Algorithms
                         // Lower bound, cut-node (exact evaluation might be greater)
 
                         // Move at previous depth is really bad. Break search.
-                        board.SharedData.Transpositions.Add(board.BoardHash, depth - 1, value, NodeType.UpperBound, true);
+                        board.Shared.Transpositions.Add(board.BoardHash, depth - 1, value, NodeType.UpperBound, true);
                         Diagnostics.IncrementBeta();
                         break;
                     }
@@ -134,7 +134,7 @@ namespace vergiBlue.Algorithms
                 var value = 100000.0;
                 foreach (var move in allMoves)
                 {
-                    var transposition = board.SharedData.Transpositions.GetTranspositionForMove(board, move);
+                    var transposition = board.Shared.Transpositions.GetTranspositionForMove(board, move);
                     if (transposition != null && transposition.Depth >= depth)
                     {
                         // Saved some time
@@ -154,7 +154,7 @@ namespace vergiBlue.Algorithms
                         var deeperValue = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true);
 
                         // Add new transposition table
-                        nextBoard.SharedData.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
+                        nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
                         value = Math.Min(value, deeperValue);
                     }
 
@@ -166,7 +166,7 @@ namespace vergiBlue.Algorithms
                         // Upper bound, all-node (exact evaluation might be less)
 
                         // Save previous level as cut node
-                        board.SharedData.Transpositions.Add(board.BoardHash, depth - 1, value, NodeType.UpperBound, true);
+                        board.Shared.Transpositions.Add(board.BoardHash, depth - 1, value, NodeType.UpperBound, true);
                         Diagnostics.IncrementAlpha();
                         break;
                     }

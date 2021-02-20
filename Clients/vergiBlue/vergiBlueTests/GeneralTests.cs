@@ -37,21 +37,21 @@ namespace vergiBlueTests
 
             // 
             var firstPawnMove = new SingleMove("d2", "d4");
-            var firstMoveHash = board.SharedData.Transpositions.GetNewBoardHash(firstPawnMove, board, board.BoardHash);
+            var firstMoveHash = board.Shared.Transpositions.GetNewBoardHash(firstPawnMove, board, board.BoardHash);
             
             board.ExecuteMove(firstPawnMove);
             firstMoveHash.ShouldBe(board.BoardHash);
 
             //
             var second = new SingleMove("e7", "e5");
-            var secondMoveHash = board.SharedData.Transpositions.GetNewBoardHash(second, board, board.BoardHash);
+            var secondMoveHash = board.Shared.Transpositions.GetNewBoardHash(second, board, board.BoardHash);
 
             board.ExecuteMove(second);
             secondMoveHash.ShouldBe(board.BoardHash);
 
             //
             var capture = new SingleMove("d4", "e5", true);
-            var captureMoveHash = board.SharedData.Transpositions.GetNewBoardHash(capture, board, board.BoardHash);
+            var captureMoveHash = board.Shared.Transpositions.GetNewBoardHash(capture, board, board.BoardHash);
 
             board.ExecuteMove(capture);
             captureMoveHash.ShouldBe(board.BoardHash);

@@ -16,6 +16,8 @@ namespace vergiBlueDesktop.Views
     /// <summary>
     /// Update ideas:
     /// * Use iterative deepening to avoid long calculations. Remember update diagnostics searchdepth
+    /// * AI doesn't recognize concept of draw. For endgame this is crucial.
+    /// 
     /// * Restrict own movements to borders
     /// * Do a click sound when moving
     /// * Add ability to change board color and piece icons
@@ -96,9 +98,9 @@ namespace vergiBlueDesktop.Views
             StartWhiteCommand = new RelayCommand<object>(StartWhite);
             StartBlackCommand = new RelayCommand<object>(StartBlack);
             ForfeitCommand = new RelayCommand<object>(Forfeit);
-            Test1Command = new RelayCommand<object>(Test1);
-            Test2Command = new RelayCommand<object>(Test2);
-            Test3Command = new RelayCommand<object>(Test3);
+            Test1Command = new RelayCommand<object>(DoubleRookTest);
+            Test2Command = new RelayCommand<object>(PromotionTest);
+            Test3Command = new RelayCommand<object>(CastlingTest);
 
         }
 
@@ -186,7 +188,43 @@ namespace vergiBlueDesktop.Views
 
             if (move.Promotion)
             {
+                if (pieceNotMovedInView)
+                {
+                    var pieceToDelete = ViewObjectList.First(o => o.Column == move.PrevPos.column && o.Row == move.PrevPos.row && o.IsWhite == IsWhiteTurn);
+                    // Substitute current piece with promotion piece
+                    ViewObjectList.Remove(pieceToDelete);
+                    var promotionPieceBase = new Queen(pieceToDelete.IsWhite, move.PrevPos);
 
+                    var promotionPiece = new DraggableItem(
+                        new PieceViewModel(this)
+                        {
+                            IsWhite = promotionPieceBase.IsWhite,
+                            PieceModel = promotionPieceBase,
+                            SourceUri = GetUriForPiece(promotionPieceBase),
+                        },
+                        move.PrevPos.column, move.PrevPos.row);
+                    ViewObjectList.Add(promotionPiece);
+                }
+                else
+                {
+                    // Some dum logic to find piece which user has moved already
+                    var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row && o.IsWhite == IsWhiteTurn);
+                    // Substitute current piece with promotion piece
+                    ViewObjectList.Remove(pieceToDelete);
+                    var promotionPieceBase = new Queen(pieceToDelete.IsWhite, move.PrevPos);
+
+                    var promotionPiece = new DraggableItem(
+                        new PieceViewModel(this)
+                        {
+                            IsWhite = promotionPieceBase.IsWhite,
+                            PieceModel = promotionPieceBase,
+                            SourceUri = GetUriForPiece(promotionPieceBase),
+                        },
+                        move.NewPos.column, move.NewPos.row);
+                    ViewObjectList.Add(promotionPiece);
+                }
+
+                
             }
 
             if(pieceNotMovedInView)
@@ -287,11 +325,11 @@ namespace vergiBlueDesktop.Views
             }
 
             // Promotion
-            if (isWhite && targetPiece.Identity != 'Q' && move.NewPos.column == 7)
+            if (isWhite && targetPiece.Identity == 'P' && move.NewPos.row == 7)
             {
                 move.Promotion = true;
             }
-            else if (!isWhite && targetPiece.Identity != 'Q' && move.NewPos.column == 0)
+            else if (!isWhite && targetPiece.Identity == 'P' && move.NewPos.row == 0)
             {
                 move.Promotion = true;
             }
@@ -301,7 +339,7 @@ namespace vergiBlueDesktop.Views
             // 
         }
 
-        private void Test1(object parameter)
+        private void DoubleRookTest(object parameter)
         {
             // 8   K
             // 7   R
@@ -322,6 +360,73 @@ namespace vergiBlueDesktop.Views
             };
             board.AddNew(pieces);
             
+            ViewUpdateGameStart();
+            InitializeEnvironment(board);
+            PlayerIsWhite = true;
+            IsWhiteTurn = true;
+
+            AiLogic = new Logic(!PlayerIsWhite, Board);
+        }
+
+        private void PromotionTest(object parameter)
+        {
+            // 8 
+            // 7 P
+            // 6     K
+            // 5   
+            // 4
+            // 3     K
+            // 2  P  
+            // 1  
+            //  ABCDEFGH
+            var board = new Board();
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "f6"),
+                new King(false, "f3"),
+                new Pawn(true, "b7"),
+                new Pawn(false, "c2"),
+            };
+            board.AddNew(pieces);
+
+            ViewUpdateGameStart();
+            InitializeEnvironment(board);
+            PlayerIsWhite = true;
+            IsWhiteTurn = true;
+
+            AiLogic = new Logic(!PlayerIsWhite, Board);
+        }
+
+        private void CastlingTest(object parameter)
+        {
+            // 8    K  R
+            // 7     PPP
+            // 6 P
+            // 5   
+            // 4
+            // 3P
+            // 2     PPP
+            // 1    K  R
+            //  ABCDEFGH
+            var board = new Board();
+            var pieces = new List<PieceBase>
+            {
+                new Rook(true, "h1"),
+                new Rook(false, "h8"),
+                new King(true, "e1"),
+                new King(false, "e8"),
+                new Pawn(true, "f2"),
+                new Pawn(true, "g2"),
+                new Pawn(true, "h2"),
+                new Pawn(true, "a3"),
+                new Pawn(false, "f7"),
+                new Pawn(false, "g7"),
+                new Pawn(false, "h7"),
+                new Pawn(false, "b6")
+
+            };
+            board.AddNew(pieces);
+
             ViewUpdateGameStart();
             InitializeEnvironment(board);
             PlayerIsWhite = true;

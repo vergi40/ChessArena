@@ -292,8 +292,8 @@ namespace vergiBlue
             {
                 evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing, Settings.UseTranspositionTables);
                 
-                if(Board.SharedData.Transpositions.Tables.Count > 0)
-                    Diagnostics.AddMessage($"Transposition tables saved: {Board.SharedData.Transpositions.Tables.Count}");
+                if(Board.Shared.Transpositions.Tables.Count > 0)
+                    Diagnostics.AddMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
             }
             
             return MoveResearch.SelectBestMove(evaluated, isMaximizing, true);

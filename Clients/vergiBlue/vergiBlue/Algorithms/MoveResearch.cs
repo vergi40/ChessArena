@@ -20,7 +20,7 @@ namespace vergiBlue.Algorithms
             {
                 foreach (var move in moves)
                 {
-                    var transposition = board.SharedData.Transpositions.GetTranspositionForMove(board, move);
+                    var transposition = board.Shared.Transpositions.GetTranspositionForMove(board, move);
                     if (transposition != null && transposition.Depth >= searchDepth)
                     {
                         // Saved some time
@@ -37,7 +37,7 @@ namespace vergiBlue.Algorithms
                         result.Add(value, move);
 
                         // Add new transposition table
-                        newBoard.SharedData.Transpositions.Add(newBoard.BoardHash, searchDepth, value, NodeType.Exact, true);
+                        newBoard.Shared.Transpositions.Add(newBoard.BoardHash, searchDepth, value, NodeType.Exact, true);
 
                         if (isMaximizing)
                         {
@@ -257,7 +257,7 @@ namespace vergiBlue.Algorithms
                     var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, alpha, beta, !isMaximizing, true);
                     
                     // Top-level result should always be saved with priority
-                    newBoard.SharedData.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, true);
+                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, true);
                     midResult.Add((evaluation, move));
 
                     if (isMaximizing)

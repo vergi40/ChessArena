@@ -13,14 +13,35 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue
 {
-    public class DataInstance
+    /// <summary>
+    /// Data class where all transposition tables etc. should be fetched. Same data shared between all board instances.
+    /// </summary>
+    public class SharedData
     {
         public TranspositionTables Transpositions { get; }
-
-        public DataInstance()
+        
+        public SharedData()
         {
             Transpositions = new TranspositionTables();
             Transpositions.Initialize();
+        }
+    }
+
+    /// <summary>
+    /// Data class where all measures, counters etc. should be stored. Strategic data is calculated in each initialization and move.
+    /// Each new board has unique strategic data.
+    /// </summary>
+    public class StrategicData
+    {
+        /// <summary>
+        /// How close to end the game is. Range 0.0 (start) - 1.0 (empty board).
+        /// </summary>
+        public double EndGameWeight { get; set; }
+
+        public StrategicData()
+        {
+            // Empty board = end value-
+            EndGameWeight = 1;
         }
     }
     
@@ -55,7 +76,13 @@ namespace vergiBlue
         /// <summary>
         /// Data reference where all transposition tables etc. should be fetched. Same data shared between all board instances.
         /// </summary>
-        public DataInstance SharedData { get; }
+        public SharedData Shared { get; }
+
+        /// <summary>
+        /// Data reference where all measures, counters etc. should be stored. Strategic data is calculated in each initialization and move.
+        /// Each new board has unique strategic data.
+        /// </summary>
+        public StrategicData Strategic { get; }
 
         /// <summary>
         /// Return pieces in the <see cref="IPiece"/> format
@@ -82,7 +109,8 @@ namespace vergiBlue
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
 
-            SharedData = new DataInstance();
+            Shared = new SharedData();
+            Strategic = new StrategicData();
         }
 
         /// <summary>
@@ -96,9 +124,12 @@ namespace vergiBlue
             
             InitializeFromReference(previous);
 
-            SharedData = previous.SharedData;
+            Shared = previous.Shared;
+            Strategic = new StrategicData();
+            
             // Create new hash as tests might not initialize board properly
-            BoardHash = SharedData.Transpositions.CreateBoardHash(this);
+            BoardHash = Shared.Transpositions.CreateBoardHash(this);
+            UpdateEndGameWeight();
         }
 
         /// <summary>
@@ -112,9 +143,10 @@ namespace vergiBlue
             PieceList = new List<PieceBase>();
             
             InitializeFromReference(previous);
-            SharedData = previous.SharedData;
+            Shared = previous.Shared;
+            Strategic = new StrategicData();
             BoardHash = previous.BoardHash;
-            
+
             ExecuteMove(move);
         }
         
@@ -124,7 +156,7 @@ namespace vergiBlue
         /// <param name="move"></param>
         public void ExecuteMove(SingleMove move)
         {
-            BoardHash = SharedData.Transpositions.GetNewBoardHash(move, this, BoardHash);
+            BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
 
@@ -143,6 +175,24 @@ namespace vergiBlue
             }
             
             UpdatePosition(piece, move);
+            UpdateEndGameWeight();
+        }
+
+        public void UpdateEndGameWeight()
+        {
+            // TODO pawns
+
+            Strategic.EndGameWeight = 1 - GetPowerPiecePercent();
+        }
+        
+        /// <summary>
+        /// How many percent of non-pawn pieces exists on board
+        /// </summary>
+        /// <returns></returns>
+        public double GetPowerPiecePercent()
+        {
+            var powerPieces = PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
+            return powerPieces / 16.0;
         }
 
         private void UpdatePosition(PieceBase piece, SingleMove move)
@@ -255,15 +305,14 @@ namespace vergiBlue
             }
         }
 
-        public double Evaluate(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null,
-            int? moveCount = null)
+        public double Evaluate(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
         {
-            if (simpleEvaluation) return EvaluateSimple(isMaximizing, currentSearchDepth, moveCount);
-            return EvaluateIntelligent(isMaximizing, currentSearchDepth, moveCount);
+            if (simpleEvaluation) return EvaluateSimple(isMaximizing, currentSearchDepth);
+            return EvaluateIntelligent(isMaximizing, currentSearchDepth);
         }
 
 
-        public double EvaluateSimple(bool isMaximizing, int? currentSearchDepth = null, int? moveCount = null)
+        public double EvaluateSimple(bool isMaximizing, int? currentSearchDepth = null)
         {
             Diagnostics.IncrementEvalCount();
             var evalScore = PieceList.Sum(p => p.RelativeStrength);
@@ -271,11 +320,11 @@ namespace vergiBlue
             // Checkmate (in good or bad) should have more priority the sooner it occurs
             if(currentSearchDepth != null)
             {
-                if (evalScore > PieceBaseStrength.King / 2)
+                if (evalScore > PieceBaseStrength.King * 0.5)
                 {
                     evalScore += 10 * (currentSearchDepth.Value + 1);
                 }
-                else if (evalScore < -PieceBaseStrength.King / 2)
+                else if (evalScore < -PieceBaseStrength.King * 0.5)
                 {
                     evalScore -= 10 * (currentSearchDepth.Value + 1);
                 }
@@ -284,29 +333,62 @@ namespace vergiBlue
             return evalScore;
         }
 
-        public double EvaluateIntelligent(bool isMaximizing, int? currentSearchDepth = null, int? moveCount = null)
+        public double EvaluateIntelligent(bool isMaximizing, int? currentSearchDepth = null)
         {
-            // TODO position evaluation
-            // TODO pawn structure
-            // TODO king position
-
             Diagnostics.IncrementEvalCount();
-            var evalScore = PieceList.Sum(p => p.PositionStrength);
-
+            var evalScore = 0.0;
+            
+            if (Strategic.EndGameWeight > 0.50)
+            {
+                evalScore += PieceList.Sum(p => p.RelativeStrength);
+                evalScore += EndGameKingToCornerEvaluation(isMaximizing);
+            }
+            else
+            {
+                evalScore = PieceList.Sum(p => p.PositionStrength);
+                // TODO pawn structure
+            }
             // Checkmate (in good or bad) should have more priority the sooner it occurs
             if (currentSearchDepth != null)
             {
-                if (evalScore > PieceBaseStrength.King / 2)
+                if (evalScore > PieceBaseStrength.King * 0.5)
                 {
                     evalScore += 10 * (currentSearchDepth.Value + 1);
                 }
-                else if (evalScore < -PieceBaseStrength.King / 2)
+                else if (evalScore < -PieceBaseStrength.King * 0.5)
                 {
                     evalScore -= 10 * (currentSearchDepth.Value + 1);
                 }
             }
 
             return evalScore;
+        }
+        
+        private double EndGameKingToCornerEvaluation(bool isWhite)
+        {
+            var evaluation = 0.0;
+            var opponentKing = KingLocation(!isWhite);
+            var ownKing = KingLocation(isWhite);
+            
+            // Testing running
+            if (opponentKing == null || ownKing == null) return 0.0;
+
+            // In endgame, favor opponent king to be on edge of board
+            double center = 3.5;
+            var distanceToCenterRow = Math.Abs(center - opponentKing.CurrentPosition.row);
+            var distanceToCenterColumn = Math.Abs(center - opponentKing.CurrentPosition.column);
+            evaluation += distanceToCenterRow + distanceToCenterColumn;
+            
+            // In endgame, favor own king closed to opponent to cut off escape routes
+            var rowDifference = Math.Abs(ownKing.CurrentPosition.row - opponentKing.CurrentPosition.row);
+            var columnDifference = Math.Abs(ownKing.CurrentPosition.column - opponentKing.CurrentPosition.column);
+            var kingDifference = rowDifference + columnDifference;
+            evaluation += 14 - kingDifference;
+            
+            evaluation += evaluation * 35 * Strategic.EndGameWeight;
+
+            if (isWhite) return evaluation;
+            else return -evaluation;
         }
 
         /// <summary>
@@ -353,7 +435,7 @@ namespace vergiBlue
                     // Check if move has transposition data
                     // Maximizing player needs lower bound moves
                     // Minimizing player needs upper bound moves
-                    var transposition = SharedData.Transpositions.GetTranspositionForMove(this, singleMove);
+                    var transposition = Shared.Transpositions.GetTranspositionForMove(this, singleMove);
                     if (transposition != null)
                     {
                         if((forWhite && transposition.Type == NodeType.LowerBound) ||
@@ -425,8 +507,8 @@ namespace vergiBlue
             AddNew(blackKing);
             Kings = (whiteKing, blackKing);
 
-            SharedData.Transpositions.Initialize();
-            BoardHash = SharedData.Transpositions.CreateBoardHash(this);
+            Shared.Transpositions.Initialize();
+            BoardHash = Shared.Transpositions.CreateBoardHash(this);
             Logger.Log("Board initialized.");
         }
 
