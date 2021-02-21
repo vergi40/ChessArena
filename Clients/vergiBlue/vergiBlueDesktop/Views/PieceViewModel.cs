@@ -24,6 +24,7 @@ namespace vergiBlueDesktop.Views
         public void VisualizePossibleTiles()
         {
             var moves = PieceModel.Moves(Main.Board);
+            moves = Main.Board.FilterOutIllegalMoves(moves, IsWhite);
 
             var borderColor = Brushes.Chartreuse;
             if (IsWhite != Main.PlayerIsWhite) borderColor = Brushes.Coral;

@@ -9,6 +9,7 @@ namespace vergiBlue.Algorithms
 {
     public class MoveResearch
     {
+        // TODO Delete. somehow unnecessary and complicated.
         public static EvaluationResult GetMoveScoreList(IList<SingleMove> moves,
             int searchDepth, Board board, bool isMaximizing, bool useTranspositions)
         {
@@ -177,11 +178,14 @@ namespace vergiBlue.Algorithms
         /// </summary>
         private static SingleMove IterativeDeepeningBasic(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, int timeLimitInMs = 5000)
         {
+            // 
+            var minimumSearchPercentForHigherDepthUse = 1 / (double) 3;
             var timeUp = false;
             int depthUsed = 0;
             
             var midResult = new List<(double, SingleMove)>();
             var currentIterationMoves = new List<SingleMove>(allMoves);
+            (double eval, SingleMove move) previousIterationBest = new (0.0, new SingleMove((-1,-1),(-1,-1)));
             var watch = new Stopwatch();
             watch.Start();
 
@@ -222,10 +226,21 @@ namespace vergiBlue.Algorithms
                 // Full search finished for depth
                 midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
                 currentIterationMoves = midResult.Select(item => item.Item2).ToList();
+                previousIterationBest = midResult.First();
             }
 
             // midResult is either partial or full. Just sort and return first.
-            // Awkward results might be produced if had only tie to calculate 1 result in depth...
+
+            // If too small percent was searched for new depth, use prevous results
+            // E.g. out of 8 possible moves, only 2 were searched
+            if (midResult.Count / (double) allMoves.Count < minimumSearchPercentForHigherDepthUse)
+            {
+                var result = previousIterationBest;
+                Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed - 1} [partial {depthUsed}: ({midResult.Count}/{allMoves.Count})].");
+                Diagnostics.AddMessage($" Move evaluation: {result.eval}.");
+                return result.move;
+            }
+            
             var finalResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
             Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed} ({midResult.Count}/{allMoves.Count}).");
             Diagnostics.AddMessage($" Move evaluation: {finalResult.First().weight}.");

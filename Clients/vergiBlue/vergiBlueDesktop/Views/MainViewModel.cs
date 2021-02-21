@@ -185,48 +185,7 @@ namespace vergiBlueDesktop.Views
                 var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row && o.IsWhite != IsWhiteTurn);
                 ViewObjectList.Remove(pieceToDelete);
             }
-
-            if (move.Promotion)
-            {
-                if (pieceNotMovedInView)
-                {
-                    var pieceToDelete = ViewObjectList.First(o => o.Column == move.PrevPos.column && o.Row == move.PrevPos.row && o.IsWhite == IsWhiteTurn);
-                    // Substitute current piece with promotion piece
-                    ViewObjectList.Remove(pieceToDelete);
-                    var promotionPieceBase = new Queen(pieceToDelete.IsWhite, move.PrevPos);
-
-                    var promotionPiece = new DraggableItem(
-                        new PieceViewModel(this)
-                        {
-                            IsWhite = promotionPieceBase.IsWhite,
-                            PieceModel = promotionPieceBase,
-                            SourceUri = GetUriForPiece(promotionPieceBase),
-                        },
-                        move.PrevPos.column, move.PrevPos.row);
-                    ViewObjectList.Add(promotionPiece);
-                }
-                else
-                {
-                    // Some dum logic to find piece which user has moved already
-                    var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row && o.IsWhite == IsWhiteTurn);
-                    // Substitute current piece with promotion piece
-                    ViewObjectList.Remove(pieceToDelete);
-                    var promotionPieceBase = new Queen(pieceToDelete.IsWhite, move.PrevPos);
-
-                    var promotionPiece = new DraggableItem(
-                        new PieceViewModel(this)
-                        {
-                            IsWhite = promotionPieceBase.IsWhite,
-                            PieceModel = promotionPieceBase,
-                            SourceUri = GetUriForPiece(promotionPieceBase),
-                        },
-                        move.NewPos.column, move.NewPos.row);
-                    ViewObjectList.Add(promotionPiece);
-                }
-
-                
-            }
-
+            
             if(pieceNotMovedInView)
             {
                 var viewObject =
@@ -243,13 +202,13 @@ namespace vergiBlueDesktop.Views
 
         public async void TurnFinished(SingleMove move, bool pieceNotMovedInView)
         {
-            ValidateMove(move);
+            move = Board.CollectMoveProperties(move);
             UpdateGraphics(move, pieceNotMovedInView);
-
             Board.ExecuteMove(move);
+            UpdatePostGraphics(move);
             
             // Game ended?
-            if (Board.IsCheckMate(IsWhiteTurn, false))
+            if (move.CheckMate)
             {
                 History.Insert(0, $"{move.ToString()} - Checkmate.");
                 ViewUpdateGameEnd();
@@ -263,13 +222,38 @@ namespace vergiBlueDesktop.Views
             {
                 // Ai turn
                 IsBusy = true;
-                AiLogic.ReceiveMove(move.ToInterfaceMove(false,false));
+                AiLogic.ReceiveMove(move.ToInterfaceMove());
                 var interfaceMoveData = await Task.Run(() => AiLogic.CreateMove());
                 UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
                 IsBusy = false;
                 var nextMove = new SingleMove(interfaceMoveData.Move);
 
                 TurnFinished(nextMove, true);
+            }
+        }
+
+        /// <summary>
+        /// Handle stuff that needs Board.ExecuteMove to be finished first
+        /// </summary>
+        /// <param name="move"></param>
+        private void UpdatePostGraphics(SingleMove move)
+        {
+            if (move.Promotion)
+            {
+                // Model-piece is correct. Image-piece is moved, but wrong picture
+                var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row && o.IsWhite == IsWhiteTurn);
+                ViewObjectList.Remove(pieceToDelete);
+
+                var promotionPieceBase = Board.ValueAtDefinitely(move.NewPos);
+                var promotionPiece = new DraggableItem(
+                    new PieceViewModel(this)
+                    {
+                        IsWhite = promotionPieceBase.IsWhite,
+                        PieceModel = promotionPieceBase,
+                        SourceUri = GetUriForPiece(promotionPieceBase),
+                    },
+                    move.NewPos.column, move.NewPos.row);
+                ViewObjectList.Add(promotionPiece);
             }
         }
 
@@ -299,46 +283,7 @@ namespace vergiBlueDesktop.Views
                 AiMoveDiagnostics.Add(item);
             }
         }
-
-        /// <summary>
-        /// Do before value is updated to Board and view
-        /// </summary>
-        /// <param name="move"></param>
-        private void ValidateMove(SingleMove move)
-        {
-            // TODO actual validation
-            // TODO do in vergiBlue project
-            
-            // Now just check there is info missing
-            var targetPiece = Board.ValueAtDefinitely(move.PrevPos);
-            var isWhite = targetPiece.IsWhite;
-
-            // Capture
-            var opponentPiece = Board.ValueAt(move.NewPos);
-            if (opponentPiece != null)
-            {
-                if (opponentPiece.IsWhite != isWhite)
-                {
-                    move.Capture = true;
-                }
-                else throw new ArgumentException($"Player with white={isWhite} tried to capture own piece.");
-            }
-
-            // Promotion
-            if (isWhite && targetPiece.Identity == 'P' && move.NewPos.row == 7)
-            {
-                move.Promotion = true;
-            }
-            else if (!isWhite && targetPiece.Identity == 'P' && move.NewPos.row == 0)
-            {
-                move.Promotion = true;
-            }
-            
-            // Castling
-            
-            // 
-        }
-
+        
         private void DoubleRookTest(object parameter)
         {
             // 8   K

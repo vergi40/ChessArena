@@ -160,12 +160,13 @@ namespace vergiBlue
 
                 if (openingMove != null)
                 {
+                    openingMove = Board.CollectMoveProperties(openingMove);
                     Board.ExecuteMove(openingMove);
                     TurnCount++;
                     PreviousData = Diagnostics.CollectAndClear();
 
                     var result = new PlayerMoveImplementation(
-                        openingMove.ToInterfaceMove(false, false), PreviousData.ToString());
+                        openingMove.ToInterfaceMove(), PreviousData.ToString());
                     GameHistory.Add(result.Move);
                     return result;
                 }
@@ -210,20 +211,13 @@ namespace vergiBlue
                     $"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
 
             // Update local
-            Board.ExecuteMove(bestMove);
+            var moveWithData = Board.CollectMoveProperties(bestMove);
+            Board.ExecuteMove(moveWithData);
             TurnCount++;
-
-            // Endgame checks
-            var castling = false;
-            var check = Board.IsCheck(IsPlayerWhite);
-            //var checkMate = false;
-            //if(check) checkMate = Board.IsCheckMate(IsPlayerWhite, true);
-            if (bestMove.Promotion) Diagnostics.AddMessage($"Promotion occured at {bestMove.NewPos.ToAlgebraic()}. ");
-
+            
             PreviousData = Diagnostics.CollectAndClear(Settings.UseFullDiagnostics);
 
-            var move = new PlayerMoveImplementation(
-                bestMove.ToInterfaceMove(castling, check),
+            var move = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
                 PreviousData.ToString());
             GameHistory.Add(move.Move);
             return move;

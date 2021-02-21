@@ -152,6 +152,9 @@ namespace vergiBlue
         
         /// <summary>
         /// Apply single move to board.
+        /// Before executing, following should be applied:
+        /// * <see cref="CollectMoveProperties(vergiBlue.SingleMove)"/>
+        /// * (In desktop) UpdateGraphics()
         /// </summary>
         /// <param name="move"></param>
         public void ExecuteMove(SingleMove move)
@@ -392,7 +395,7 @@ namespace vergiBlue
         }
 
         /// <summary>
-        /// Adds capture-moves in front
+        /// Find every possible move for every piece for given color.
         /// </summary>
         public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false)
         {
@@ -524,7 +527,7 @@ namespace vergiBlue
         }
 
         /// <summary>
-        /// If any player move could eat other player king, and opponent has zero
+        /// If there is a player move that can eat other player king, and opponent has zero
         /// moves to stop this, it is checkmate
         /// </summary>
         /// <param name="isWhiteOffensive"></param>
@@ -555,7 +558,7 @@ namespace vergiBlue
         }
 
         /// <summary>
-        /// If any player move could eat other player king with current board setup, it is check.
+        /// If there is a player move that can eat other player king with current board setup, it is check.
         /// </summary>
         /// <param name="isWhiteOffensive">Which player moves are analyzed against others king checking</param>
         /// <returns></returns>
@@ -575,6 +578,77 @@ namespace vergiBlue
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Collect before the move is executed to board.
+        /// </summary>
+        /// <param name="move"></param>
+        /// <returns></returns>
+        public SingleMove CollectMoveProperties(SingleMove move)
+        {
+            return CollectMoveProperties(move.PrevPos, move.NewPos);
+        }
+
+        /// <summary>
+        /// Collect before the move is executed to board.
+        /// </summary>
+        /// <returns></returns>
+        public SingleMove CollectMoveProperties((int column, int row) from, (int column, int row) to)
+        {
+            var move = new SingleMove(from, to);
+            
+            // TODO actual validation
+            // TODO do in vergiBlue project
+
+            // Now just check there is info missing
+            var ownPiece = ValueAtDefinitely(from);
+            var isWhite = ownPiece.IsWhite;
+
+            // Capture
+            var opponentPiece = ValueAt(to);
+            if (opponentPiece != null)
+            {
+                if (opponentPiece.IsWhite != isWhite)
+                {
+                    move.Capture = true;
+                }
+                else throw new ArgumentException($"Player with white={isWhite} tried to capture own piece.");
+            }
+
+            // Promotion
+            if (isWhite && ownPiece.Identity == 'P' && move.NewPos.row == 7)
+            {
+                move.Promotion = true;
+            }
+            else if (!isWhite && ownPiece.Identity == 'P' && move.NewPos.row == 0)
+            {
+                move.Promotion = true;
+            }
+
+            // Castling
+
+            // Check and checkmate
+            var nextBoard = new Board(this, move);
+            move.Check = nextBoard.IsCheck(isWhite);
+            move.CheckMate = nextBoard.IsCheckMate(isWhite, move.Check);
+            return move;
+        }
+
+        public IEnumerable<SingleMove> FilterOutIllegalMoves(IEnumerable<SingleMove> moves, bool isWhite)
+        {
+            var legalMoves = Moves(isWhite, false, true);
+            foreach (var singleMove in moves)
+            {
+                var isLegal =
+                    legalMoves.FirstOrDefault(m => m.Equals(singleMove));
+                if(isLegal != null)
+                {
+                    // Move is ok
+                    yield return singleMove;
+                }
+                
+            }
         }
     }
 }

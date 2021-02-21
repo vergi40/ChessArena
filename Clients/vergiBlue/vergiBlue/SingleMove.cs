@@ -9,10 +9,21 @@ using CommonNetStandard.LocalImplementation;
 
 namespace vergiBlue
 {
+    // TODO separate move without additional data
+    // public class SingleMoveBase
+    
+    // public class SingleMoveWithData
+    
     public class SingleMove : IEquatable<SingleMove>
     {
         public bool Capture { get; set; }
         public bool Promotion { get; set; }
+        public bool Castling { get; set; }
+        
+        /// <summary>
+        /// Produces check-state to other player
+        /// </summary>
+        public bool Check { get; set; }
         public bool CheckMate { get; set; }
 
         public (int column, int row) PrevPos { get; }
@@ -45,9 +56,12 @@ namespace vergiBlue
             NewPos = interfaceMove.EndPosition.ToTuple();
             Capture = capture;
             Promotion = interfaceMove.PromotionResult != PromotionPieceType.NoPromotion;
+            Castling = interfaceMove.Castling;
+            Check = interfaceMove.Check;
+            CheckMate = interfaceMove.CheckMate;
         }
 
-        public IMove ToInterfaceMove(bool castling, bool check)
+        public IMove ToInterfaceMove()
         {
             var promotionType = PromotionPieceType.NoPromotion;
             if (Promotion) promotionType = PromotionPieceType.Queen;
@@ -57,8 +71,8 @@ namespace vergiBlue
                 StartPosition = PrevPos.ToAlgebraic(),
                 EndPosition = NewPos.ToAlgebraic(),
                 PromotionResult = promotionType,
-                Castling = castling,
-                Check = check,
+                Castling = Castling,
+                Check = Check,
                 CheckMate = CheckMate
             };
             return move;
