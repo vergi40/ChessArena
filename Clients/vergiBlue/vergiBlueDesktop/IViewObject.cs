@@ -34,7 +34,7 @@ namespace vergiBlueDesktop
         Position CurrentPosition { get; }
         Position PreviousPosition { get; }
 
-        void UpdateImageLocation(int column, int row, bool initialization);
+        void UpdateImageLocation(int column, int row, bool updatePreviousPixelLocation);
         void UpdateInternalLocation(int column, int row);
         void TestIncrRow();
     }

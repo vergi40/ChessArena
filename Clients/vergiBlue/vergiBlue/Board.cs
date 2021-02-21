@@ -38,10 +38,39 @@ namespace vergiBlue
         /// </summary>
         public double EndGameWeight { get; set; }
 
+        public bool WhiteLeftCastlingValid { get; set; } = true;
+        public bool WhiteRightCastlingValid { get; set; } = true;
+        public bool BlackLeftCastlingValid { get; set; } = true;
+        public bool BlackRightCastlingValid { get; set; } = true;
+
         public StrategicData()
         {
             // Empty board = end value-
             EndGameWeight = 1;
+        }
+
+        public StrategicData(StrategicData previous)
+        {
+            EndGameWeight = previous.EndGameWeight;
+            WhiteLeftCastlingValid = previous.WhiteLeftCastlingValid;
+            WhiteRightCastlingValid = previous.WhiteRightCastlingValid;
+            BlackLeftCastlingValid = previous.BlackLeftCastlingValid;
+            BlackRightCastlingValid = previous.BlackRightCastlingValid;
+        }
+
+
+        public void UpdateCastlingStatus(SingleMove move)
+        {
+            if (move.NewPos.row == 0)
+            {
+                WhiteLeftCastlingValid = false;
+                WhiteRightCastlingValid = false;
+            }
+            else if(move.NewPos.row == 7)
+            {
+                BlackLeftCastlingValid = false;
+                BlackRightCastlingValid = false;
+            }
         }
     }
     
@@ -125,7 +154,7 @@ namespace vergiBlue
             InitializeFromReference(previous);
 
             Shared = previous.Shared;
-            Strategic = new StrategicData();
+            Strategic = new StrategicData(previous.Strategic);
             
             // Create new hash as tests might not initialize board properly
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
@@ -144,7 +173,7 @@ namespace vergiBlue
             
             InitializeFromReference(previous);
             Shared = previous.Shared;
-            Strategic = new StrategicData();
+            Strategic = new StrategicData(previous.Strategic);
             BoardHash = previous.BoardHash;
 
             ExecuteMove(move);
@@ -175,6 +204,11 @@ namespace vergiBlue
                 {
                     RemovePiece(move.NewPos);
                 }
+            }
+
+            if (move.Castling)
+            {
+                Strategic.UpdateCastlingStatus(move);
             }
             
             UpdatePosition(piece, move);
@@ -209,6 +243,25 @@ namespace vergiBlue
             else
             {
                 piece.CurrentPosition = move.NewPos;
+            }
+
+            if (move.Castling)
+            {
+                // Most definitely known that king and rook are untouched and in place
+                if (move.NewPos.column == 2)
+                {
+                    // Execute also rook move
+                    var row = move.NewPos.row;
+                    var rookMove = new SingleMove((0, row), (3, row));
+                    UpdatePosition(ValueAtDefinitely((0, row)), rookMove);
+                }
+                if (move.NewPos.column == 6)
+                {
+                    // Execute also rook move
+                    var row = move.NewPos.row;
+                    var rookMove = new SingleMove((7, row), (5, row));
+                    UpdatePosition(ValueAtDefinitely((7, row)), rookMove);
+                }
             }
 
             BoardArray[move.PrevPos.Item1, move.PrevPos.Item2] = null;
@@ -264,18 +317,18 @@ namespace vergiBlue
         /// Return piece at coordinates, null if empty.
         /// </summary>
         /// <returns>Can be null</returns>
-        public PieceBase? ValueAt((int, int) target)
+        public PieceBase? ValueAt((int column, int row) target)
         {
-            return BoardArray[target.Item1, target.Item2];
+            return BoardArray[target.column, target.row];
         }
 
         /// <summary>
         /// Return piece at coordinates. Known to have value
         /// </summary>
         /// <returns>Can be null</returns>
-        public PieceBase ValueAtDefinitely((int, int) target)
+        public PieceBase ValueAtDefinitely((int column, int row) target)
         {
-            var piece = BoardArray[target.Item1, target.Item2];
+            var piece = BoardArray[target.column, target.row];
             if (piece == null) throw new ArgumentException($"Logical error. Value should not be null at {target.ToAlgebraic()}");
 
             return piece;
@@ -592,6 +645,7 @@ namespace vergiBlue
 
         /// <summary>
         /// Collect before the move is executed to board.
+        /// Any changes to board should be done in <see cref="ExecuteMove"/>
         /// </summary>
         /// <returns></returns>
         public SingleMove CollectMoveProperties((int column, int row) from, (int column, int row) to)
@@ -599,9 +653,8 @@ namespace vergiBlue
             var move = new SingleMove(from, to);
             
             // TODO actual validation
-            // TODO do in vergiBlue project
 
-            // Now just check there is info missing
+            // Now just check if there is info missing
             var ownPiece = ValueAtDefinitely(from);
             var isWhite = ownPiece.IsWhite;
 
@@ -627,6 +680,16 @@ namespace vergiBlue
             }
 
             // Castling
+            var castlingRow = 0;
+            if (!isWhite) castlingRow = 7;
+            if (ownPiece.Identity == 'K')
+            {
+                if (move.PrevPos == (4, castlingRow) &&
+                    (move.NewPos == (2, castlingRow) || move.NewPos == (6, castlingRow)))
+                {
+                    move.Castling = true;
+                }
+            }
 
             // Check and checkmate
             var nextBoard = new Board(this, move);
@@ -649,6 +712,82 @@ namespace vergiBlue
                 }
                 
             }
+        }
+        
+        // Slow
+        public IList<(int column, int row)> GetAttackSquares(bool attackerColor)
+        {
+            // TODO
+            return new List<(int column, int row)>();
+        }
+
+        public bool CanCastleToLeft(bool white)
+        {
+            var row = 0;
+            if (white)
+            {
+                if (!Strategic.WhiteLeftCastlingValid) return false;
+            }
+            else
+            {
+                if (!Strategic.BlackLeftCastlingValid) return false;
+                row = 7;
+            }
+            
+            // Castling pieces are intact
+            var rook = ValueAt((0, row));
+            var king = ValueAt((4, row));
+            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
+            
+            // No other pieces on the way
+            if (ValueAt((1, row)) != null) return false;
+            if (ValueAt((2, row)) != null) return false;
+            if (ValueAt((3, row)) != null) return false;
+
+            // Check that no position is under attack currently.
+            var neededSquares = new List<(int, int)> {(1, row), (2, row), (3, row), (4, row)};
+            var attackSquares = GetAttackSquares(!white);
+
+            foreach (var position in neededSquares)
+            {
+                if (attackSquares.Contains(position)) return false;
+            }
+
+            return true;
+        }
+
+        public bool CanCastleToRight(bool white)
+        {
+            var row = 0;
+            if (white)
+            {
+                if (!Strategic.WhiteLeftCastlingValid) return false;
+            }
+            else
+            {
+                if (!Strategic.BlackLeftCastlingValid) return false;
+                row = 7;
+            }
+
+            // Castling pieces are intact
+            var rook = ValueAt((7, row));
+            var king = ValueAt((4, row));
+            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
+
+            // No other pieces on the way
+            if (ValueAt((5, row)) != null) return false;
+            if (ValueAt((6, row)) != null) return false;
+
+            // Check that no position is under attack currently.
+            var neededSquares = new List<(int, int)> { (4, row), (5, row), (6, row)};
+            var attackSquares = GetAttackSquares(!white);
+
+            foreach (var position in neededSquares)
+            {
+                if (attackSquares.Contains(position)) return false;
+            }
+
+            return true;
         }
     }
 }

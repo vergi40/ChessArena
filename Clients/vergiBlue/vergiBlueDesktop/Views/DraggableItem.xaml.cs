@@ -69,14 +69,14 @@ namespace vergiBlueDesktop.Views
         /// </summary>
         /// <param name="column"></param>
         /// <param name="row"></param>
-        /// <param name="initialization"></param>
-        public void UpdateImageLocation(int column, int row, bool initialization)
+        /// <param name="updatePreviousPixelLocation"></param>
+        public void UpdateImageLocation(int column, int row, bool updatePreviousPixelLocation)
         {
             var x = column * BlockSize;
             // UserControl transform system has mirrored y-axis
             var y = 420 - row * BlockSize;
 
-            if (initialization)
+            if (updatePreviousPixelLocation)
             {
                 prevX = x;
                 prevY = y;

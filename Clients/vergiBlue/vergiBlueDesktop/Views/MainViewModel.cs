@@ -255,6 +255,25 @@ namespace vergiBlueDesktop.Views
                     move.NewPos.column, move.NewPos.row);
                 ViewObjectList.Add(promotionPiece);
             }
+
+            if (move.Castling)
+            {
+                // TODO find rook position and add here
+                var row = move.NewPos.row;
+                if (move.NewPos.column == 2)
+                {
+                    // Left
+                    var viewObject = ViewObjectList.First(o => o.Column == 0 && o.Row == row);
+                    viewObject.UpdateImageLocation(3, row, true);
+                    viewObject.UpdateInternalLocation(3, row);
+                }
+                else if (move.NewPos.column == 6)
+                {
+                    var viewObject = ViewObjectList.First(o => o.Column == 7 && o.Row == row);
+                    viewObject.UpdateImageLocation(5, row, true);
+                    viewObject.UpdateInternalLocation(5, row);
+                }
+            }
         }
 
         private void AppendHistory(SingleMove move)

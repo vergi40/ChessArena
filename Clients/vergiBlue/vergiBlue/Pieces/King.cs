@@ -10,6 +10,7 @@ namespace vergiBlue.Pieces
     {
         public override char Identity { get; }
         public override double RelativeStrength { get; }
+
         public override double PositionStrength =>
             RelativeStrength + vergiBlue.PositionStrength.KingStartToMiddleGame(IsWhite, CurrentPosition);
 
@@ -24,15 +25,15 @@ namespace vergiBlue.Pieces
             Identity = 'K';
             RelativeStrength = PieceBaseStrength.King * Direction;
         }
-        
+
         public override IEnumerable<SingleMove> Moves(Board board)
         {
             var cur = CurrentPosition;
 
-            var move = CanMoveTo((cur.column + 1, cur.row), board, true);
-            if (move != null) yield return move;
+            var moveRight = CanMoveTo((cur.column + 1, cur.row), board, true);
+            if (moveRight != null) yield return moveRight;
 
-            move = CanMoveTo((cur.column + 1, cur.row + 1), board, true);
+            var move = CanMoveTo((cur.column + 1, cur.row + 1), board, true);
             if (move != null) yield return move;
 
             move = CanMoveTo((cur.column, cur.row + 1), board, true);
@@ -41,8 +42,8 @@ namespace vergiBlue.Pieces
             move = CanMoveTo((cur.column - 1, cur.row + 1), board, true);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column - 1, cur.row), board, true);
-            if (move != null) yield return move;
+            var moveLeft = CanMoveTo((cur.column - 1, cur.row), board, true);
+            if (moveLeft != null) yield return moveLeft;
 
             move = CanMoveTo((cur.column - 1, cur.row - 1), board, true);
             if (move != null) yield return move;
@@ -52,14 +53,36 @@ namespace vergiBlue.Pieces
 
             move = CanMoveTo((cur.column + 1, cur.row - 1), board, true);
             if (move != null) yield return move;
+
+            // Castling
+            // Only check if not done yet
+            if (IsWhite)
+            {
+                if (board.Strategic.WhiteLeftCastlingValid && board.CanCastleToLeft(true))
+                {
+                    yield return new SingleMove(CurrentPosition, (2, 0));
+                }
+
+                if (board.Strategic.WhiteRightCastlingValid && board.CanCastleToRight(true))
+                {
+                    yield return new SingleMove(CurrentPosition, (6, 0));
+                }
+            }
+            else
+            {
+                if (board.Strategic.BlackLeftCastlingValid && board.CanCastleToLeft(false))
+                {
+                    yield return new SingleMove(CurrentPosition, (2, 7));
+                }
+
+                if (board.Strategic.BlackRightCastlingValid && board.CanCastleToRight(false))
+                {
+                    yield return new SingleMove(CurrentPosition, (6, 7));
+                }
+            }
         }
 
         public override PieceBase CreateCopy()
-        {
-            return new King(IsWhite, CurrentPosition);
-        }
-
-        public King CreateKingCopy()
         {
             return new King(IsWhite, CurrentPosition);
         }
