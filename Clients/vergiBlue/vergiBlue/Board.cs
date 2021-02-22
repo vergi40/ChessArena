@@ -392,18 +392,16 @@ namespace vergiBlue
         public double EvaluateIntelligent(bool isMaximizing, int? currentSearchDepth = null)
         {
             Diagnostics.IncrementEvalCount();
-            var evalScore = 0.0;
+            var evalScore = PieceList.Sum(p => p.GetEvaluationStrength(Strategic.EndGameWeight));
+            
+            // TODO pawn structure
+            // Separate start game weight functions
             
             if (Strategic.EndGameWeight > 0.50)
             {
-                evalScore += PieceList.Sum(p => p.RelativeStrength);
                 evalScore += EndGameKingToCornerEvaluation(isMaximizing);
             }
-            else
-            {
-                evalScore = PieceList.Sum(p => p.PositionStrength);
-                // TODO pawn structure
-            }
+            
             // Checkmate (in good or bad) should have more priority the sooner it occurs
             if (currentSearchDepth != null)
             {

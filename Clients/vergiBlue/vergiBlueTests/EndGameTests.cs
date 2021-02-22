@@ -29,9 +29,7 @@ namespace vergiBlueTests
             // and placing Black in zugzwang—he must either move his king, allowing White's king to penetrate, or his bishop, allowing a
             // decisive incursion by White's bishop)
             // 4... Bd7 5. Bxg6!
-
-            var player = new Logic(true);
-            var opponent = new Logic(false);
+         
             
             var board = new Board();
             var pieces = new List<PieceBase>
@@ -47,21 +45,14 @@ namespace vergiBlueTests
                 new Pawn(false, "h7"),
 
                 new Bishop(true, "b3"),
-                new Bishop(false, "f7")
+                new Bishop(false, "f7"),
+                new King(true, "f4"),
+                new King(false, "e7")
             };
             board.AddNew(pieces);
-            // 
-            var blackKing = new King(false, "e7");
-            board.AddNew(blackKing);
-
-            var whiteKing = new King(true, "f4");
-            board.AddNew(whiteKing);
-
-            board.Kings = (whiteKing, blackKing);
-
-            player.Board = new Board(board);
-            opponent.Board = new Board(board);
-
+            var player = new Logic(true, board);
+            var opponent = new Logic(false, board);
+            
             var playerMove = player.CreateMoveWithDepth(8);
             playerMove.Move.EndPosition.ShouldBe("e6");
 

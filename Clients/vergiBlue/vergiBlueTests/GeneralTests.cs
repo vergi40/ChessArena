@@ -61,8 +61,7 @@ namespace vergiBlueTests
         public void Transpositions_Depth1()
         {
             var searchDepth = 1;
-            var player = new Logic(false);
-            player.Board = new Board(BenchMarking.CreateRuyLopezOpeningBoard());
+            var player = new Logic(false, BenchMarking.CreateRuyLopezOpeningBoard());
 
             player.Settings = new LogicSettings()
             {
@@ -97,7 +96,6 @@ namespace vergiBlueTests
             // Obvious board.
             // If white starts, pawn is sure to be lost
 
-            var depth = 5;
             var whiteBoard = new Board();
             var pieces = new List<PieceBase>
             {
@@ -144,6 +142,44 @@ namespace vergiBlueTests
             // Board evaluations: 3814. Check evaluations: 72. Alpha cutoffs: 854. Beta cutoffs: 683. Priority moves found: 2900.
             // Transpositions used: 3307. Time elapsed: 35 ms. Available moves found: 7. Transposition tables saved: 1294
 
+
+        }
+
+        [TestMethod]
+        public void Transposition_DifferentMoves_SameHash()
+        {
+            // 8   K
+            // 7   
+            // 6    
+            // 5
+            // 4P
+            // 3   K
+            // 2
+            // 1
+            //  ABCDEFGH
+
+            var board1 = new Board();
+            var board2 = new Board();
+            var pieces = new List<PieceBase>
+            {
+                new Pawn(false, "a4"),
+                new King(true, "d3"),
+                new King(false, "d8")
+            };
+            board1.AddNew(pieces);
+            board2.AddNew(pieces);
+
+            var move1a = new SingleMove("d3", "c4");
+            board1.ExecuteMove(move1a);
+            var move2a = new SingleMove("c4", "d5");
+            board1.ExecuteMove(move2a);
+
+            var move1b = new SingleMove("d3", "d4");
+            board2.ExecuteMove(move1b);
+            var move2b = new SingleMove("d4", "d5");
+            board2.ExecuteMove(move2b);
+            
+            board1.BoardHash.ShouldBe(board2.BoardHash);
 
         }
 

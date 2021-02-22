@@ -59,6 +59,10 @@ namespace vergiBlue.Pieces
             CurrentPosition = position.ToTuple();
         }
 
+        public abstract double GetEvaluationStrength(double endGameWeight = 0);
+        
+        
+
         /// <summary>
         /// If target position is empty or has opponent piece, return SingleMove. If own piece or outside board, return null.
         /// </summary>

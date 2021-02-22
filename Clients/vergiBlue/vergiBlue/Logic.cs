@@ -108,9 +108,6 @@ namespace vergiBlue
 
         /// <summary>
         /// For tests. Start board known. Test environment handles initializations.
-        /// Custom set <see cref="UseParallelComputation"/>.
-        /// Custom set <see cref="UseTranspositionTables"/>.
-        /// Custom set <see cref="UseIterativeDeepening"/>.
         /// </summary>
         public Logic(bool isPlayerWhite, Board board, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {

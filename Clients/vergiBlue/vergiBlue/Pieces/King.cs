@@ -14,6 +14,9 @@ namespace vergiBlue.Pieces
         public override double PositionStrength =>
             RelativeStrength + vergiBlue.PositionStrength.KingStartToMiddleGame(IsWhite, CurrentPosition);
 
+        private double PositionStrengthInEnd =>
+            RelativeStrength + vergiBlue.PositionStrength.KingEndGame(IsWhite, CurrentPosition);
+
         public King(bool isWhite, (int column, int row) position) : base(isWhite, position)
         {
             Identity = 'K';
@@ -24,6 +27,12 @@ namespace vergiBlue.Pieces
         {
             Identity = 'K';
             RelativeStrength = PieceBaseStrength.King * Direction;
+        }
+
+        public override double GetEvaluationStrength(double endGameWeight = 0)
+        {
+            // Linear weighting to endgame strength 
+            return PositionStrength * (1 - endGameWeight) + PositionStrengthInEnd * endGameWeight;
         }
 
         public override IEnumerable<SingleMove> Moves(Board board)

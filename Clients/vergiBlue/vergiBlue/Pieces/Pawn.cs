@@ -25,6 +25,11 @@ namespace vergiBlue.Pieces
             RelativeStrength = PieceBaseStrength.Pawn * Direction;
         }
 
+        public override double GetEvaluationStrength(double endGameWeight = 0)
+        {
+            return PositionStrength;
+        }
+
         protected override SingleMove? CanMoveTo((int, int) target, Board board, bool validateBorders = false)
         {
             if (validateBorders && Logic.IsOutside(target)) return null;

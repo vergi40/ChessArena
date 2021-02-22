@@ -24,12 +24,9 @@ namespace vergiBlueTests
             board.AddNew(white, black);
             board.Kings = (white, black);
 
-            var player1 = new Logic(true);
-            //player1.Board = board;
-
             var move = new SingleMove("a1", "a2");
             //player1.Board.ExecuteMove(move);
-            player1.Board = new Board(board, move);
+            var player1 = new Logic(true, new Board(board, move));
 
             var kingReference = player1.Board.Kings.white;
             kingReference.ShouldNotBeNull();

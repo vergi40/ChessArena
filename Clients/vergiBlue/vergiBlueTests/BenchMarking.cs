@@ -264,9 +264,7 @@ namespace vergiBlueTests
             // 2PPPP| PPP
             // 1RNBQ|K  R
             //  ABCD EFGH
-            var player = new Logic(false);
-            player.Board = new Board(CreateRuyLopezOpeningBoard());
-
+            var player = new Logic(false, new Board(CreateRuyLopezOpeningBoard()));
             player.Settings = settings;
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
@@ -353,18 +351,12 @@ namespace vergiBlueTests
                 new Bishop(true, "d3"),
                 new Knight(false, "a5"),
                 new Queen(true, "e4"),
-                new Queen(false, "d7")
+                new Queen(false, "d7"),
+                new King(true, "g2"),
+                new King(false, "f8")
             };
             board.AddNew(pieces);
-
-            // 
-            var whiteKing = new King(true, "g2");
-            var blackKing = new King(false, "f8");
-            board.AddNew(whiteKing, blackKing);
-            board.Kings = (whiteKing, blackKing);
-
-            var player = new Logic(true);
-            player.Board = new Board(board);
+            var player = new Logic(true, board);
 
             player.Settings = settings;
 

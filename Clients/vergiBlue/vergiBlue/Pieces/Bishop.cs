@@ -25,6 +25,11 @@ namespace vergiBlue.Pieces
             RelativeStrength = PieceBaseStrength.Bishop * Direction;
         }
 
+        public override double GetEvaluationStrength(double endGameWeight = 0)
+        {
+            return PositionStrength;
+        }
+
         public override IEnumerable<SingleMove> Moves(Board board)
         {
             return BishopMoves(board);

@@ -62,8 +62,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerWhitePawnShouldEatOpponent()
         {
-            var logic = new Logic(true);
-            logic.Board = CreateMockPawnSetup();
+            var logic = new Logic(true, CreateMockPawnSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
@@ -73,8 +72,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerBlackPawnShouldEatOpponent()
         {
-            var logic = new Logic(false);
-            logic.Board = CreateMockPawnSetup();
+            var logic = new Logic(false, CreateMockPawnSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
@@ -84,8 +82,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerWhiteRookShouldEatOpponentRook()
         {
-            var logic = new Logic(true);
-            logic.Board = CreateMockPawnRookSetup();
+            var logic = new Logic(true, CreateMockPawnRookSetup());
             var playerMove = logic.CreateMoveWithDepth(2);
 
             // Let's see if the best move selected
@@ -97,8 +94,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerBlackRookShouldEatOpponentRook()
         {
-            var logic = new Logic(false);
-            logic.Board = CreateMockPawnRookSetup();
+            var logic = new Logic(false, CreateMockPawnRookSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
