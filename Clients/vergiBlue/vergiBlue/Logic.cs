@@ -26,6 +26,7 @@ namespace vergiBlue
         EndGame
     }
 
+    
     public class LogicSettings
     {
         // Config bools. Default values used in real game
@@ -90,15 +91,15 @@ namespace vergiBlue
         /// </summary>
         public DiagnosticsData PreviousData { get; set; } = new DiagnosticsData();
 
-
+        /// <summary>
+        /// Set before starting logic, if e.g. want to try transposition tables or parallel
+        /// search.
+        /// </summary>
         public LogicSettings Settings { get; set; } = new LogicSettings();
 
 
         /// <summary>
         /// For tests. Need to set board explicitly. Test environment handles initializations.
-        /// Custom set <see cref="UseParallelComputation"/>.
-        /// Custom set <see cref="UseTranspositionTables"/>.
-        /// Custom set <see cref="UseIterativeDeepening"/>.
         /// </summary>
         [Obsolete("For tests, use constructor with Board parameter.")]
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
