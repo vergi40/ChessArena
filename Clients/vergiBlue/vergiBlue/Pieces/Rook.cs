@@ -27,7 +27,9 @@ namespace vergiBlue.Pieces
 
         public override double GetEvaluationStrength(double endGameWeight = 0)
         {
-            return PositionStrength;
+            // Start normal relative weighting after halfgame
+            if (endGameWeight < 0.5) return PositionStrength;
+            return RelativeStrength;
         }
 
         public override IEnumerable<SingleMove> Moves(Board board)

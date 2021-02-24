@@ -131,6 +131,12 @@ namespace vergiBlue
         }
 
         /// <summary>
+        /// Is check = true. Not calculated = null.
+        /// Save some time if already calculated checkmate
+        /// </summary>
+        private bool? _isCheckForOffensivePrecalculated { get; set; } = null;
+
+        /// <summary>
         /// Start game initialization
         /// </summary>
         public Board()
@@ -361,10 +367,10 @@ namespace vergiBlue
             }
         }
 
-        public double Evaluate(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
+        public double Evaluate(bool isMaximizing, bool simpleEvaluation, bool isInCheckForOther = false, int? currentSearchDepth = null)
         {
             if (simpleEvaluation) return EvaluateSimple(isMaximizing, currentSearchDepth);
-            return EvaluateIntelligent(isMaximizing, currentSearchDepth);
+            return EvaluateIntelligent(isMaximizing, isInCheckForOther, currentSearchDepth);
         }
 
 
@@ -372,24 +378,11 @@ namespace vergiBlue
         {
             Diagnostics.IncrementEvalCount();
             var evalScore = PieceList.Sum(p => p.RelativeStrength);
-
-            // Checkmate (in good or bad) should have more priority the sooner it occurs
-            if(currentSearchDepth != null)
-            {
-                if (evalScore > PieceBaseStrength.King * 0.5)
-                {
-                    evalScore += 10 * (currentSearchDepth.Value + 1);
-                }
-                else if (evalScore < -PieceBaseStrength.King * 0.5)
-                {
-                    evalScore -= 10 * (currentSearchDepth.Value + 1);
-                }
-            }
-
+            
             return evalScore;
         }
 
-        public double EvaluateIntelligent(bool isMaximizing, int? currentSearchDepth = null)
+        public double EvaluateIntelligent(bool isMaximizing, bool isInCheckForOther, int? currentSearchDepth = null)
         {
             Diagnostics.IncrementEvalCount();
             var evalScore = PieceList.Sum(p => p.GetEvaluationStrength(Strategic.EndGameWeight));
@@ -401,24 +394,36 @@ namespace vergiBlue
             {
                 evalScore += EndGameKingToCornerEvaluation(isMaximizing);
             }
-            
+
             // Checkmate (in good or bad) should have more priority the sooner it occurs
+            // E.g. depth 4 = 1000
+            // depth 3 = 800
+            // depth 2 = 600
             if (currentSearchDepth != null)
             {
-                if (evalScore > PieceBaseStrength.King * 0.5)
+                // Increase if positive having checkmate, decrease if negative
+                if (evalScore > PieceBaseStrength.CheckMateThreshold)
                 {
-                    evalScore += 10 * (currentSearchDepth.Value + 1);
+                    evalScore += 200 * (currentSearchDepth.Value + 1);
                 }
-                else if (evalScore < -PieceBaseStrength.King * 0.5)
+                else if (evalScore < -PieceBaseStrength.CheckMateThreshold)
                 {
-                    evalScore -= 10 * (currentSearchDepth.Value + 1);
+                    evalScore -= 200 * (currentSearchDepth.Value + 1);
                 }
             }
+            
+            // Stalemate
+            // TODO not working in endgame properly somehow
+            //if (Math.Abs(evalScore) > PieceBaseStrength.CheckMateThreshold && !isInCheckForOther)
+            //{
+            //    return 0;
+            //    // Otherwise would be evaluated like -200000
+            //}
 
             return evalScore;
         }
         
-        private double EndGameKingToCornerEvaluation(bool isWhite)
+        public double EndGameKingToCornerEvaluation(bool isWhite)
         {
             var evaluation = 0.0;
             var opponentKing = KingLocation(!isWhite);
@@ -431,14 +436,14 @@ namespace vergiBlue
             double center = 3.5;
             var distanceToCenterRow = Math.Abs(center - opponentKing.CurrentPosition.row);
             var distanceToCenterColumn = Math.Abs(center - opponentKing.CurrentPosition.column);
-            evaluation += distanceToCenterRow + distanceToCenterColumn;
+            evaluation += 1 * (distanceToCenterRow + distanceToCenterColumn);
             
             // In endgame, favor own king closed to opponent to cut off escape routes
             var rowDifference = Math.Abs(ownKing.CurrentPosition.row - opponentKing.CurrentPosition.row);
             var columnDifference = Math.Abs(ownKing.CurrentPosition.column - opponentKing.CurrentPosition.column);
             var kingDifference = rowDifference + columnDifference;
             evaluation += 14 - kingDifference;
-            
+
             evaluation += evaluation * 35 * Strategic.EndGameWeight;
 
             if (isWhite) return evaluation;
@@ -615,6 +620,11 @@ namespace vergiBlue
         /// <returns></returns>
         public bool IsCheck(bool isWhiteOffensive)
         {
+            if (_isCheckForOffensivePrecalculated != null && _isCheckForOffensivePrecalculated == true)
+            {
+                return true;
+            }
+            
             var opponentKing = KingLocation(!isWhiteOffensive);
             if (opponentKing == null) return false; // Test override, don't always have kings on board
 
@@ -624,6 +634,7 @@ namespace vergiBlue
                 Diagnostics.IncrementCheckCount();
                 if (singleMove.NewPos == opponentKing.CurrentPosition)
                 {
+                    _isCheckForOffensivePrecalculated = true;
                     return true;
                 }
             }

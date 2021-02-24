@@ -14,6 +14,8 @@ namespace vergiBlue
         public static int Rook { get; } = 500;
         public static int Queen { get; } = 900;
         public static int King { get; } = 200000;
+
+        public static double CheckMateThreshold => King * 0.5;
     }
     
     /// <summary>

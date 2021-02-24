@@ -32,7 +32,12 @@ namespace vergiBlue.Pieces
         public override double GetEvaluationStrength(double endGameWeight = 0)
         {
             // Linear weighting to endgame strength 
-            return PositionStrength * (1 - endGameWeight) + PositionStrengthInEnd * endGameWeight;
+            //return PositionStrength * (1 - endGameWeight) + PositionStrengthInEnd * endGameWeight;
+
+            // Start normal relative weighting after halfgame
+            // TODO testing
+            if (endGameWeight < 0.5) return PositionStrength;
+            return RelativeStrength;
         }
 
         public override IEnumerable<SingleMove> Moves(Board board)

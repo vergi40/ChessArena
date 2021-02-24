@@ -16,7 +16,8 @@ namespace vergiBlueDesktop.Views
     /// <summary>
     /// Update ideas:
     /// * Use iterative deepening to avoid long calculations. Remember update diagnostics searchdepth
-    /// * AI doesn't recognize concept of draw. For endgame this is crucial.
+    /// * AI doesn't recognize concept of draw. For endgame this is crucial. This needs fine-tuning in evaluation function (commented out)
+    /// 
     /// 
     /// * Restrict own movements to borders
     /// * Do a click sound when moving

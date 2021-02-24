@@ -9,13 +9,16 @@ namespace vergiBlue.Algorithms
 {
     public class MoveResearch
     {
+        private static double DefaultAlpha => -1000000;
+        private static double DefaultBeta => 1000000;
+        
         // TODO Delete. somehow unnecessary and complicated.
         public static EvaluationResult GetMoveScoreList(IList<SingleMove> moves,
             int searchDepth, Board board, bool isMaximizing, bool useTranspositions)
         {
             var result = new EvaluationResult();
-            var alpha = -100000.0;
-            var beta = 100000.0;
+            var alpha = DefaultAlpha;
+            var beta = DefaultBeta;
 
             if (useTranspositions)
             {
@@ -88,7 +91,7 @@ namespace vergiBlue.Algorithms
                 (move, loopState, localState) => // Predefined lambda expression (Func<SingleMove, ParallelLoopState, thread-local variable, body>)
                 {
                     var newBoard = new Board(board, move);
-                    var value = MiniMax.ToDepth(newBoard, searchDepth, -100000, 100000, !isMaximizing);
+                    var value = MiniMax.ToDepth(newBoard, searchDepth, DefaultAlpha, DefaultBeta, !isMaximizing);
                     localState.Add((value, move));
                     return localState;
                 },
@@ -106,7 +109,7 @@ namespace vergiBlue.Algorithms
             if (isMaximizing) return evaluated.MaxMove;
             else return evaluated.MinMove;
         }
-
+        
         private static double BestValue(bool isMaximizing)
         {
             if (isMaximizing) return 1000000;
@@ -183,22 +186,24 @@ namespace vergiBlue.Algorithms
             var timeUp = false;
             int depthUsed = 0;
             
-            var midResult = new List<(double, SingleMove)>();
+            var midResult = new List<(double weight, SingleMove move)>();
             var currentIterationMoves = new List<SingleMove>(allMoves);
             (double eval, SingleMove move) previousIterationBest = new (0.0, new SingleMove((-1,-1),(-1,-1)));
             var watch = new Stopwatch();
             watch.Start();
 
+            // Why this works for black start, but not white?
+            //var alpha = -1000000.0;
+            //var beta = 1000000.0;
+
             // Initial depth 2
             for (int i = 2; i <= searchDepth; i++)
             {
+                var alpha = DefaultAlpha;
+                var beta = DefaultBeta;
                 depthUsed = i;
                 midResult.Clear();
-
-                // Initialize for each cycle
-                var alpha = -100000.0;
-                var beta = 100000.0;
-
+                
                 foreach (var move in currentIterationMoves)
                 {
                     var newBoard = new Board(board, move);
@@ -221,14 +226,27 @@ namespace vergiBlue.Algorithms
                     }
                 }
 
-                if (timeUp) break;
                 
                 // Full search finished for depth
                 midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
+
+                // Found checkmate
+                //if (isMaximizing && midResult.First().weight > PieceBaseStrength.CheckMateThreshold
+                //    || !isMaximizing && midResult.First().weight < -PieceBaseStrength.CheckMateThreshold)
+                //{
+                //    // TODO This might result in stupid movements, if opponent doesn't do the exact move AI thinks is best for it
+                    
+                //    Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed}. Check mate found.");
+                //    Diagnostics.AddMessage($" Move evaluation: {midResult.First().weight}.");
+                //    return midResult.First().move;
+                //}
+                
+                if (timeUp) break;
+
                 currentIterationMoves = midResult.Select(item => item.Item2).ToList();
                 previousIterationBest = midResult.First();
             }
-
+            
             // midResult is either partial or full. Just sort and return first.
 
             // If too small percent was searched for new depth, use prevous results
@@ -236,15 +254,34 @@ namespace vergiBlue.Algorithms
             if (midResult.Count / (double) allMoves.Count < minimumSearchPercentForHigherDepthUse)
             {
                 var result = previousIterationBest;
-                Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed - 1} [partial {depthUsed}: ({midResult.Count}/{allMoves.Count})].");
-                Diagnostics.AddMessage($" Move evaluation: {result.eval}.");
+                AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, result.eval, result.move, board);
                 return result.move;
             }
             
             var finalResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
-            Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed} ({midResult.Count}/{allMoves.Count}).");
-            Diagnostics.AddMessage($" Move evaluation: {finalResult.First().weight}.");
+            AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, finalResult.First().weight, finalResult.First().move, board);
             return finalResult.First().move;
+        }
+
+        private static void AddIterativeDeepeningResultDiagnostics(int depthUsed, int totalMoveCount, int searchMoveCount, double evaluation, SingleMove? move = null, Board? board = null)
+        {
+            if (searchMoveCount < totalMoveCount)
+            {
+                Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed - 1} [partial {depthUsed}: ({searchMoveCount}/{totalMoveCount})].");
+            }
+            else
+            {
+                Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed} ({searchMoveCount}/{totalMoveCount}).");
+            }
+            Diagnostics.AddMessage($" Move evaluation: {evaluation}.");
+
+            // DEBUG
+            if (move != null && board != null)
+            {
+                var newBoard = new Board(board, move);
+                var isWhite = newBoard.ValueAtDefinitely(move.NewPos).IsWhite;
+                Diagnostics.AddMessage(" EndGameKingToCornerEvaluation: " + newBoard.EndGameKingToCornerEvaluation(isWhite));
+            }
         }
 
         /// <summary>
@@ -263,8 +300,8 @@ namespace vergiBlue.Algorithms
                 midResult.Clear();
                 
                 // Initialize for each cycle
-                var alpha = -100000.0;
-                var beta = 100000.0;
+                var alpha = DefaultAlpha;
+                var beta = DefaultBeta;
                 
                 foreach (var move in allMoves)
                 {

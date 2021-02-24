@@ -126,6 +126,11 @@ namespace vergiBlue
         /// </summary>
         public static void AddMessage(string message)
         {
+            // Helpers to keep full result message nice.
+            message = message.Trim();
+            if (!message.EndsWith('.')) message += ".";
+            message = message + " ";
+
             // TODO
             lock (messageLock)
             {

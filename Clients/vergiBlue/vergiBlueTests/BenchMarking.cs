@@ -99,6 +99,20 @@ namespace vergiBlueTests
             // Board evaluations: 448738. Check evaluations: 967. Alpha cutoffs: 66099. Beta cutoffs: 16213. Time elapsed: 2978 ms. Available moves found: 30. 
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 330887. Check evaluations: 1471. Alpha cutoffs: 11189. Beta cutoffs: 100620. Time elapsed: 2412 ms. Available moves found: 40.
+
+            // 6.1 sec. 24.2. pre
+            // Board evaluations: 441370. Check evaluations: 1032. Alpha cutoffs: 66065. Beta cutoffs: 15754. Time elapsed: 3330 ms. Available moves found: 30.
+            // Iterative deepening search depth was 5 (30/30). Move evaluation: 120.
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 329460. Check evaluations: 1515. Alpha cutoffs: 9652. Beta cutoffs: 105791. Time elapsed: 2769 ms. Available moves found: 40.
+            // Iterative deepening search depth was 5 (40/40). Move evaluation: -294,375.
+
+            // 2 sec. Use old alpha-beta for each cycle. -> works for black start, white becomes really stupid
+            // Board evaluations: 68415. Check evaluations: 1024. Alpha cutoffs: 24109. Beta cutoffs: 2577. Time elapsed: 736 ms. Available moves found: 30.
+            // Iterative deepening search depth was 5 (30/30). Move evaluation: -10.
+            // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
+            // Board evaluations: 132820. Check evaluations: 1517. Alpha cutoffs: 2674. Beta cutoffs: 54639. Time elapsed: 1276 ms. Available moves found: 40.
+            // Iterative deepening search depth was 5 (40/40). Move evaluation: 175,625.
         }
 
         [TestMethod]
