@@ -160,7 +160,7 @@ namespace vergiBlue
 
         private int GetMaxDepthForCurrentBoardWithTranspositions(Board board)
         {
-            var tempOffset = 0;
+            var tempOffset = -1;
             
             var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
             if (powerPieces > 9) return 6 + tempOffset;

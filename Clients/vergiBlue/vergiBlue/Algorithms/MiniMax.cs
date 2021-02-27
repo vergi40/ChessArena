@@ -1,16 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace vergiBlue.Algorithms
 {
+    /// <summary>
+    /// General minimax alpha beta abstract:
+    ///
+    /// When maximizing: 
+    /// * We know previous level current best minimizing move (beta).
+    /// * We update current best max move to alpha (Max(alpha, value))
+    /// * If alpha >= beta, we know that previous level minimizing will skip this.
+    /// * Prune
+    ///
+    /// When minimizing:
+    /// * We know previous level current best maximizing move (alpha)
+    /// * We update current best min move to beta (Min(beta, value))
+    /// * If beta <= alpha, we know that previous level maximizing will skip this.
+    /// * Prune
+    /// </summary>
     public class MiniMax
     {
         /// <summary>
         /// Main game decision feature. Calculate player and opponent moves to certain depth. When
         /// maximizing, return best move evaluation value for white player. When minimizing return best value for black.
+        ///
         /// </summary>
         /// <param name="newBoard">Board setup to be evaluated</param>
         /// <param name="depth">How many player and opponent moves by turns are calculated</param>
@@ -35,6 +52,7 @@ namespace vergiBlue.Algorithms
                     alpha = Math.Max(alpha, value);
                     if (alpha >= beta)
                     {
+                        // Prune. Alpha is better than previous level beta. Don't want to use moves from this board set.
                         // Saved some time by noticing this branch is a dead end
                         Diagnostics.IncrementAlpha();
                         break;
@@ -52,7 +70,7 @@ namespace vergiBlue.Algorithms
                     beta = Math.Min(beta, value);
                     if (beta <= alpha)
                     {
-                        // Saved some time by noticing this branch is a dead end
+                        // Prune. Beta is smaller than previous level alpha. Don't want to use moves from this board set.
                         Diagnostics.IncrementBeta();
                         break;
                     }
@@ -63,113 +81,135 @@ namespace vergiBlue.Algorithms
 
         /// <summary>
         /// Minimax with transpositions.
-        /// Root1: transposition added at depth 1
-        /// Root2: Same transposition encountered at depth 3.
-        /// -> No need to use
         ///
-        /// Case: transposition added at depth 4
-        /// Another tree encounters this at depth 3
-        /// -> good
+        /// Example - search depth 5
+        /// 5    4   3   2   1
+        /// A1 - B - E - F - G: Transposition added for each move
+        /// A2 - C - E: Same transposition encountered at depth 3.
+        /// -> No need to search deeper
+        ///
+        /// General guidelines
+        /// * Don't save transposition values near the leaf nodes (depth 0, maybe 1)
+        ///
+        /// Example
+        /// maximizing depth 4    alpha = 5, beta = 10
+        ///
+        /// minimizing depth 3    alpha = 5, beta = 10
+        /// minimizing depth 3    value = 12 ok.
+        /// minimizing depth 3    value = 8 ok. beta = 8
+        /// minimizing depth 3    value = 4 -> prune and save as lowerbound. this move results to 4 or lower. return 4
+        ///
+        /// maximizing depth 2    alpha = 5, beta = 8
+        /// maximizing depth 2    value = 13 -> prune and save as upperbound. this move results to 13 or higher. return 13
+        /// maximizing depth 2    value = 6 ok. alpha = 6
+        /// 
+        /// minimizing depth 1    alpha = 6 beta = 8
+        /// transposition found: lowerbound, 4
+        /// transposition found: upperbound, 13
+        ///
+        ///
+        /// maximizing depth 4 receives 4 - ignored
+        /// minimizing depth 3 receives 13 - ignored
         /// </summary>
-        public static double ToDepthWithTranspositions(Board board, int depth, double alpha, double beta, bool maximizingPlayer, bool createStartTranspositionCheck = false)
+        public static double ToDepthWithTranspositions(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
-            if (depth == 0) return board.Evaluate(maximizingPlayer, false, false, depth);
-            if (createStartTranspositionCheck)
-            {
-                var transposition = board.Shared.Transpositions.GetTranspositionForBoard(board.BoardHash);
-                if (transposition != null && transposition.Depth >= depth)
-                {
-                    return transposition.Evaluation;
-                }
-            }
+            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, false, depth);
             
-            var allMoves = board.MovesWithTranspositionOrder(maximizingPlayer, false);
-            if (!allMoves.Any()) return board.Evaluate(maximizingPlayer, false, board.IsCheck(!maximizingPlayer), depth);
+            // Check if solution already exists
+            var transposition = newBoard.Shared.Transpositions.GetTranspositionForBoard(newBoard.BoardHash);
+            if (transposition != null && transposition.Depth >= depth)
+            {
+                Diagnostics.IncrementTranspositionsFound();
+                var transpositionEval = MoveResearch.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
+                
+                if (transposition.Type == NodeType.Exact) return transpositionEval;
+                else if (transposition.Type == NodeType.UpperBound && transpositionEval < beta)
+                {
+                    beta = transpositionEval;
+                }
+                else if (transposition.Type == NodeType.LowerBound && transpositionEval > alpha)
+                {
+                    alpha = transpositionEval;
+                }
+                //else if (transposition.Type == NodeType.UpperBound && !maximizingPlayer && transposition.Evaluation <= alpha)
+                //{
+                //    // No need to search further, as score was worse than alpha
+                //    return transposition.Evaluation;
+                //}
+                //else if (transposition.Type == NodeType.LowerBound && maximizingPlayer && transposition.Evaluation >= beta)
+                //{
+                //    // No need to search further, as score was worse than beta
+                //    return transposition.Evaluation;
+                //}
+            }
+
+            var allMoves = newBoard.Moves(maximizingPlayer, false);
+            if (!allMoves.Any()) return newBoard.Evaluate(maximizingPlayer, false, newBoard.IsCheck(!maximizingPlayer), depth);
             
             if (maximizingPlayer)
             {
-                var value = -100000.0;
+                var value = MoveResearch.DefaultAlpha;
                 foreach (var move in allMoves)
                 {
-                    var transposition = board.Shared.Transpositions.GetTranspositionForMove(board, move);
-                    if (transposition != null && transposition.Depth >= depth)
+                    var nextBoard = new Board(newBoard, move);
+                    value = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false);
+                    if (value >= beta)
                     {
-                        // Saved some time
-                        transposition.ReadOnly = true;
-                        value = Math.Max(value, transposition.Evaluation);
-                        Diagnostics.IncrementTranspositionsFound();
-                        
-                        if(transposition.Type == NodeType.UpperBound)
+                        // Eval is at least beta. Fail high
+                        // Prune. Alpha is better than previous level beta. Don't want to use moves from this board set.
+
+                        if(depth > 1)
                         {
-                            // Saved big time
-                            break;
+                            nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
+                                NodeType.LowerBound, nextBoard.Shared.GameTurnCount);
                         }
-                    }
-                    else
-                    {
-                        var nextBoard = new Board(board, move);
-                        var deeperValue = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false);
-                        
-                        // Add new transposition table
-                        nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
-                        value = Math.Max(value, deeperValue);
-                    }
-
-                    alpha = Math.Max(alpha, value);
-                    if (alpha >= beta)
-                    {
-                        // Move at previous depth is really bad. Break search.
-                        // Beta cutoff, alpha surpassed beta
-                        // Lower bound, cut-node (exact evaluation might be greater)
-
-                        // Move at previous depth is really bad. Break search.
-                        board.Shared.Transpositions.Add(board.BoardHash, depth - 1, value, NodeType.UpperBound, true);
                         Diagnostics.IncrementBeta();
                         break;
+                    }
+                    else if(value > alpha)
+                    {
+                        // Value between alpha and beta. Save as exact score
+                        // Update alpha for rest of iteration
+                        alpha = value;
+                        if(depth > 1)
+                        {
+                            nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value, NodeType.Exact, nextBoard.Shared.GameTurnCount);
+                        }
                     }
                 }
                 return value;
             }
             else
             {
-                var value = 100000.0;
+                var value = MoveResearch.DefaultBeta;
                 foreach (var move in allMoves)
                 {
-                    var transposition = board.Shared.Transpositions.GetTranspositionForMove(board, move);
-                    if (transposition != null && transposition.Depth >= depth)
+                    var nextBoard = new Board(newBoard, move);
+                    value = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true);
+                    if (value <= alpha)
                     {
-                        // Saved some time
-                        transposition.ReadOnly = true;
-                        value = Math.Min(value, transposition.Evaluation);
-                        Diagnostics.IncrementTranspositionsFound();
-
-                        if (transposition.Type == NodeType.LowerBound)
+                        // Eval is at most alpha. Fail low
+                        // Prune. Beta is smaller than previous level alpha. Don't want to use moves from this board set.
+                        
+                        if (depth > 1)
                         {
-                            // Saved big time
-                            break;
+                            nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
+                                NodeType.UpperBound, nextBoard.Shared.GameTurnCount);
                         }
-                    }
-                    else
-                    {
-                        var nextBoard = new Board(board, move);
-                        var deeperValue = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true);
-
-                        // Add new transposition table
-                        nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth - 1, deeperValue, NodeType.Exact);
-                        value = Math.Min(value, deeperValue);
-                    }
-
-                    beta = Math.Min(beta, value);
-                    if (beta <= alpha)
-                    {
-                        // Move at previous depth is really bad. Break search.
-                        // Alpha cutoff, beta went below alpha
-                        // Upper bound, all-node (exact evaluation might be less)
-
-                        // Save previous level as cut node
-                        board.Shared.Transpositions.Add(board.BoardHash, depth - 1, value, NodeType.UpperBound, true);
                         Diagnostics.IncrementAlpha();
                         break;
+                    }
+                    else if(value < beta)
+                    {
+                        // Value between alpha and beta. Save as exact score
+                        // Update beta for rest of iteration
+                        beta = value;
+                        if (depth > 1)
+                        {
+                            
+                            // Add new transposition table
+                            nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value, NodeType.Exact, nextBoard.Shared.GameTurnCount);
+                        }
                     }
                 }
                 return value;

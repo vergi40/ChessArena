@@ -9,8 +9,8 @@ namespace vergiBlue.Algorithms
 {
     public class MoveResearch
     {
-        private static double DefaultAlpha => -1000000;
-        private static double DefaultBeta => 1000000;
+        public static double DefaultAlpha => -1000000;
+        public static double DefaultBeta => 1000000;
         
         // TODO Delete. somehow unnecessary and complicated.
         public static EvaluationResult GetMoveScoreList(IList<SingleMove> moves,
@@ -29,7 +29,6 @@ namespace vergiBlue.Algorithms
                     {
                         // Saved some time
                         // TODO extra parameters to evaluationresult if this was lower or upper bound
-                        transposition.ReadOnly = true;
                         result.Add(transposition.Evaluation, move);
                     }
                     else
@@ -37,11 +36,11 @@ namespace vergiBlue.Algorithms
                         // Board evaluation at current depth
                         var newBoard = new Board(board, move);
                         var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, alpha, beta,
-                            !isMaximizing, true);
+                            !isMaximizing);
                         result.Add(value, move);
 
                         // Add new transposition table
-                        newBoard.Shared.Transpositions.Add(newBoard.BoardHash, searchDepth, value, NodeType.Exact, true);
+                        newBoard.Shared.Transpositions.Add(newBoard.BoardHash, searchDepth, value, NodeType.Exact, newBoard.Shared.GameTurnCount);
 
                         if (isMaximizing)
                         {
@@ -276,7 +275,7 @@ namespace vergiBlue.Algorithms
             Diagnostics.AddMessage($" Move evaluation: {evaluation}.");
 
             // DEBUG
-            if (move != null && board != null)
+            if (move != null && board != null && board.Strategic.EndGameWeight > 0.50)
             {
                 var newBoard = new Board(board, move);
                 var isWhite = newBoard.ValueAtDefinitely(move.NewPos).IsWhite;
@@ -289,56 +288,134 @@ namespace vergiBlue.Algorithms
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ...
         /// 
         /// </summary>
-        private static SingleMove IterativeDeepeningWithTranspositions(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing)
+        private static SingleMove IterativeDeepeningWithTranspositions(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, int timeLimitInMs = 5000)
         {
-            var midResult = new List<(double, SingleMove)>();
-            var previousOrder = new List<SingleMove>(allMoves);
+            // 
+            var minimumSearchPercentForHigherDepthUse = 1 / (double)3;
+            var timeUp = false;
+            int depthUsed = 0;
+
+            var midResult = new List<(double weight, SingleMove move)>();
+            var currentIterationMoves = new List<SingleMove>(allMoves);
+            (double eval, SingleMove move) previousIterationBest = new(0.0, new SingleMove((-1, -1), (-1, -1)));
+            var watch = new Stopwatch();
+            watch.Start();
+
+            // Why this works for black start, but not white?
+            //var alpha = -1000000.0;
+            //var beta = 1000000.0;
 
             // Initial depth 2
             for (int i = 2; i <= searchDepth; i++)
             {
-                midResult.Clear();
-                
-                // Initialize for each cycle
                 var alpha = DefaultAlpha;
                 var beta = DefaultBeta;
-                
-                foreach (var move in allMoves)
+                depthUsed = i;
+                midResult.Clear();
+
+                foreach (var move in currentIterationMoves)
                 {
                     var newBoard = new Board(board, move);
-                    var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, alpha, beta, !isMaximizing, true);
-                    
-                    // Top-level result should always be saved with priority
-                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, true);
+                    var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, alpha, beta, !isMaximizing);
                     midResult.Add((evaluation, move));
-
+                    
                     if (isMaximizing)
                     {
                         alpha = Math.Max(alpha, evaluation);
+                        if (alpha >= beta) { /* */ }
+                        else
+                        {
+                            //newBoard.Shared.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, newBoard.Shared.GameTurnCount);
+                        }
                     }
                     else
                     {
                         beta = Math.Min(beta, evaluation);
+                        if(beta <= alpha) { /* */ }
+                        else
+                        {
+                            //newBoard.Shared.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, newBoard.Shared.GameTurnCount);
+                        }
+                    }
+
+                    if (watch.ElapsedMilliseconds > timeLimitInMs)
+                    {
+                        timeUp = true;
+                        break;
                     }
                 }
 
-                midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
-                allMoves = midResult.Select(item => item.Item2).ToList();
 
-                if (allMoves.Any())
+                // Full search finished for depth
+                midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
+
+                // Found checkmate
+                //if (isMaximizing && midResult.First().weight > PieceBaseStrength.CheckMateThreshold
+                //    || !isMaximizing && midResult.First().weight < -PieceBaseStrength.CheckMateThreshold)
+                //{
+                //    // TODO This might result in stupid movements, if opponent doesn't do the exact move AI thinks is best for it
+
+                //    Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed}. Check mate found.");
+                //    Diagnostics.AddMessage($" Move evaluation: {midResult.First().weight}.");
+                //    return midResult.First().move;
+                //}
+
+                if (timeUp) break;
+
+                currentIterationMoves = midResult.Select(item => item.Item2).ToList();
+                previousIterationBest = midResult.First();
+            }
+
+            // midResult is either partial or full. Just sort and return first.
+
+            // If too small percent was searched for new depth, use prevous results
+            // E.g. out of 8 possible moves, only 2 were searched
+            if (midResult.Count / (double)allMoves.Count < minimumSearchPercentForHigherDepthUse)
+            {
+                var result = previousIterationBest;
+                AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, result.eval, result.move, board);
+                return result.move;
+            }
+
+            var finalResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
+            AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, finalResult.First().weight, finalResult.First().move, board);
+            return finalResult.First().move;
+        }
+
+        
+        // TODO Could move to other place
+        public static double CheckMateScoreAdjustToEven(double evalScore)
+        {
+            if(Math.Abs(evalScore) > PieceBaseStrength.CheckMateThreshold)
+            {
+                if (evalScore > 0)
                 {
-                    // Save previous level in case of time running out or empty result
-                    previousOrder = new List<SingleMove>(allMoves);
+                    return PieceBaseStrength.King;
                 }
                 else
                 {
-                    // TODO delete first and try search with second
-                    return previousOrder.First();
+                    return -PieceBaseStrength.King;
                 }
             }
 
-            // Search finished
-            return allMoves.First();
+            return evalScore;
+        }
+
+        public static double CheckMateScoreAdjustToDepthFixed(double evalScore, int depth)
+        {
+            if (Math.Abs(evalScore) > PieceBaseStrength.CheckMateThreshold)
+            {
+                if (evalScore > 0)
+                {
+                    return PieceBaseStrength.King + depth;
+                }
+                else
+                {
+                    return -PieceBaseStrength.King - depth;
+                }
+            }
+
+            return evalScore;
         }
     }
 }

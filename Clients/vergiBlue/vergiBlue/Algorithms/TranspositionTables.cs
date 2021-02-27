@@ -16,11 +16,13 @@ namespace vergiBlue.Algorithms
         Exact,
 
         /// <summary>
+        /// Eval is at most alpha.
         /// All-nodes. Cut-node occured with upper bound beta. Every move from all-node needs to be searched. Node score >= score (at least equal to score). E.g. evaluation 5, lowerbound can be [5, 6, 7, 8, 9].
         /// </summary>
         UpperBound,
         
         /// <summary>
+        /// Eval is at least beta.
         /// Cut-nodes. Beta cutoff occured. A minimum of 1 node at a cut-node needs to be searched. Node score at most equal to eval score. E.g. evaluation 5, lowerbound can be [1, 2, 3, 4, 5]
         /// </summary>
         LowerBound
@@ -35,23 +37,30 @@ namespace vergiBlue.Algorithms
         public ulong Hash { get; set; }
         public int Depth { get; set; }
         public double Evaluation { get; set; }
-        public NodeType Type { get; set; }
-
+        
         /// <summary>
-        /// If useful, set read-only to true -> do not replace with new value.
-        /// Read-only if: transposition was used in to skip node children searches.
-        /// Read-only if: transposition occured in cutoff.
-        /// https://adamberent.com/2019/03/02/transposition-table-and-zobrist-hashing/
+        /// Is transposition evaluation from exact result, of some approximation.
         /// </summary>
-        public bool ReadOnly { get; set; }
+        public NodeType Type { get; set; }
+        
+        /// <summary>
+        /// Turn count in main board when transposition was saved.
+        /// Used to delete old entries.
+        /// </summary>
+        public int GameTurnCount { get; set; }
 
-        public Transposition(ulong hash, int depth, double evaluation, NodeType nodetype = NodeType.Exact, bool readOnly = false)
+        public Transposition(ulong hash, int depth, double evaluation, NodeType nodetype, int gameTurnCount)
         {
             Hash = hash;
             Depth = depth;
             Evaluation = evaluation;
             Type = nodetype;
-            ReadOnly = readOnly;
+            GameTurnCount = gameTurnCount;
+        }
+
+        public override string ToString()
+        {
+            return $"Eval: {Evaluation} - {Type.ToString()}";
         }
     }
 
@@ -123,6 +132,7 @@ namespace vergiBlue.Algorithms
                 oldHash = oldHash ^ hashTable[boardIndex, capturedPieceIndex];
             }
             // TODO castling
+            // TODO promotion
             
             // Update player position
             var piece = oldBoard.ValueAtDefinitely(move.PrevPos);
@@ -169,29 +179,24 @@ namespace vergiBlue.Algorithms
         
         
         private readonly object _tableLock = new object();
-        
+
         /// <summary>
         /// Add new boardhash transposition to tables data.
-        /// If already contained, only update. Don't update if transposition is read-only.
+        /// If already contained, only update. 
         /// </summary>
-        /// <param name="boardHash"></param>
-        /// <param name="depth"></param>
-        /// <param name="evaluation"></param>
-        /// <param name="nodeType"></param>
-        public void Add(ulong boardHash, int depth, double evaluation, NodeType nodeType, bool readOnly = false)
+        public void Add(ulong boardHash, int depth, double evaluation, NodeType nodeType, int gameTurnCount)
         {
             if (boardHash == 0) throw new ArgumentException($"Board hash was empty.");
             if(Tables.TryGetValue(boardHash, out var transposition))
             {
-                // No need to lock, since we directly just update values
-                //lock (_tableLock) { }
-                if (nodeType != NodeType.Exact || (!transposition.ReadOnly && depth > transposition.Depth))
+                // Replacement scheme: always replace
+                if (depth >= transposition.Depth)
                 {
-                    // We found deeper search, substitute
+                    evaluation = MoveResearch.CheckMateScoreAdjustToEven(evaluation);
                     transposition.Depth = depth;
                     transposition.Evaluation = evaluation;
                     transposition.Type = nodeType;
-                    transposition.ReadOnly = readOnly;
+                    transposition.GameTurnCount = gameTurnCount;
                 }
             }
             else
@@ -199,31 +204,27 @@ namespace vergiBlue.Algorithms
                 lock (_tableLock)
                 {
                     // New hash
-                    Tables.Add(boardHash, new Transposition(boardHash, depth, evaluation, nodeType, readOnly));
+                    Tables.Add(boardHash, new Transposition(boardHash, depth, evaluation, nodeType, gameTurnCount));
                 }
             }
         }
 
         /// <summary>
-        /// Update transposition if it's current content is not significant (table.readOnly == true).
+        /// Update transposition
         /// </summary>
-        public void Update(ulong hash, int depth, double evaluation, NodeType nodeType, bool readOnly = false)
+        public void Update(ulong hash, int depth, double evaluation, NodeType nodeType, int gameTurnCount)
         {
             if (hash == 0) throw new ArgumentException($"Board hash was empty.");
-            lock (_tableLock)
+            
+            // Replacement scheme: always replace
+            var transposition = Tables[hash];
+            if (depth >= transposition.Depth)
             {
-                // Always replace if cutoff point found. Otherwise:
-                // * Replacement strategy: replace by depth
-                // * Has to be higher depth to be replaced
-                var transposition = Tables[hash];
-                if (nodeType != NodeType.Exact || (!transposition.ReadOnly && depth > transposition.Depth))
-                {
-                    // We found deeper search, substitute
-                    transposition.Depth = depth;
-                    transposition.Evaluation = evaluation;
-                    transposition.Type = nodeType;
-                    transposition.ReadOnly = readOnly;
-                }
+                evaluation = MoveResearch.CheckMateScoreAdjustToEven(evaluation);
+                transposition.Depth = depth;
+                transposition.Evaluation = evaluation;
+                transposition.Type = nodeType;
+                transposition.GameTurnCount = gameTurnCount;
             }
         }
 

@@ -14,10 +14,15 @@ using vergiBlue.Pieces;
 namespace vergiBlue
 {
     /// <summary>
-    /// Data class where all transposition tables etc. should be fetched. Same data shared between all board instances.
+    /// Data class that has same informations shared to all search depths.
     /// </summary>
     public class SharedData
     {
+        /// <summary>
+        /// Total game turn count
+        /// </summary>
+        public int GameTurnCount { get; set; } = 0;
+        
         public TranspositionTables Transpositions { get; }
         
         public SharedData()
@@ -28,11 +33,15 @@ namespace vergiBlue
     }
 
     /// <summary>
-    /// Data class where all measures, counters etc. should be stored. Strategic data is calculated in each initialization and move.
-    /// Each new board has unique strategic data.
+    /// Data class that is updated for each depth in search.
     /// </summary>
     public class StrategicData
     {
+        /// <summary>
+        /// Tracks turn count for search.
+        /// </summary>
+        public int TurnCountInCurrentDepth { get; set; }
+        
         /// <summary>
         /// How close to end the game is. Range 0.0 (start) - 1.0 (empty board).
         /// </summary>
@@ -47,6 +56,7 @@ namespace vergiBlue
         {
             // Empty board = end value-
             EndGameWeight = 1;
+            TurnCountInCurrentDepth = 0;
         }
 
         public StrategicData(StrategicData previous)
@@ -218,7 +228,10 @@ namespace vergiBlue
             }
             
             UpdatePosition(piece, move);
+            
+            // General every turn processes
             UpdateEndGameWeight();
+            Strategic.TurnCountInCurrentDepth++;
         }
 
         public void UpdateEndGameWeight()
@@ -386,32 +399,22 @@ namespace vergiBlue
         {
             Diagnostics.IncrementEvalCount();
             var evalScore = PieceList.Sum(p => p.GetEvaluationStrength(Strategic.EndGameWeight));
-            
-            // TODO pawn structure
-            // Separate start game weight functions
-            
-            if (Strategic.EndGameWeight > 0.50)
+
+            // Checkmate override
+            // Equalize checkmate scores, so relative positions of other pieces don't effect outcome
+            // Also give more priority for shallower moves.
+            if (Math.Abs(evalScore) > PieceBaseStrength.CheckMateThreshold)
             {
-                evalScore += EndGameKingToCornerEvaluation(isMaximizing);
+                if (currentSearchDepth != null)
+                {
+                    return MoveResearch.CheckMateScoreAdjustToDepthFixed(evalScore, currentSearchDepth.Value);
+                }
+                else
+                {
+                    return MoveResearch.CheckMateScoreAdjustToEven(evalScore);
+                }
             }
 
-            // Checkmate (in good or bad) should have more priority the sooner it occurs
-            // E.g. depth 4 = 1000
-            // depth 3 = 800
-            // depth 2 = 600
-            if (currentSearchDepth != null)
-            {
-                // Increase if positive having checkmate, decrease if negative
-                if (evalScore > PieceBaseStrength.CheckMateThreshold)
-                {
-                    evalScore += 200 * (currentSearchDepth.Value + 1);
-                }
-                else if (evalScore < -PieceBaseStrength.CheckMateThreshold)
-                {
-                    evalScore -= 200 * (currentSearchDepth.Value + 1);
-                }
-            }
-            
             // Stalemate
             // TODO not working in endgame properly somehow
             //if (Math.Abs(evalScore) > PieceBaseStrength.CheckMateThreshold && !isInCheckForOther)
@@ -419,12 +422,30 @@ namespace vergiBlue
             //    return 0;
             //    // Otherwise would be evaluated like -200000
             //}
+            
+
+            // TODO pawn structure
+            // Separate start game weight functions
+
+            if (Strategic.EndGameWeight > 0.50)
+            {
+                evalScore += EndGameKingToCornerEvaluation(isMaximizing);
+            }
+
+            
 
             return evalScore;
         }
         
         public double EndGameKingToCornerEvaluation(bool isWhite)
         {
+            // TODO debug hack
+            var ownPieces = PieceList.Where(p => p.IsWhite == isWhite).ToList();
+            if (ownPieces.Count == 1)
+            {
+                return ownPieces.First().GetEvaluationStrength(-1);
+            }
+            
             var evaluation = 0.0;
             var opponentKing = KingLocation(!isWhite);
             var ownKing = KingLocation(isWhite);
@@ -620,7 +641,7 @@ namespace vergiBlue
         /// <returns></returns>
         public bool IsCheck(bool isWhiteOffensive)
         {
-            if (_isCheckForOffensivePrecalculated != null && _isCheckForOffensivePrecalculated == true)
+            if (_isCheckForOffensivePrecalculated == true)
             {
                 return true;
             }
@@ -659,6 +680,7 @@ namespace vergiBlue
         /// <returns></returns>
         public SingleMove CollectMoveProperties((int column, int row) from, (int column, int row) to)
         {
+            _isCheckForOffensivePrecalculated = null;
             var move = new SingleMove(from, to);
             
             // TODO actual validation

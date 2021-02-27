@@ -31,6 +31,9 @@ namespace vergiBlue.Pieces
 
         public override double GetEvaluationStrength(double endGameWeight = 0)
         {
+            // TODO Debug hack
+            if (endGameWeight < 0) return PositionStrengthInEnd;
+            
             // Linear weighting to endgame strength 
             //return PositionStrength * (1 - endGameWeight) + PositionStrengthInEnd * endGameWeight;
 

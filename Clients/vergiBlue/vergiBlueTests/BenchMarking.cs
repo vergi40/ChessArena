@@ -29,7 +29,7 @@ namespace vergiBlueTests
                 UseIterativeDeepening = true,
                 UseFullDiagnostics = true
             };
-            RunAll(5, settings);
+            RunAll(5, settings, true);
 
             // 17.4 sec. 22.1.2021 initial algorithm
             // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
@@ -68,6 +68,39 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 882658. Check evaluations: 1471. Alpha cutoffs: 212237. Beta cutoffs: 17395. Priority moves found: 75884.
             // Transpositions used: 25212. Time elapsed: 5729 ms. Available moves found: 40.
+
+            // 12.3 sec. 27.2. - added endgame
+            // Test: RuyLopez_Black. Move: c6 to d4. Depth 5. 5 sec max
+            // Board evaluations: 518550. Check evaluations: 25037. Alpha cutoffs: 18161. Beta cutoffs: 74543. Transpositions used: 15766.
+            // Time elapsed: 4266 ms. Available moves found: 30. Iterative deepening search depth was 5 (30/30). Move evaluation: 120. EndGameKingToCornerEvaluation: -11. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 328295. Check evaluations: 24681. Alpha cutoffs: 105482. Beta cutoffs: 9801. Transpositions used: 9819.
+            // Time elapsed: 2871 ms. Available moves found: 40. Iterative deepening search depth was 5 (40/40). Move evaluation: -290. EndGameKingToCornerEvaluation: 169,5.
+            // Test: DoubleRook_EndGame. Move: d5 to g5. Depth 9
+            // Board evaluations: 1832377. Check evaluations: 306613. Alpha cutoffs: 17287. Beta cutoffs: 790393. Transpositions used: 819483.
+            // Time elapsed: 5116 ms. Available moves found: 24. Iterative deepening search depth was 6 [partial 7: (15/24)]. Move evaluation: -201276,1875. EndGameKingToCornerEvaluation: -272,5.
+
+            // 7.8 sec. 28.2. - improvements based on Eppstein lectures. partially working
+            // Test: RuyLopez_Black. Move: g8 to f6. Depth 5
+            // Board evaluations: 77271. Check evaluations: 8095. Alpha cutoffs: 2106. Beta cutoffs: 23141. Transpositions used: 6.
+            // Time elapsed: 994 ms. Available moves found: 30. Iterative deepening search depth was 5 (30/30). Move evaluation: 65. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 120240. Check evaluations: 13358. Alpha cutoffs: 42173. Beta cutoffs: 2790.
+            // Time elapsed: 1380 ms. Available moves found: 40. Iterative deepening search depth was 5 (40/40). Move evaluation: 1135. 
+            // Test: DoubleRook_EndGame. Move: d7 to f7. Depth 9
+            // Board evaluations: 2125891. Check evaluations: 176968. Alpha cutoffs: 752. Beta cutoffs: 525244. Transpositions used: 118747.
+            // Time elapsed: 5402 ms. Available moves found: 24. Iterative deepening search depth was 7 [partial 8: (3/24)]. Move evaluation: -201935,0625. EndGameKingToCornerEvaluation: -272,5.
+
+            // 1.1 sec. 4.3. - alpha beta with transpositions major update
+            // Test: RuyLopez_Black. Move: g8 to f6. Depth 5
+            // Board evaluations: 17970. Check evaluations: 4065. Alpha cutoffs: 992. Beta cutoffs: 12413. Transpositions used: 688.
+            // Time elapsed: 315 ms. Available moves found: 30. Iterative deepening search depth was 5 (30/30). Move evaluation: 10. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 35286. Check evaluations: 6768. Alpha cutoffs: 22911. Beta cutoffs: 2043. Transpositions used: 2162.
+            // Time elapsed: 452 ms. Available moves found: 40. Iterative deepening search depth was 5 (40/40). Move evaluation: 40. 
+            // Test: DoubleRook_EndGame. Move: d5 to d3. Depth 9
+            // Board evaluations: 110727. Check evaluations: 31327. Alpha cutoffs: 7864. Beta cutoffs: 29061. Transpositions used: 13773.
+            // Time elapsed: 288 ms. Available moves found: 24. Iterative deepening search depth was 9 (24/24). Move evaluation: -200007. EndGameKingToCornerEvaluation: -272,5.
         }
 
         [TestMethod]
@@ -80,7 +113,7 @@ namespace vergiBlueTests
                 UseIterativeDeepening = true,
                 UseFullDiagnostics = true
             };
-            RunAll(5, settings);
+            RunAll(5, settings, true);
 
             // 17-18 sec. 
             // Test: RuyLopez_Black. Move: d8 to f6. Depth 5
@@ -113,6 +146,17 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: e4 to e2. Depth 5
             // Board evaluations: 132820. Check evaluations: 1517. Alpha cutoffs: 2674. Beta cutoffs: 54639. Time elapsed: 1276 ms. Available moves found: 40.
             // Iterative deepening search depth was 5 (40/40). Move evaluation: 175,625.
+
+            // 11.5 sec. 27.2. Added endgame
+            // Test: RuyLopez_Black. Move: f8 to c5. Depth 5
+            // Board evaluations: 439696. Check evaluations: 18482. Alpha cutoffs: 65863. Beta cutoffs: 15708. Time elapsed: 3599 ms. Available moves found: 30.
+            // Iterative deepening search depth was 5 (30/30). Move evaluation: 120. EndGameKingToCornerEvaluation: -11. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 325754. Check evaluations: 25249. Alpha cutoffs: 10747. Beta cutoffs: 103433. Time elapsed: 2862 ms. Available moves found: 40.
+            // Iterative deepening search depth was 5 (40/40). Move evaluation: -290. EndGameKingToCornerEvaluation: 169,5. 
+            // Test: DoubleRook_EndGame. Move: d8 to c8. Depth 9
+            // Board evaluations: 3243904. Check evaluations: 118581. Alpha cutoffs: 276448. Beta cutoffs: 60093. Time elapsed: 5031 ms. Available moves found: 24.
+            // Iterative deepening search depth was 6 [partial 7: (1/24)]. Move evaluation: -754,75. EndGameKingToCornerEvaluation: -245,25.
         }
 
         [TestMethod]
@@ -202,9 +246,17 @@ namespace vergiBlueTests
             // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
             // Board evaluations: 194290. Check evaluations: 1471. Alpha cutoffs: 77853. Beta cutoffs: 3667. Priority moves found: 8410.
             // Transpositions used: 4316. Time elapsed: 2149 ms. Available moves found: 40. Transposition tables saved: 165471
+
+            // 3.1 sec. 4.3. - major alpha-beta transpositions update
+            // Test: RuyLopez_Black. Move: g8 to f6. Depth 5
+            // Board evaluations: 39846. Check evaluations: 4658. Alpha cutoffs: 1280. Beta cutoffs: 15634. Transpositions used: 1043.
+            // Time elapsed: 1569 ms. Available moves found: 30. Transposition tables saved: 1598. 
+            // Test: GreatestEndings_1_MidGame. Move: c4 to d5. Depth 5
+            // Board evaluations: 56320. Check evaluations: 9479. Alpha cutoffs: 28425. Beta cutoffs: 1783. Transpositions used: 2554.
+            // Time elapsed: 1461 ms. Available moves found: 40. Transposition tables saved: 2411.
         }
 
-        private void RunAll(int searchDepth, LogicSettings settings)
+        private void RunAll(int searchDepth, LogicSettings settings, bool runEndGame = false)
         {
             // Ruy lopez opening
             RuyLopez_Black(searchDepth, settings);
@@ -212,6 +264,8 @@ namespace vergiBlueTests
             // https://thechessworld.com/articles/endgame/7-greatest-chess-endings/
             // #1 at pair23
             GreatestEndings_1_MidGame(searchDepth, settings);
+            
+            if(runEndGame) DoubleRook_EndGame(9, settings);
 
             // Current standings 17.1.2021 -----------------
 
@@ -377,6 +431,37 @@ namespace vergiBlueTests
             var playerMove = player.CreateMoveWithDepth(searchDepth);
             var diagnostics = playerMove.Diagnostics;
             Logger.LogMessage($"// Test: {nameof(GreatestEndings_1_MidGame)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
+            Logger.LogMessage($"// {diagnostics.ToString()}");
+        }
+
+        public void DoubleRook_EndGame(int searchDepth, LogicSettings settings)
+        {
+            // 8   K
+            // 7   R
+            // 6
+            // 5   R
+            // 4
+            // 3
+            // 2    K
+            // 1
+            //  ABCDEFGH
+            var board = new Board();
+            var pieces = new List<PieceBase>
+            {
+                new Rook(false, "d5"),
+                new Rook(false, "d7"),
+                new King(true, "e2"),
+                new King(false, "d8")
+            };
+            board.AddNew(pieces);
+            
+            var player = new Logic(false, board);
+
+            player.Settings = settings;
+
+            var playerMove = player.CreateMoveWithDepth(searchDepth);
+            var diagnostics = playerMove.Diagnostics;
+            Logger.LogMessage($"// Test: {nameof(DoubleRook_EndGame)}. Move: {playerMove.Move.StartPosition} to {playerMove.Move.EndPosition}. Depth {searchDepth}");
             Logger.LogMessage($"// {diagnostics.ToString()}");
         }
 

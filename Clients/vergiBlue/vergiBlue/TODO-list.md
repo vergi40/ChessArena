@@ -14,9 +14,17 @@
 ## Things the AI needs improvements
 * If no captures available, does pretty dumb backing moves
 * Stalemate should be avoided
-* Transposition logic. In tests seems like this doesn't improve search time
-  * Castling not in transposition data
-  * En passant not in transposition data
+* Transposition logic
+  * Update checkmate value after fetching
+  * https://www.ics.uci.edu/~eppstein/180a/970424.html
+* Iterative move ordering
+  * Use transposition results as approximations
+  * Killer heuristics
+* Castling not in transposition data
+* En passant not in transposition data
+* Attack squares
+  * This is tricky, as calculating for each depth is really expensive
+  * For main logic board, could contain 'current turn data'
 
 ## Techniques
 * En passant moves missing

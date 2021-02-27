@@ -56,10 +56,10 @@ namespace vergiBlueTests
             //  ABCDEFGH
             var player = new Logic(true);
             player.Strategy.Phase = GamePhase.EndGame;
-            player.TurnCount = 20;
             player.SearchDepth = 4;
 
             var board = new Board();
+            board.Shared.GameTurnCount = 20;
             // 
             var rookPositions = new List<string> { "a8", "b7" };
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();

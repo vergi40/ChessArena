@@ -30,14 +30,16 @@ namespace vergiBlue
     public class LogicSettings
     {
         // Config bools. Default values used in real game
-        public bool UseTranspositionTables { get; set; } = false;
+        public bool UseTranspositionTables { get; set; } = true;
         public bool UseParallelComputation { get; set; } = false;
         public bool UseIterativeDeepening { get; set; } = true;
 
         /// <summary>
         /// Log more data, like alpha-betas
         /// </summary>
-        public bool UseFullDiagnostics { get; set; } = false;
+        public bool UseFullDiagnostics { get; set; } = true;
+
+        public int ClearSavedTranspositionsAfterTurnsPassed { get; set; } = 4;
 
 
         /// <summary>
@@ -62,24 +64,7 @@ namespace vergiBlue
 
         public int SearchDepth { get; set; } = 5;
         public Strategy Strategy { get; set; }
-
-        /// <summary>
-        /// Total game turn count
-        /// </summary>
-        public int TurnCount { get; set; } = 0;
-
-        /// <summary>
-        /// Starts from 0
-        /// </summary>
-        public int PlayerTurnCount
-        {
-            get
-            {
-                if (IsPlayerWhite) return TurnCount / 2;
-                return (TurnCount - 1) / 2;
-            }
-        }
-
+        
         public IMove? LatestOpponentMove { get; set; }
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
         
@@ -135,7 +120,8 @@ namespace vergiBlue
         /// <returns></returns>
         public IPlayerMove CreateMoveWithDepth(int searchDepth, bool checkOpenings = false, int previousMoveCount = 0)
         {
-            TurnCount = previousMoveCount;
+            Board.Shared.GameTurnCount = previousMoveCount;
+            Board.Strategic.TurnCountInCurrentDepth = previousMoveCount;
             return CreateNewMove(checkOpenings, searchDepth);
         }
 
@@ -150,6 +136,40 @@ namespace vergiBlue
             var isMaximizing = IsPlayerWhite;
             Diagnostics.StartMoveCalculations();
 
+            // Common start measures
+            if (Settings.UseTranspositionTables)
+            {
+                // Delete old entries from tables
+                var transpositions = Board.Shared.Transpositions.Tables;
+                if (transpositions.Any())
+                {
+                    var toBeDeleted = new List<ulong>();
+                    var currentTurnCount = Board.Shared.GameTurnCount;
+
+                    foreach (var transposition in transpositions)
+                    {
+                        // If transposition.turn 20 < current 25 - 4
+                        if (transposition.Value.GameTurnCount <
+                            currentTurnCount - Settings.ClearSavedTranspositionsAfterTurnsPassed)
+                        {
+                            toBeDeleted.Add(transposition.Key);
+                        }
+                    }
+
+                    foreach (var hash in toBeDeleted)
+                    {
+                        transpositions.Remove(hash);
+                    }
+                    
+                    if(Settings.UseFullDiagnostics)
+                    {
+                        if(toBeDeleted.Any()) Diagnostics.AddMessage($"Deleted {toBeDeleted.Count} old transposition entries.");
+                        Diagnostics.AddMessage($"Total transpositions: {transpositions.Count}.");
+                    }
+                }
+            }
+            
+
             // Opening
             if (GameHistory.Count < 10 && checkOpenings)
             {
@@ -158,9 +178,9 @@ namespace vergiBlue
 
                 if (openingMove != null)
                 {
-                    openingMove = Board.CollectMoveProperties(openingMove);
-                    Board.ExecuteMove(openingMove);
-                    TurnCount++;
+                    var openingMoveWithData = Board.CollectMoveProperties(openingMove);
+                    Board.ExecuteMove(openingMoveWithData);
+                    Board.Shared.GameTurnCount++;
                     PreviousData = Diagnostics.CollectAndClear();
 
                     var result = new PlayerMoveImplementation(
@@ -194,7 +214,7 @@ namespace vergiBlue
             // 
             if(overrideSearchDepth == null)
             {
-                Strategy.Update(PreviousData, TurnCount);
+                Strategy.Update(PreviousData, Board.Shared.GameTurnCount);
                 SearchDepth = Strategy.DecideSearchDepth(PreviousData, allMoves, Board);
             }
             else
@@ -211,7 +231,7 @@ namespace vergiBlue
             // Update local
             var moveWithData = Board.CollectMoveProperties(bestMove);
             Board.ExecuteMove(moveWithData);
-            TurnCount++;
+            Board.Shared.GameTurnCount++;
             
             PreviousData = Diagnostics.CollectAndClear(Settings.UseFullDiagnostics);
 
@@ -329,7 +349,7 @@ namespace vergiBlue
 
             Board.ExecuteMove(move);
             GameHistory.Add(opponentMove);
-            TurnCount++;
+            Board.Shared.GameTurnCount++;
         }
 
         public static bool IsOutside((int, int) target)
