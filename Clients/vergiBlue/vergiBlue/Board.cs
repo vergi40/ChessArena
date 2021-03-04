@@ -69,7 +69,7 @@ namespace vergiBlue
         }
 
 
-        public void UpdateCastlingStatus(SingleMove move)
+        public void UpdateCastlingStatusFromMove(SingleMove move)
         {
             if (move.NewPos.row == 0)
             {
@@ -224,14 +224,70 @@ namespace vergiBlue
 
             if (move.Castling)
             {
-                Strategic.UpdateCastlingStatus(move);
+                Strategic.UpdateCastlingStatusFromMove(move);
             }
+
+            UpdateCastlingStatus(piece.IsWhite);
             
             UpdatePosition(piece, move);
             
             // General every turn processes
             UpdateEndGameWeight();
             Strategic.TurnCountInCurrentDepth++;
+        }
+
+        /// <summary>
+        /// Check if castling pieces are still in place
+        /// </summary>
+        private void UpdateCastlingStatus(bool isWhite)
+        {
+            // TODO lot of statements, could use optimization
+            var row = 0;
+            if (isWhite && (Strategic.WhiteLeftCastlingValid || Strategic.WhiteRightCastlingValid))
+            {
+                // Castling pieces are intact
+                var leftRook = ValueAt((0, row));
+                var rightRook = ValueAt((7, row));
+                var king = ValueAt((4, row));
+
+                if (king == null || king.Identity != 'K')
+                {
+                    Strategic.WhiteLeftCastlingValid = false;
+                    Strategic.WhiteRightCastlingValid = false;
+                }
+
+                if (leftRook == null || leftRook.Identity != 'R')
+                {
+                    Strategic.WhiteLeftCastlingValid = false;
+                }
+                if (rightRook == null || rightRook.Identity != 'R')
+                {
+                    Strategic.WhiteRightCastlingValid = false;
+                }
+            }
+            else if(Strategic.BlackLeftCastlingValid || Strategic.BlackRightCastlingValid)
+            {
+                row = 7;
+                // Castling pieces are intact
+                var leftRook = ValueAt((0, row));
+                var rightRook = ValueAt((7, row));
+                var king = ValueAt((4, row));
+
+                if (king == null || king.Identity != 'K')
+                {
+                    Strategic.BlackLeftCastlingValid = false;
+                    Strategic.BlackRightCastlingValid = false;
+                }
+
+                if (leftRook == null || leftRook.Identity != 'R')
+                {
+                    Strategic.BlackLeftCastlingValid = false;
+                }
+                if (rightRook == null || rightRook.Identity != 'R')
+                {
+                    Strategic.BlackRightCastlingValid = false;
+                }
+            }
         }
 
         public void UpdateEndGameWeight()
@@ -445,7 +501,7 @@ namespace vergiBlue
             {
                 return ownPieces.First().GetEvaluationStrength(-1);
             }
-            
+
             var evaluation = 0.0;
             var opponentKing = KingLocation(!isWhite);
             var ownKing = KingLocation(isWhite);
