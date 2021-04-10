@@ -87,7 +87,9 @@ namespace vergiBlue.Pieces
         }
 
         /// <summary>
-        /// Each move the piece can make in current board setting
+        /// Each move the piece can make in current board setting.
+        /// Capture is recorded.
+        /// TODO Promotion
         /// </summary>
         /// <returns></returns>
         public abstract IEnumerable<SingleMove> Moves(Board board);
