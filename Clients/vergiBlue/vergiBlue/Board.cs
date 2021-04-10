@@ -552,6 +552,56 @@ namespace vergiBlue
             else return MoveOrdering.SortMovesByGuessWeight(list, this, forWhite);
         }
 
+        /// <summary>
+        /// Enhance alpha-beta with having some better move in front of the list.
+        /// </summary>
+        /// <param name="forWhite"></param>
+        /// <returns></returns>
+        public IList<SingleMove> MovesWithLightOrdering(bool forWhite, bool kingInDanger = false)
+        {
+            // Priority moves like known cutoffs
+            var priorityList = new List<SingleMove>();
+            var result = new List<SingleMove>();
+            var sign = 1;
+            if (!forWhite) sign = -1;
+            
+            foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves(this))
+                {
+                    if (kingInDanger)
+                    {
+                        // Only allow moves that don't result in check
+                        var newBoard = new Board(this, singleMove);
+                        if (newBoard.IsCheck(!forWhite)) continue;
+                    }
+
+                    // Check if move has transposition data
+                    //var transposition = Shared.Transpositions.GetTranspositionForMove(this, singleMove);
+                    //if (transposition != null)
+                    //{
+                    //    // TODO how to use saved transpositions? Should we get alpha&beta as parameters
+                    //    //if ((forWhite && transposition.Type == NodeType.LowerBound) ||
+                    //    //    (!forWhite && transposition.Type == NodeType.UpperBound))
+                    //    //{
+                    //    //    Diagnostics.IncrementPriorityMoves();
+                    //    //    priorityList.Add(singleMove);
+                    //    //    continue;
+                    //    //}
+                    //}
+
+                    // Use guess weight to decide if move should be in front or back of priority list
+                    var scoreGuess = MoveOrdering.CreateGuessWeightEval(this, singleMove, forWhite);
+                    if(scoreGuess * sign >= 100) priorityList.Add(singleMove);
+                    else if(scoreGuess * sign >= 400) priorityList.Insert(0, singleMove);
+                    else result.Add(singleMove);
+                }
+            }
+            
+            priorityList.AddRange(result);
+            return priorityList;
+        }
+
         public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false)
         {
             // Priority moves like known cutoffs

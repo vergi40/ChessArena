@@ -113,6 +113,7 @@ namespace vergiBlue.Algorithms
         /// </summary>
         public static double ToDepthWithTranspositions(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
+            // TODO collect checkmate status
             if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, false, depth);
             
             // Check if solution already exists
@@ -143,7 +144,8 @@ namespace vergiBlue.Algorithms
                 //}
             }
 
-            var allMoves = newBoard.Moves(maximizingPlayer, false);
+            // TODO collect checkmate status
+            var allMoves = newBoard.MovesWithLightOrdering(maximizingPlayer, false);
             if (!allMoves.Any()) return newBoard.Evaluate(maximizingPlayer, false, newBoard.IsCheck(!maximizingPlayer), depth);
             
             if (maximizingPlayer)

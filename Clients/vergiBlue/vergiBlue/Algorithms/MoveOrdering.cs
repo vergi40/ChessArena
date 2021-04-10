@@ -32,31 +32,48 @@ namespace vergiBlue.Algorithms
             IList<(double weight, SingleMove move)> list = new List<(double weight, SingleMove move)>();
             foreach (var singleMove in moves)
             {
-                var scoreGuess = 0.0;
-                if (singleMove.Capture)
-                {
-                    // Give more value on capturing stronger opponent than player piece.
-                    var opponentWeight = Math.Abs(10 * board.ValueAtDefinitely(singleMove.NewPos).RelativeStrength);
-                    var ownWeight = Math.Abs(board.ValueAtDefinitely(singleMove.PrevPos).RelativeStrength);
-
-                    if (isMaximizing) scoreGuess += opponentWeight - ownWeight;
-                    else scoreGuess -= opponentWeight + ownWeight;
-                }
-
-                if (singleMove.Promotion)
-                {
-                    // 
-                    if (isMaximizing) scoreGuess += PieceBaseStrength.Queen;
-                    else scoreGuess -= PieceBaseStrength.Queen;
-                }
-                
-                // Penalize moving to position where opponent pawn is attacking
-                // TODO
-                
+                var scoreGuess = CreateGuessWeightEval(board, singleMove, isMaximizing);
                 list.Add((scoreGuess, singleMove));
             }
 
             return list;
+        }
+        
+        /// <summary>
+        /// Light evaluation by using table data.
+        /// 100 - 500 ok move
+        /// 500 -  really good move
+        /// * Capture gives bonus weight the more the piece difference is.
+        /// * Promotion adds queen score
+        /// </summary>
+        /// <param name="board"></param>
+        /// <param name="singleMove"></param>
+        /// <param name="isMaximizing"></param>
+        /// <returns></returns>
+        public static double CreateGuessWeightEval(Board board, SingleMove singleMove, bool isMaximizing)
+        {
+            var scoreGuess = 0.0;
+            if (singleMove.Capture)
+            {
+                // Give more value on capturing stronger opponent than player piece.
+                var opponentWeight = Math.Abs(2 * board.ValueAtDefinitely(singleMove.NewPos).RelativeStrength);
+                var ownWeight = Math.Abs(board.ValueAtDefinitely(singleMove.PrevPos).RelativeStrength);
+
+                if (isMaximizing) scoreGuess += opponentWeight - ownWeight;
+                else scoreGuess -= opponentWeight + ownWeight;
+            }
+
+            if (singleMove.Promotion)
+            {
+                // 
+                if (isMaximizing) scoreGuess += PieceBaseStrength.Queen;
+                else scoreGuess -= PieceBaseStrength.Queen;
+            }
+
+            // Penalize moving to position where opponent pawn is attacking
+            // TODO
+
+            return scoreGuess;
         }
 
         // -----------
