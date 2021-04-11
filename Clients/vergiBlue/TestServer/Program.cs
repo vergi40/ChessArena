@@ -67,6 +67,10 @@ namespace TestServer
         public int CurrentMoveCount => MoveHistory.Count;
         public int CurrentWebIndex { get; set; } = 0;
 
+        public void ResetGame()
+        {
+            MoveHistory = new TrackedList<Move>();
+        }
     }
 
     

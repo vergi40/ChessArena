@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using GameManager;
 using Grpc.Core;
@@ -14,43 +17,74 @@ namespace TestServer
     class TestServer : GameService.GameServiceBase
     {
         private static readonly Logger _logger = new Logger(typeof(TestServer));
-        public PlayerClass? Player1 { get; set; }
-        public PlayerClass? Player2 { get; set; }
-        public MockClass MockPlayer { get; set; }
+        public PlayerClient? Player1 { get; set; }
+        public PlayerClient? Player2 { get; set; }
         public SharedData _shared { get; }
 
         public TestServer(SharedData shared)
         {
             _shared = shared;
-            MockPlayer = new MockClass()
+            
+            // Keep alive indefinetily
+            Task.Run(() => MainHosting());
+        }
+
+        private async Task MainHosting()
+        {
+            while (true)
             {
-                Information = new GameInformation()
+                DebugLog($"Main game loop hosting started.");
+                try
                 {
-                    Name = "dumdum"
+                    await RetrieveBothPlayerStreamsToSameContext();
+                    DebugLog("Main game loop hosting ended");
                 }
-            };
+                catch (Exception e)
+                {
+                    DebugLog($"Main game loop hosting ended to exception. {e.ToString()}");
+                }
+
+                Player1 = null;
+                Player2 = null;
+                _shared.ResetGame();
+                DebugLog("Game reset and players initialized, ready for next game");
+            }
         }
 
         public override Task<GameStartInformation> Initialize(GameInformation request, ServerCallContext context)
         {
             _logger.Info($"Client {request.Name} requested initialize.");
-            bool connectionTest = request.Name.Contains("test");
             GameStartInformation response;
 
             if (Player1 == null)
             {
                 // First connection
-                if (connectionTest) Player1 = MockPlayer;
-                else Player1 = new PlayerClass() { Information = request };
+                Player1 = new PlayerClient()
+                {
+                    PlayerIndex = 0,
+                    RequestStream = null,
+                    ResponseStream = null,
+                    PeerName = context.Peer,
+                    Information = request
+                };
                 response = new GameStartInformation()
                 {
                     Start = true
                 };
+
             }
             else if (Player2 == null)
             {
-                if (connectionTest) Player2 = MockPlayer;
-                else Player2 = new PlayerClass() { Information = request };
+                Player2 = new PlayerClient()
+                {
+                    PlayerIndex = 1,
+                    RequestStream = null,
+                    ResponseStream = null,
+                    PeerName = context.Peer,
+                    Information = request
+                };
+                
+                // TODO logic to wait p1 first move
                 response = new GameStartInformation()
                 {
                     Start = false,
@@ -64,12 +98,7 @@ namespace TestServer
 
             return Task.FromResult(response);
         }
-
-        private IAsyncStreamReader<Move>? _p1ReqStream = null;
-        private IServerStreamWriter<Move>? _p1ResStream = null;
-        private IAsyncStreamReader<Move>? _p2ReqStream = null;
-        private IServerStreamWriter<Move>? _p2ResStream = null;
-
+        
         private enum GameState
         {
             P1NotInitialized,
@@ -79,161 +108,165 @@ namespace TestServer
             P2Req,
             P2Res
         }
+        
+        private void DebugLog(string message)
+        {
+            var processorId = Thread.GetCurrentProcessorId();
+            var threadName = Thread.CurrentThread.ManagedThreadId;
+            
+            _logger.Info($"[procId:{processorId}, threadId:{threadName}] {message}");
+        }
+        
+        // These are used to get players safely to same context
+        private readonly ConcurrentQueue<PlayerClient> _activations = new ConcurrentQueue<PlayerClient>();
+        private readonly SemaphoreSlim _actSemaphore = new SemaphoreSlim(0);
 
-        private GameState _nextState = GameState.P1NotInitialized;
-        private readonly object _stateLock = new object();
-        private int _debugInstanceCount = 0;
+        /// <summary>
+        /// P1 initializes.
+        /// P1 sends start move.
+        /// P2 initializes.
+        /// Send P1 move to P2.
+        /// Send P2 move to P1.
+        /// </summary>
+        /// <returns></returns>
+        private async Task RetrieveBothPlayerStreamsToSameContext()
+        {
+            // Waiting for both players
+            await _actSemaphore.WaitAsync().ConfigureAwait(false);
 
-        private Task? _mainLoop = null;
+            // Got first player stream
+            var gotFirst = _activations.TryDequeue(out var player1);
+            if (player1 == null) throw new ArgumentException($"Dequeue returned null player1");
+            DebugLog($"Player 1 streaming started");
 
+            // ... stuff
+            await ReceivePlayerMove(player1);
+
+            // P2 received move info for initialization and sent first move
+            await _actSemaphore.WaitAsync().ConfigureAwait(false);
+            var gotSecond = _activations.TryDequeue(out var player2);
+            if (player2 == null) throw new ArgumentException($"Dequeue returned null player2");
+            DebugLog($"Player 2 streaming started");
+
+            await ReceivePlayerMove(player2);
+
+
+            // Main game
+            var firstPlayerTurn = false;
+            while (player1.StreamOpened && player2.StreamOpened)
+            {
+                var sender = player1;
+                var receiver = player2;
+                if (!firstPlayerTurn)
+                {
+                    sender = player2;
+                    receiver = player1;
+                }
+
+                await SendMove(sender, receiver);
+                await ReceivePlayerMove(receiver);
+
+                firstPlayerTurn = !firstPlayerTurn;
+                //await Task.Delay(_shared.CycleDelayInMs);
+            }
+
+            DebugLog($"Stream was closed");
+            player1.StreamingTask = Task.FromResult(Task.CompletedTask);
+            player2.StreamingTask = Task.FromResult(Task.CompletedTask);
+        }
+
+        private async Task ReceivePlayerMove(PlayerClient player)
+        {
+            await player.RequestStream.MoveNext();
+
+            if (player.RequestStream == null) throw new ArgumentException($"{player.Information.Name} stream was down.");
+            player.LatestMove = player.RequestStream.Current;
+            _shared.MoveHistory.Add(player.LatestMove);
+            
+            DebugLog($"{(player.Information.Name + ":").PadRight(12)} Move[{_shared.CurrentMoveCount}] {player.PrintLatest()}");
+            DebugLog($"{(player.Information.Name + ":").PadRight(12)} {player.LatestMove.Diagnostics}");
+        }
+
+        private async Task SendMove(PlayerClient sender, PlayerClient receiver)
+        {
+            if (receiver.ResponseStream == null)
+                throw new ArgumentException($"{receiver.Information.Name} stream was down.");
+            await receiver.ResponseStream.WriteAsync(sender.LatestMove);
+            
+            DebugLog($"Sent p{sender.PlayerIndex+1} move to p{receiver.PlayerIndex+1}");
+        }
+        
         /// <summary>
         /// Two instances of this will be open simultaneously
         /// </summary>
         public override async Task Act(IAsyncStreamReader<Move> requestStream, IServerStreamWriter<Move> responseStream, ServerCallContext context)
         {
-            _debugInstanceCount++;
+            DebugLog($"Started Act() with {context.Peer}");
 
-            if (_mainLoop == null)
+            PlayerClient actingPlayer;
+            if (Player1 != null && context.Peer == Player1.PeerName)
             {
-                // P1
-                if (Player1 != null && !Player1.StreamOpened)
-                {
-                    Player1.StreamOpened = true;
-                    Player1.PeerName = context.Peer;
-                    _p1ReqStream = requestStream;
-                    _p1ResStream = responseStream;
-                }
+                Player1.RequestStream = requestStream;
+                Player1.ResponseStream = responseStream;
+                actingPlayer = Player1;
+                
+                _activations.Enqueue(Player1);
+            }
+            else if (Player2 != null && context.Peer == Player2.PeerName)
+            {
+                Player2.RequestStream = requestStream;
+                Player2.ResponseStream = responseStream;
+                actingPlayer = Player2;
 
-                lock (_stateLock) _nextState = GameState.P1Req;
-                _mainLoop = MainLoop();
+                _activations.Enqueue(Player2);
             }
             else
             {
-                if (Player1 != null &&
-                    Player2 != null &&
-                    !Player2.StreamOpened &&
-                    context.Peer != Player1.PeerName)
-                {
-                    Player2.StreamOpened = true;
-                    Player2.PeerName = context.Peer;
-                    _p2ReqStream = requestStream;
-                    _p2ResStream = responseStream;
-
-                    lock (_stateLock) _nextState = GameState.P2Req;
-                    // TODO what happens to second stream?
-                    //return;//Close second instance
-                }
+                throw new ArgumentException("Unknown Act-call");
             }
-
-            await _mainLoop;
-        }
-
-        private async Task MainLoop()
-        {
-            while (true)
-            {
-                try
-                {
-                    if (_nextState == GameState.P2NotInitialized)
-                    {
-                        if (Player2 == null || !Player2.StreamOpened)
-                        {
-                            _logger.Info("Waiting for second player to initialize");
-                            while (Player2 == null)
-                            {
-                                await Task.Delay(50);
-                            }
-                        }
-                    }
-                    else if (_nextState == GameState.P1Req)
-                    {
-                        await _p1ReqStream.MoveNext();
-
-                        if (Player1 == null || _p1ReqStream == null) throw new Exception("Logical error");
-                        Player1.LatestMove = _p1ReqStream.Current;
-                        _shared.MoveHistory.Add(Player1.LatestMove);
-                        _logger.Info($"{(Player1.Information.Name + ":").PadRight(12)} Received move {Player1.PrintLatest()}");
-                        _logger.Info($"{(Player1.Information.Name + ":").PadRight(12)} {Player1.LatestMove.Diagnostics}");
-                        if (Player2 == null || !Player2.StreamOpened)
-                        {
-                            lock (_stateLock) _nextState = GameState.P2NotInitialized;
-                        }
-                        else
-                        {
-                            lock (_stateLock) _nextState = GameState.P2Res;
-                        }
-                    }
-                    else if (_nextState == GameState.P2Res)
-                    {
-                        if (Player1 == null || _p2ResStream == null) throw new Exception("Logical error");
-                        await _p2ResStream.WriteAsync(Player1.LatestMove);
-                        _logger.Info($"Sent p1 move to p2");
-                        lock (_stateLock) _nextState = GameState.P2Req;
-                    }
-                    else if (_nextState == GameState.P2Req)
-                    {
-                        await _p2ReqStream.MoveNext();
-                        if (Player2 == null || _p2ReqStream == null) throw new Exception("Logical error");
-                        Player2.LatestMove = _p2ReqStream.Current;
-                        _shared.MoveHistory.Add(Player2.LatestMove);
-                        _logger.Info($"{(Player2.Information.Name + ":").PadRight(12)} Received move {Player2.PrintLatest()}");
-                        _logger.Info($"{(Player2.Information.Name + ":").PadRight(12)} {Player2.LatestMove.Diagnostics}");
-                        lock (_stateLock) _nextState = GameState.P1Res;
-                    }
-                    else if (_nextState == GameState.P1Res)
-                    {
-                        if (Player2 == null || _p1ResStream == null) throw new Exception("Logical error");
-                        await _p1ResStream.WriteAsync(Player2.LatestMove);
-                        _logger.Info($"Sent p2 move to p1");
-                        lock (_stateLock) _nextState = GameState.P1Req;
-                    }
-                }
-                catch (Exception e)
-                {
-                    _logger.Error(e, $"Game loop ended to exception {e.Message}");
-                    return;
-                }
-
-                await Task.Delay(_shared.CycleDelayInMs);
-            }
+            
+            // Inform that player streams received
+            _actSemaphore.Release();
+            await actingPlayer.StreamingTask;
+            DebugLog($"Streaming task finished for {actingPlayer.Information.Name}");
         }
     }
 
-    class PlayerClass
+    internal class PlayerClient
     {
         /// <summary>
-        /// Will be set when bidirectional stream is opened
+        /// 0 or 1
         /// </summary>
-        public string PeerName { get; set; } = "";
-        public bool StreamOpened { get; set; } = false;
+        public int PlayerIndex { get; set; }
 
+        public IAsyncStreamReader<Move>? RequestStream { get; set; } = null;
+        public IServerStreamWriter<Move>? ResponseStream { get; set; } = null;
+        public bool StreamOpened => RequestStream != null && ResponseStream != null;
+        public string PeerName { get; set; } = "";
+
+        /// <summary>
+        /// Void task that finishes when game is finished.
+        /// TODO: this infinite loop is not the proper way
+        /// </summary>
+        public Task StreamingTask { get; set; } = Task.Factory.StartNew(() =>
+        {
+            while (true)
+            {
+                // 
+            }
+        });
+
+        //private TaskCompletionSource _tcs = new TaskCompletionSource();
+        
+        
+        
+        // Temp
         public GameInformation Information { get; set; } = new GameInformation();
         public Move LatestMove { get; set; } = new Move();
-
         public string PrintLatest()
         {
             var message = $"{LatestMove.Chess.StartPosition} to {LatestMove.Chess.EndPosition}";
             return message;
-        }
-    }
-
-    class MockClass : PlayerClass
-    {
-        private int _index = 7;
-        public Move CreateOpponentMockMove()
-        {
-            var move = new Move()
-            {
-                Chess = new ChessMove()
-                {
-
-                    StartPosition = $"b{_index--}",
-                    EndPosition = $"b{_index}",
-                    PromotionResult = ChessMove.Types.PromotionPieceType.NoPromotion
-                }
-            };
-
-            return move;
         }
     }
 }
