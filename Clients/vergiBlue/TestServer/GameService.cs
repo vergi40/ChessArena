@@ -44,6 +44,28 @@ namespace TestServer
                     DebugLog($"Main game loop hosting ended to exception. {e.ToString()}");
                 }
 
+                // TODO must be better way to end stream
+                if (Player1?.ResponseStream != null)
+                {
+                    await Player1.ResponseStream.WriteAsync(new Move()
+                    {
+                        Chess = new ChessMove()
+                        {
+                            CheckMate = true
+                        }
+                    });
+                }
+                if (Player2?.ResponseStream != null)
+                {
+                    await Player2.ResponseStream.WriteAsync(new Move()
+                    {
+                        Chess = new ChessMove()
+                        {
+                            CheckMate = true
+                        }
+                    });
+                }
+
                 Player1 = null;
                 Player2 = null;
                 _shared.ResetGame();
@@ -208,6 +230,7 @@ namespace TestServer
             {
                 Player1.RequestStream = requestStream;
                 Player1.ResponseStream = responseStream;
+                Player1.Context = context;
                 actingPlayer = Player1;
                 
                 _activations.Enqueue(Player1);
@@ -216,6 +239,7 @@ namespace TestServer
             {
                 Player2.RequestStream = requestStream;
                 Player2.ResponseStream = responseStream;
+                Player2.Context = context;
                 actingPlayer = Player2;
 
                 _activations.Enqueue(Player2);
@@ -241,6 +265,7 @@ namespace TestServer
 
         public IAsyncStreamReader<Move>? RequestStream { get; set; } = null;
         public IServerStreamWriter<Move>? ResponseStream { get; set; } = null;
+        public ServerCallContext? Context { get; set; } = null;
         public bool StreamOpened => RequestStream != null && ResponseStream != null;
         public string PeerName { get; set; } = "";
 

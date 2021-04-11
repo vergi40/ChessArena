@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CommonNetStandard;
 using CommonNetStandard.Client;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
+using CommonNetStandard.LocalImplementation;
 
 namespace vergiBlue.ConsoleTools
 {
@@ -15,30 +17,76 @@ namespace vergiBlue.ConsoleTools
         private static void Log(string message, bool writeToConsole = true) => Logger.Log(message, writeToConsole);
         public static void Start(grpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
         {
+            // We could use while(true) to play games indefinitely. But probably better to play single game per opened client
+            try
+            {
+                // https://stackoverflow.com/questions/9343594/how-to-call-asynchronous-method-from-synchronous-method-in-c
+                AsyncHelper.RunSync(() => MainGameLoop(grpcClientConnection, playerName, connectionTesting));
+
+                // Exception deadlock
+                //var task = MainGameLoop(grpcClientConnection, playerName, connectionTesting);
+                //task.Wait();
+
+                Log("Game ended, reason: ____TODO____");
+            }
+            catch (GameEndedException e)
+            {
+                Log($"Game ended, reason: {e.E.Status.Detail}");
+            }
+            catch (Exception e)
+            {
+                Log($"Main game loop failed: {e.ToString()}");
+            }
+        }
+
+        public static async Task MainGameLoop(grpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
+        {
             Log(Environment.NewLine);
-            // TODO async
-            var startInformation = grpcClientConnection.Initialize(playerName);
-
-            // TODO exception catching here
-            // DebugException="Grpc.Core.Internal.CoreErrorDetailException: 
-            startInformation.Wait();
-
+            var startInformation = await grpcClientConnection.Initialize(playerName);
+            
             Log($"Received game start information.");
-            if (startInformation.Result.WhitePlayer) Log($"{playerName} starts the game.");
+            if (startInformation.WhitePlayer) Log($"{playerName} starts the game.");
             else Log($"Opponent starts the game.");
 
             Log(Environment.NewLine);
 
             Log("Starting logic...");
             LogicBase ai;
-            if (connectionTesting) ai = new ConnectionTesterLogic(startInformation.Result.WhitePlayer);
-            else  ai = new Logic(startInformation.Result);
+            if (connectionTesting) ai = new ConnectionTesterLogic(startInformation.WhitePlayer);
+            else ai = new Logic(startInformation);
 
             Log("Start game loop");
 
             // Inject ai to connection module and play game
-            var playTask = grpcClientConnection.Play(ai);
-            playTask.Wait();
+            // TODO cancellation token here
+            await grpcClientConnection.Play(ai);
+        }
+
+        internal static class AsyncHelper
+        {
+            private static readonly TaskFactory _myTaskFactory = new
+                TaskFactory(CancellationToken.None,
+                    TaskCreationOptions.None,
+                    TaskContinuationOptions.None,
+                    TaskScheduler.Default);
+
+            public static TResult RunSync<TResult>(Func<Task<TResult>> func)
+            {
+                return AsyncHelper._myTaskFactory
+                    .StartNew<Task<TResult>>(func)
+                    .Unwrap<TResult>()
+                    .GetAwaiter()
+                    .GetResult();
+            }
+
+            public static void RunSync(Func<Task> func)
+            {
+                AsyncHelper._myTaskFactory
+                    .StartNew<Task>(func)
+                    .Unwrap()
+                    .GetAwaiter()
+                    .GetResult();
+            }
         }
     }
 

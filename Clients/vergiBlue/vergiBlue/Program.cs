@@ -75,6 +75,7 @@ namespace vergiBlue
                 {
                     using var connection = new grpcClientConnection(_fullAddress);
                     NetworkGame.Start(connection, _playerName, false);
+                    break;
                 }
                 else if (_gameMode == 2)
                 {
@@ -85,6 +86,7 @@ namespace vergiBlue
                     Log($"Chess ai {playerName} [{_currentVersion}]");
                     using var connection = new grpcClientConnection(_fullAddress);
                     NetworkGame.Start(connection, playerName, false);
+                    break;
                 }
                 else if (_gameMode == 3)
                 {
@@ -102,6 +104,7 @@ namespace vergiBlue
                 {
                     using var connection = new grpcClientConnection(_fullAddress);
                     NetworkGame.Start(connection, "Connection test AI", true);
+                    break;
                 }
                 else break;
 

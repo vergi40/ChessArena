@@ -51,6 +51,12 @@ namespace CommonNetStandard.LocalImplementation
                                 // Error or game end
                                 return;
                             }
+                            else if (opponentMove.Chess.CheckMate)
+                            {
+                                // TODO should we trust this
+                                // TODO for now CheckMate also used to sign any game ending and errors
+                                return;
+                            }
 
                             Logger.Log($"Received opponent move: {opponentMove.Chess.StartPosition} to {opponentMove.Chess.EndPosition}");
 
@@ -68,8 +74,19 @@ namespace CommonNetStandard.LocalImplementation
             }
             catch (RpcException e)
             {
-                Logger.Log(e.ToString());
+                Logger.Log($"DEBUG: {e.ToString()}");
+                throw new GameEndedException(e);
             }
+        }
+    }
+    
+    public class GameEndedException : Exception
+    {
+        public RpcException E { get; set; }
+
+        public GameEndedException(RpcException e)
+        {
+            E = e;
         }
     }
 }
