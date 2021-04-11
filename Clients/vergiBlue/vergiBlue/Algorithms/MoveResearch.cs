@@ -262,6 +262,15 @@ namespace vergiBlue.Algorithms
             return finalResult.First().move;
         }
 
+        private static void DebugConsolePrintMoves(IList<(double weight, SingleMove move)> moves)
+        {
+            Debug.WriteLine($"Total moves: {moves.Count()}");
+            foreach ((var weight, var move) in moves)
+            {
+                Debug.WriteLine($"{move.ToString()}: score {weight}");
+            }
+        }
+
         private static void AddIterativeDeepeningResultDiagnostics(int depthUsed, int totalMoveCount, int searchMoveCount, double evaluation, SingleMove? move = null, Board? board = null)
         {
             if (searchMoveCount < totalMoveCount)
@@ -305,8 +314,8 @@ namespace vergiBlue.Algorithms
             //var alpha = -1000000.0;
             //var beta = 1000000.0;
 
-            // Initial depth 2
-            for (int i = 2; i <= searchDepth; i++)
+            // Initial depth given here
+            for (int i = 0; i <= searchDepth; i++)
             {
                 var alpha = DefaultAlpha;
                 var beta = DefaultBeta;
@@ -350,15 +359,21 @@ namespace vergiBlue.Algorithms
                 midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
 
                 // Found checkmate
-                //if (isMaximizing && midResult.First().weight > PieceBaseStrength.CheckMateThreshold
-                //    || !isMaximizing && midResult.First().weight < -PieceBaseStrength.CheckMateThreshold)
-                //{
-                //    // TODO This might result in stupid movements, if opponent doesn't do the exact move AI thinks is best for it
+                // Should prioritize checkmates at really early iterations
+                if (i == 0)
+                {
+                    if (isMaximizing && midResult.First().weight > PieceBaseStrength.CheckMateThreshold
+                        || !isMaximizing && midResult.First().weight < -PieceBaseStrength.CheckMateThreshold)
+                    {
+                        // TODO This might result in stupid movements in further iterations,
+                        // if opponent doesn't do the exact move AI thinks is best for it
+                        // Also need to be careful it really is checkmate and not stalemate
+                        Diagnostics.AddMessage($" Immediate checkmate found.");
+                        DebugConsolePrintMoves(midResult);
+                        return midResult.First().move;
+                    }
+                }
 
-                //    Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed}. Check mate found.");
-                //    Diagnostics.AddMessage($" Move evaluation: {midResult.First().weight}.");
-                //    return midResult.First().move;
-                //}
 
                 if (timeUp) break;
 
@@ -374,11 +389,13 @@ namespace vergiBlue.Algorithms
             {
                 var result = previousIterationBest;
                 AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, result.eval, result.move, board);
+                DebugConsolePrintMoves(midResult);
                 return result.move;
             }
 
             var finalResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
             AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, finalResult.First().weight, finalResult.First().move, board);
+            DebugConsolePrintMoves(midResult);
             return finalResult.First().move;
         }
 
@@ -401,6 +418,12 @@ namespace vergiBlue.Algorithms
             return evalScore;
         }
 
+        /// <summary>
+        /// Score should be higher the closer checkmate was found to search start depth
+        /// E.g. search depth 8, white
+        /// At depth 6: 200006
+        /// At depth 4: 200004
+        /// </summary>
         public static double CheckMateScoreAdjustToDepthFixed(double evalScore, int depth)
         {
             if (Math.Abs(evalScore) > PieceBaseStrength.CheckMateThreshold)

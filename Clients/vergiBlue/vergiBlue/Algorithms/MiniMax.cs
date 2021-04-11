@@ -114,7 +114,7 @@ namespace vergiBlue.Algorithms
         public static double ToDepthWithTranspositions(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
             // TODO collect checkmate status
-            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, false, depth);
+            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, newBoard.IsCheck(!maximizingPlayer), depth);
             
             // Check if solution already exists
             var transposition = newBoard.Shared.Transpositions.GetTranspositionForBoard(newBoard.BoardHash);
