@@ -186,6 +186,9 @@ namespace vergiBlue.Algorithms
         /// </summary>
         public void Add(ulong boardHash, int depth, double evaluation, NodeType nodeType, int gameTurnCount)
         {
+            // Temp override. don't save checkmate values
+            if (Math.Abs(evaluation) > PieceBaseStrength.CheckMateThreshold) return;
+            
             if (boardHash == 0) throw new ArgumentException($"Board hash was empty.");
             if(Tables.TryGetValue(boardHash, out var transposition))
             {

@@ -454,13 +454,24 @@ namespace vergiBlue
         public double EvaluateIntelligent(bool isMaximizing, bool boardInCheckForOther, int? currentSearchDepth = null)
         {
             Diagnostics.IncrementEvalCount();
+            
+            // Game already ended - return negated max
+            if (isMaximizing)
+            {
+                if (PieceList.Count(p => p.IsWhite) == 0) return -PieceBaseStrength.King;
+            }
+            else
+            {
+                if (PieceList.Count(p => !p.IsWhite) == 0) return PieceBaseStrength.King;
+            }
+
             var evalScore = PieceList.Sum(p => p.GetEvaluationStrength(Strategic.EndGameWeight));
 
             // Checkmate override
             // Equalize checkmate scores, so relative positions of other pieces don't effect outcome
             // Also give more priority for shallower moves.
             if (isMaximizing && evalScore > PieceBaseStrength.CheckMateThreshold
-                || !isMaximizing && evalScore < PieceBaseStrength.CheckMateThreshold)
+                || (!isMaximizing && evalScore < PieceBaseStrength.CheckMateThreshold))
             {
                 if(!boardInCheckForOther)
                 {

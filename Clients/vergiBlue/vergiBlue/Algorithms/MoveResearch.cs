@@ -315,7 +315,7 @@ namespace vergiBlue.Algorithms
             //var beta = 1000000.0;
 
             // Initial depth given here
-            for (int i = 0; i <= searchDepth; i++)
+            for (int i = 2; i <= searchDepth; i++)
             {
                 var alpha = DefaultAlpha;
                 var beta = DefaultBeta;
@@ -360,7 +360,7 @@ namespace vergiBlue.Algorithms
 
                 // Found checkmate
                 // Should prioritize checkmates at really early iterations
-                if (i == 0)
+                if (i == 2)
                 {
                     if (isMaximizing && midResult.First().weight > PieceBaseStrength.CheckMateThreshold
                         || !isMaximizing && midResult.First().weight < -PieceBaseStrength.CheckMateThreshold)
