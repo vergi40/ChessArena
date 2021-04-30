@@ -8,5 +8,7 @@ cd Clients//vergiBlue
 @REM Return home
 cd ..//..//
 
-npm start Web//frontend
-npm start Web//backend
+cd Web//frontend
+start cmd /k npm start 
+cd ..//backend
+npm start
