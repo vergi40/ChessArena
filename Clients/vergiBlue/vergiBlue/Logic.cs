@@ -31,6 +31,8 @@ namespace vergiBlue
     {
         // Config bools. Default values used in real game
         public bool UseTranspositionTables { get; set; } = true;
+        public int TranspositionTimeLimitInMs { get; set; } = 5000;
+
         public bool UseParallelComputation { get; set; } = false;
         public bool UseIterativeDeepening { get; set; } = true;
 
@@ -285,7 +287,7 @@ namespace vergiBlue
             if(Settings.UseIterativeDeepening)
             {
                 return MoveResearch.SelectBestWithIterativeDeepening(allMoves, SearchDepth, Board, isMaximizing,
-                    Settings.UseTranspositionTables);
+                    Settings.UseTranspositionTables, Settings.TranspositionTimeLimitInMs);
             }
 
             EvaluationResult evaluated;

@@ -8,6 +8,7 @@
         Width="900"
         Height="800"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance {x:Type local:MainViewModel}}"
         >
     <Window.Resources>
         <ResourceDictionary>
@@ -20,46 +21,80 @@
             <local:InverseBooleanConverter x:Key="inverseBool"></local:InverseBooleanConverter>
         </ResourceDictionary>
     </Window.Resources>
-    <StackPanel Orientation="Vertical">
-        <WrapPanel IsEnabled="{Binding IsBusy, Converter={StaticResource inverseBool}}">
-            <Button Command="{Binding Test1Command}" Content="Test 1" />
-            <Button Command="{Binding Test2Command}" Content="Test 2" />
-            <Button Command="{Binding Test3Command}" Content="Test 3" />
-        </WrapPanel>
-        <StackPanel Orientation="Horizontal">
-            <StackPanel Orientation="Vertical" Width="300" Margin="10">
-                <GroupBox Header="History">
-                    <ListBox ItemsSource="{Binding History}" Height="200">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding }" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </GroupBox>
-                <GroupBox Header="AI diagnostics">
-                    <StackPanel Orientation="Vertical">
-                        <Label Content="Current move"></Label>
-                        <ListBox ItemsSource="{Binding AiMoveDiagnostics}" MinHeight="100">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding }" />
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                        <Label Content="Previous move" Margin="0,20,0,0"></Label>
-                        <ListBox ItemsSource="{Binding AiPreviousMoveDiagnostics}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding }" />
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </StackPanel>
-                </GroupBox>
-            </StackPanel>
 
-            <DockPanel Height="600">
+    <StackPanel Orientation="Vertical">
+
+        <StackPanel Orientation="Horizontal">
+            <!-- Main game setup controls -->
+            <WrapPanel IsEnabled="{Binding IsBusy, Converter={StaticResource inverseBool}}">
+                <Button Command="{Binding Test1Command}" Content="Test 1" />
+                <Button Command="{Binding Test2Command}" Content="Test 2" />
+                <Button Command="{Binding Test3Command}" Content="Test 3" />
+            </WrapPanel>
+            <Expander Margin="3">
+                <StackPanel Orientation="Vertical" >
+                    <Label Content="Ai logic settings before game start"></Label>
+                    <CheckBox Content="Use full diagnostics" IsChecked="{Binding AiLogicSettings.UseFullDiagnostics, Mode=TwoWay}"></CheckBox>
+                    <!--<CheckBox Content="Use parallel computation" IsChecked="{Binding AiLogicSettings.UseParallelComputation, Mode=TwoWay}"></CheckBox>-->
+                    
+                    <CheckBox Margin="0,5,0,0" Content="Use iterative deepening" IsChecked="{Binding AiLogicSettings.UseIterativeDeepening, Mode=TwoWay}" ></CheckBox>
+                    <StackPanel Orientation="Horizontal" IsEnabled="{Binding AiLogicSettings.UseIterativeDeepening}">
+                        <Label Content="Time limit for opponent move calculation (ms)"></Label>
+                        <TextBox Text="{Binding AiLogicSettings.TranspositionTimeLimitInMs}" MinWidth="40" VerticalContentAlignment="Center"></TextBox>
+                    </StackPanel>
+
+                    <CheckBox Margin="0,5,0,0" Content="Use transposition tables" IsChecked="{Binding AiLogicSettings.UseTranspositionTables, Mode=TwoWay}"></CheckBox>
+                    <StackPanel Orientation="Horizontal" IsEnabled="{Binding AiLogicSettings.UseTranspositionTables}">
+                        <Label Content="Transposition save data clearing frequency"></Label>
+                        <TextBox Text="{Binding AiLogicSettings.ClearSavedTranspositionsAfterTurnsPassed}" MinWidth="40" VerticalContentAlignment="Center"></TextBox>
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+            
+        </StackPanel>
+        
+
+
+        <StackPanel Orientation="Horizontal">
+
+            <!-- Rolling move history, diagnostics -->
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <StackPanel Orientation="Vertical" Width="320" Margin="10">
+                    <GroupBox Header="History">
+                        <ListBox ItemsSource="{Binding History}" Height="200">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding }" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </GroupBox>
+                    <GroupBox Header="AI diagnostics">
+                        <StackPanel Orientation="Vertical">
+                            <Label Content="Current move"></Label>
+                            <ListBox ItemsSource="{Binding AiMoveDiagnostics}" MinHeight="100">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding }" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Label Content="Previous move" Margin="0,20,0,0"></Label>
+                            <ListBox ItemsSource="{Binding AiPreviousMoveDiagnostics}" MinHeight="100">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding }" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
+            
+
+            <!-- In-game controls and board -->
+            <DockPanel Height="600" VerticalAlignment="Top">
                 <Button DockPanel.Dock="Top" Command="{Binding StartBlackCommand}" Content="Start as black" Height="40"
                         Width="200"
                         Foreground="White" Background="#222222"

@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Formats.Asn1;
 using System.Linq;
-using System.Security.Cryptography.Xml;
 using System.Threading.Tasks;
-using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using vergiBlue;
 using vergiBlue.Pieces;
 
@@ -15,14 +11,11 @@ namespace vergiBlueDesktop.Views
 {
     /// <summary>
     /// Update ideas:
-    /// * Use iterative deepening to avoid long calculations. Remember update diagnostics searchdepth
     /// * AI doesn't recognize concept of draw. For endgame this is crucial. This needs fine-tuning in evaluation function (commented out)
-    /// 
-    /// 
-    /// * Restrict own movements to borders
+    ///
+    /// * Better highlighing for previous move
     /// * Do a click sound when moving
     /// * Add ability to change board color and piece icons
-    /// * Add settings tab with checkboxes for Logic creation
     /// * Add timer
     /// * Ask ai to give hint
     /// * Endgame scenarios with thumbnail pictures
@@ -70,6 +63,11 @@ namespace vergiBlueDesktop.Views
         public bool IsWhiteTurn { get; set; }
         
         private Logic AiLogic { get; set; }
+
+        /// <summary>
+        /// As long as binding is oneway (only view-side can alter), no need to implement notifyproperty
+        /// </summary>
+        public LogicSettings AiLogicSettings { get; set; } = new LogicSettings();
         
         /// <summary>
         /// Actual graphics binded to view
@@ -113,6 +111,7 @@ namespace vergiBlueDesktop.Views
             IsWhiteTurn = true;
 
             AiLogic = new Logic(!PlayerIsWhite, Board);
+            AiLogic.Settings = AiLogicSettings;
         }
 
         private void StartBlack(object parameter)
@@ -123,7 +122,8 @@ namespace vergiBlueDesktop.Views
             IsWhiteTurn = true;
             
             AiLogic = new Logic(!PlayerIsWhite, Board);
-            
+            AiLogic.Settings = AiLogicSettings;
+
             var interfaceMoveData = AiLogic.CreateMove();
             UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
             var move = new SingleMove(interfaceMoveData.Move);
@@ -331,6 +331,7 @@ namespace vergiBlueDesktop.Views
             IsWhiteTurn = true;
 
             AiLogic = new Logic(!PlayerIsWhite, Board);
+            AiLogic.Settings = AiLogicSettings;
         }
 
         private void PromotionTest(object parameter)
@@ -360,6 +361,7 @@ namespace vergiBlueDesktop.Views
             IsWhiteTurn = true;
 
             AiLogic = new Logic(!PlayerIsWhite, Board);
+            AiLogic.Settings = AiLogicSettings;
         }
 
         private void CastlingTest(object parameter)
@@ -398,6 +400,7 @@ namespace vergiBlueDesktop.Views
             IsWhiteTurn = true;
 
             AiLogic = new Logic(!PlayerIsWhite, Board);
+            AiLogic.Settings = AiLogicSettings;
         }
 
         private void Test2(object parameter)

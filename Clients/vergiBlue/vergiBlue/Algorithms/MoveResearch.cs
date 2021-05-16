@@ -162,15 +162,15 @@ namespace vergiBlue.Algorithms
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ...
         /// 
         /// </summary>
-        public static SingleMove SelectBestWithIterativeDeepening(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, bool useTranspositions)
+        public static SingleMove SelectBestWithIterativeDeepening(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, bool useTranspositions, int timeLimitInMs)
         {
             if (useTranspositions)
             {
-                return IterativeDeepeningWithTranspositions(allMoves, searchDepth, board, isMaximizing);
+                return IterativeDeepeningWithTranspositions(allMoves, searchDepth, board, isMaximizing, timeLimitInMs);
             }
             else
             {
-                return IterativeDeepeningBasic(allMoves, searchDepth, board, isMaximizing);
+                return IterativeDeepeningBasic(allMoves, searchDepth, board, isMaximizing, timeLimitInMs);
             }
         }
 
