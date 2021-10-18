@@ -5,6 +5,7 @@ using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
 using GameManager;
 using Grpc.Core;
+using log4net;
 
 namespace CommonNetStandard.Client
 {
@@ -15,6 +16,7 @@ namespace CommonNetStandard.Client
     /// </summary>
     public sealed class grpcClientConnection : IDisposable
     {
+        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(grpcClientConnection));
         private string _aiName = "";
         private readonly string _address;
         private readonly Channel _channel;
@@ -38,7 +40,7 @@ namespace CommonNetStandard.Client
         public async Task<IGameStartInformation> Initialize(string playerName)
         {
             _aiName = playerName;
-            Logger.Log($"Opening gRPC channel to {_address}");
+            Logger.LogWithConsole($"Opening gRPC channel to {_address}", _localLogger);
             var startInformation = await _client.Initialize(playerName);
             var localInformation = new StartInformationImplementation()
             {

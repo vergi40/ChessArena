@@ -5,12 +5,15 @@ using System.Reflection;
 using CommonNetStandard;
 using CommandLine;
 using CommonNetStandard.Client;
+using log4net;
 using vergiBlue.ConsoleTools;
 
 namespace vergiBlue
 {
     class Program
     {
+        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(Program));
+
         // Program is singleton static so static properties should be ok
         private static string? _currentVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(2);
         private static string _playerName { get; set; } = "vergiBlue";
@@ -19,7 +22,7 @@ namespace vergiBlue
         private static string _port { get; set; } = ConfigurationManager.AppSettings["Port"] ?? "";
         private static int _minimumDelayBetweenMoves { get; set; } = 0;
 
-        private static void Log(string message, bool writeToConsole = true) => Logger.Log(message, writeToConsole);
+        private static void Log(string message) => Logger.LogWithConsole(message, _localLogger);
 
         private static string _fullAddress => $"{_address}:{_port}"; 
 
@@ -56,6 +59,7 @@ namespace vergiBlue
 
             if (_stopArgsGiven) return;
 
+            Logger.Setup();
             Log($"Chess ai vergiBlue [{_currentVersion}]");
 
             while (true)

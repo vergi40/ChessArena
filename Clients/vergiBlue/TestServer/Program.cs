@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using GameManager;
 using Grpc.Core;
+using log4net.Config;
 
 namespace TestServer
 {
@@ -14,6 +16,8 @@ namespace TestServer
         private static readonly Logger _logger = new Logger(typeof(Program));
         static void Main(string[] args)
         {
+            // Programmatic way to configure log4net xml
+            XmlConfigurator.Configure(new FileInfo("log4net.config"));
             const int Port = 30052;
             var data = new SharedData();
 

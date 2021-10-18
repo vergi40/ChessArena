@@ -2,11 +2,13 @@
 using CommonNetStandard;
 using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
+using log4net;
 
 namespace CommonNetStandard.Common
 {
     public class BoardPrinter
     {
+        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(BoardPrinter));
         private ConsoleColors Colors { get; }
         public const string PreviousTileValue = "[ ]";
 
@@ -44,9 +46,9 @@ namespace CommonNetStandard.Common
                     columnString += DrawPiece(Get((column, row)));
                     columnString += Colors.BlackBackground + Colors.WhiteForeground;
                 }
-                Logger.Log(columnString);
+                Logger.LogWithConsole(columnString, _localLogger);
             }
-            Logger.Log("    A  B  C  D  E  F  G  H ");
+            Logger.LogWithConsole("    A  B  C  D  E  F  G  H ", _localLogger);
         }
 
         private string DrawPiece(string value)

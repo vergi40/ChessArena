@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 using CommonNetStandard;
 using CommonNetStandard.Interface;
+using log4net;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
@@ -86,6 +82,7 @@ namespace vergiBlue
     
     public class Board
     {
+        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(Board));
         /// <summary>
         /// [column,row}
         /// </summary>
@@ -645,7 +642,7 @@ namespace vergiBlue
 
             Shared.Transpositions.Initialize();
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
-            Logger.Log("Board initialized.");
+            Logger.LogWithConsole("Board initialized.", _localLogger);
         }
 
         /// <summary>

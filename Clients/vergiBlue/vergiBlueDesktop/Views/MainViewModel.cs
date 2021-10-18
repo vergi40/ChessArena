@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using log4net;
 using vergiBlue;
 using vergiBlue.Pieces;
 
@@ -25,6 +26,7 @@ namespace vergiBlueDesktop.Views
     /// </summary>
     public class MainViewModel : NotifyPropertyBase
     {
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(MainViewModel));
         private bool _gameStarted = false;
         private bool _isBusy;
 
@@ -79,6 +81,9 @@ namespace vergiBlueDesktop.Views
         // TODO this is really a single object
         public IList<Position> PreviousPosition { get; } = new ObservableCollection<Position>();
 
+        /// <summary>
+        /// Auto-rolling move history.
+        /// </summary>
         public IList<string> History { get; } = new ObservableCollection<string>();
         public IList<string> AiMoveDiagnostics { get; } = new ObservableCollection<string>();
         public IList<string> AiPreviousMoveDiagnostics { get; } = new ObservableCollection<string>();
@@ -211,7 +216,7 @@ namespace vergiBlueDesktop.Views
             // Game ended?
             if (move.CheckMate)
             {
-                History.Insert(0, $"{move.ToString()} - Checkmate.");
+                WriteMoveHistory($"{move.ToString()} - Checkmate.");
                 ViewUpdateGameEnd();
                 return;
             }
@@ -282,9 +287,15 @@ namespace vergiBlueDesktop.Views
             TurnCount++;
             var text = TurnCount.ToString() + ": " + move.ToString();
             if (Board.IsCheck(IsWhiteTurn)) text += " Check.";
-            History.Insert(0, text);
+            WriteMoveHistory(text);
         }
 
+        private void WriteMoveHistory(string message)
+        {
+            _logger.Info($"{nameof(History)}: {message}");
+            History.Insert(0, message);
+        }
+        
         private void UpdateAiDiagnostics(string dataString)
         {
             if (AiMoveDiagnostics.Any())
@@ -297,6 +308,8 @@ namespace vergiBlueDesktop.Views
             }
             
             AiMoveDiagnostics.Clear();
+
+            _logger.Info($"{nameof(AiMoveDiagnostics)}: {dataString}");
             var list = dataString.Split(". ");
             foreach (var item in list)
             {

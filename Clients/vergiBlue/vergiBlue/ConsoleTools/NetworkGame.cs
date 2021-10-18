@@ -9,12 +9,14 @@ using CommonNetStandard.Client;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
+using log4net;
 
 namespace vergiBlue.ConsoleTools
 {
     class NetworkGame
     {
-        private static void Log(string message, bool writeToConsole = true) => Logger.Log(message, writeToConsole);
+        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(NetworkGame));
+        private static void Log(string message) => Logger.LogWithConsole(message, _localLogger);
         public static void Start(grpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
         {
             // We could use while(true) to play games indefinitely. But probably better to play single game per opened client

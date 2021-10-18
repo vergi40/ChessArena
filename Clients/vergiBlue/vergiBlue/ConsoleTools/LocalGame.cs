@@ -8,6 +8,7 @@ using CommonNetStandard;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
+using log4net;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
@@ -15,7 +16,8 @@ namespace vergiBlue.ConsoleTools
 {
     class LocalGame
     {
-        private static void Log(string message, bool writeToConsole = true) => Logger.Log(message, writeToConsole);
+        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(LocalGame));
+        private static void Log(string message) => Logger.LogWithConsole(message, _localLogger);
 
         public static void Start(int minDelayInMs, int? overrideOpponentMaxDepth, Board? overrideBoard = null)
         {
