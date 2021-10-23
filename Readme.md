@@ -10,8 +10,10 @@ Developing own chess AI's from scratch to battle each other. Games are hosted on
 
 ### [vergiBlue C#](Clients/vergiBlue)
 * Basic minimax-algorithm as base logic
-* Iterating more intelligence by teaching how to handle [various game situations through tests](Clients/vergiBlue/vergiBlueTests/)
 * Includes [test server](Clients/vergiBlue/TestServer/) and console app where AI can play against itself
+	* Full demo with two independent AI's hosted on TestServer over gRPC connection: [startlocalservergame.bat](Clients/vergiBlue/startlocalservergame.bat). Script builds all projects and starts new console for each app.
+	* Graphical chess demo: Open solution and run "vergiBlueDesktop" project. Desktop chess has some settings, normal black or white start and some test game situations.
+* Iterating more intelligence by teaching how to handle [various game situations through tests](Clients/vergiBlue/vergiBlueTests/)
 * Minor goal is to include all connection-specific implementation in [Common-project](Clients/vergiBlue/CommonNetStandard/). 
 	* C# clients should only need to implement shared abstract [LogicBase](Clients/vergiBlue/CommonNetStandard/Client/LogicBase.cs).
 	* Example code how to implement your own ai in C# can be found in [Example.cs](Clients/vergiBlue/CommonNetStandard/Example.cs).
