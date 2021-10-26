@@ -13,6 +13,9 @@ namespace vergiBlueDesktop
     /// </summary>
     public partial class App : Application
     {
+
+        private GameModel _gameModel;
+
         /// <summary>
         /// Startup in code-behind.
         /// https://www.wpf-tutorial.com/wpf-application/working-with-app-xaml/
@@ -23,6 +26,10 @@ namespace vergiBlueDesktop
         {
             // Link in MVVM manner
             var viewModel = new MainViewModel();
+            
+            // Control interactions between AI and player
+            _gameModel = new GameModel(viewModel);
+            
             var view = new MainView();
             view.Title = "vergiBlue desktop environment";
             view.DataContext = viewModel;

@@ -17,14 +17,21 @@ namespace vergiBlueDesktop.Views
 
         public MainViewModel Main { get; }
 
-        public PieceViewModel(MainViewModel mainViewModel)
+        /// <summary>
+        /// temp
+        /// </summary>
+        private GameModelProxy _gameModel { get; }
+
+        public PieceViewModel(MainViewModel mainViewModel, GameModelProxy model)
         {
-            Main = mainViewModel;}
+            Main = mainViewModel;
+            _gameModel = model;
+        }
         
         public void VisualizePossibleTiles()
         {
-            var moves = PieceModel.Moves(Main.Board);
-            moves = Main.Board.FilterOutIllegalMoves(moves, IsWhite);
+            var moves = PieceModel.Moves(_gameModel.Model.Board);
+            moves = _gameModel.Model.Board.FilterOutIllegalMoves(moves, IsWhite);
 
             var borderColor = Brushes.Chartreuse;
             if (IsWhite != Main.PlayerIsWhite) borderColor = Brushes.Coral;
@@ -43,7 +50,7 @@ namespace vergiBlueDesktop.Views
         {
             var move = new SingleMove((previousPosition.Column, previousPosition.Row),
                 (currentPosition.Column, currentPosition.Row));
-            Main.TurnFinished(move, false);
+            _gameModel.Model.TurnFinished(move, false);
         }
     }
 }
