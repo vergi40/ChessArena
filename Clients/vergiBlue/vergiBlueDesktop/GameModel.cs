@@ -50,9 +50,7 @@ namespace vergiBlueDesktop
         private void StartWhite(object parameter)
         {
             _viewModel.ViewUpdateGameStart();
-            InitializeEnvironment();
-            _viewModel.PlayerIsWhite = true;
-            _viewModel.IsWhiteTurn = true;
+            InitializeEnvironment(true, true);
 
             AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
             AiLogic.Settings = _viewModel.AiLogicSettings;
@@ -61,9 +59,7 @@ namespace vergiBlueDesktop
         private void StartBlack(object parameter)
         {
             _viewModel.ViewUpdateGameStart();
-            InitializeEnvironment();
-            _viewModel.PlayerIsWhite = false;
-            _viewModel.IsWhiteTurn = true;
+            InitializeEnvironment(false, true);
 
             AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
             AiLogic.Settings = _viewModel.AiLogicSettings;
@@ -83,7 +79,7 @@ namespace vergiBlueDesktop
         /// <summary>
         /// Initialize board and view with pieces
         /// </summary>
-        private void InitializeEnvironment(Board initializedBoard = null)
+        private void InitializeEnvironment(bool playerIsWhite, bool isWhiteTurn, Board initializedBoard = null)
         {
             TurnCount = 0;
             if (initializedBoard == null)
@@ -94,9 +90,10 @@ namespace vergiBlueDesktop
 
             Board = initializedBoard;
 
-            _viewModel.InitializeViewModel(Board.PieceList, _proxy);
+            _viewModel.InitializeViewModel(playerIsWhite, isWhiteTurn, Board.PieceList, _proxy);
         }
         
+        // TODO this needs some refactoring to smaller 
         public async void TurnFinished(SingleMove move, bool pieceNotMovedInView)
         {
             move = Board.CollectMoveProperties(move);
@@ -107,7 +104,7 @@ namespace vergiBlueDesktop
             // Game ended?
             if (move.CheckMate)
             {
-                _viewModel.WriteMoveHistory($"{move.ToString()} - Checkmate.");
+                _viewModel.AppendHistory($"{move.ToString()} - Checkmate.");
                 _viewModel.ViewUpdateGameEnd();
                 return;
             }
@@ -119,6 +116,7 @@ namespace vergiBlueDesktop
             if (_viewModel.IsWhiteTurn != _viewModel.PlayerIsWhite)
             {
                 // Ai turn
+                // TODO some busy-wrapper
                 _viewModel.IsBusy = true;
                 // TODO synchronous
                 AiLogic.ReceiveMove(move.ToInterfaceMove());
@@ -154,9 +152,7 @@ namespace vergiBlueDesktop
             board.AddNew(pieces);
 
             _viewModel.ViewUpdateGameStart();
-            InitializeEnvironment(board);
-            _viewModel.PlayerIsWhite = true;
-            _viewModel.IsWhiteTurn = true;
+            InitializeEnvironment(true, true, board);
 
             AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
             AiLogic.Settings = _viewModel.AiLogicSettings;
@@ -184,9 +180,7 @@ namespace vergiBlueDesktop
             board.AddNew(pieces);
 
             _viewModel.ViewUpdateGameStart();
-            InitializeEnvironment(board);
-            _viewModel.PlayerIsWhite = true;
-            _viewModel.IsWhiteTurn = true;
+            InitializeEnvironment(true, true, board);
 
             AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
             AiLogic.Settings = _viewModel.AiLogicSettings;
@@ -223,9 +217,7 @@ namespace vergiBlueDesktop
             board.AddNew(pieces);
 
             _viewModel.ViewUpdateGameStart();
-            InitializeEnvironment(board);
-            _viewModel.PlayerIsWhite = true;
-            _viewModel.IsWhiteTurn = true;
+            InitializeEnvironment(true, true, board);
 
             AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
             AiLogic.Settings = _viewModel.AiLogicSettings;

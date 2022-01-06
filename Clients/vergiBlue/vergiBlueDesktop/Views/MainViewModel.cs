@@ -14,6 +14,7 @@ namespace vergiBlueDesktop.Views
     /// Update ideas:
     /// * AI doesn't recognize concept of draw. For endgame this is crucial. This needs fine-tuning in evaluation function (commented out)
     ///
+    /// UX/UI
     /// * Better highlighing for previous move
     /// * Do a click sound when moving
     /// * Add ability to change board color and piece icons
@@ -23,6 +24,9 @@ namespace vergiBlueDesktop.Views
     /// * Get all possible moves and compare to made move. Eg king cant be lost on purpose
     /// * Show captured pieces on top and bottom, in place of buttons
     /// * - Also highlight player which turn is going
+    ///
+    /// General
+    /// * Save user settings to local app.config. Add restore defaults button
     ///
     /// Design ideas
     /// * Make this as an example MVVM project
@@ -75,9 +79,15 @@ namespace vergiBlueDesktop.Views
         /// </summary>
         public ObservableCollection<IViewObject> ViewObjectList { get; } = new ObservableCollection<IViewObject>();
 
+        /// <summary>
+        /// Binded
+        /// </summary>
         public IList<Position> VisualizationTiles { get; } = new ObservableCollection<Position>();
-        
+
         // TODO this is really a single object
+        /// <summary>
+        /// Binded
+        /// </summary>
         public IList<Position> PreviousPosition { get; } = new ObservableCollection<Position>();
 
         /// <summary>
@@ -103,8 +113,12 @@ namespace vergiBlueDesktop.Views
         {
         }
 
-        public void InitializeViewModel(List<PieceBase> pieceList, GameModelProxy modelProxy)
+        public void InitializeViewModel(bool playerIsWhite, bool isWhiteTurn, List<PieceBase> pieceList, GameModelProxy modelProxy)
         {
+            PlayerIsWhite = playerIsWhite;
+            // TODO this is always true?
+            IsWhiteTurn = isWhiteTurn;
+
             History.Clear();
             AiMoveDiagnostics.Clear();
             AiPreviousMoveDiagnostics.Clear();
@@ -120,23 +134,36 @@ namespace vergiBlueDesktop.Views
             }
         }
 
+        /// <summary>
+        /// Enable game board
+        /// </summary>
         public void ViewUpdateGameStart()
         {
             GameStarted = true;
         }
 
+        /// <summary>
+        /// Disable game board
+        /// </summary>
         public void ViewUpdateGameEnd()
         {
             GameStarted = false;
         }
         
+        /// <summary>
+        /// </summary>
+        /// <param name="move"></param>
+        /// <param name="pieceNotMovedInView">Piece in view not updated yet</param>
         public void UpdateGraphics(SingleMove move, bool pieceNotMovedInView)
         {
             // Update view objects
             if (move.Capture)
             {
                 // If user move, there exists 2 viewobjects in same square
-                var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row && o.IsWhite != IsWhiteTurn);
+                var pieceToDelete = ViewObjectList.First(o =>
+                    o.Column == move.NewPos.column 
+                    && o.Row == move.NewPos.row 
+                    && o.IsWhite != IsWhiteTurn);
                 ViewObjectList.Remove(pieceToDelete);
             }
             
@@ -156,18 +183,19 @@ namespace vergiBlueDesktop.Views
         /// <summary>
         /// Handle stuff that needs Board.ExecuteMove to be finished first
         /// </summary>
-        /// <param name="move"></param>
         public void UpdatePostGraphics(SingleMove move, GameModelProxy proxy)
         {
             if (move.Promotion)
             {
                 // Model-piece is correct. Image-piece is moved, but wrong picture
-                var pieceToDelete = ViewObjectList.First(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row && o.IsWhite == IsWhiteTurn);
+                var pieceToDelete = ViewObjectList.First(o => 
+                    o.Column == move.NewPos.column 
+                    && o.Row == move.NewPos.row 
+                    && o.IsWhite == IsWhiteTurn);
                 ViewObjectList.Remove(pieceToDelete);
 
                 var promotionPieceBase = proxy.Model.Board.ValueAtDefinitely(move.NewPos);
                 AddPromotionPiece(promotionPieceBase, move, proxy);
-
             }
 
             if (move.Castling)
@@ -195,10 +223,10 @@ namespace vergiBlueDesktop.Views
         {
             var text = turnCount.ToString() + ": " + move.ToString();
             if (isCheck) text += " Check.";
-            WriteMoveHistory(text);
+            AppendHistory(text);
         }
 
-        public void WriteMoveHistory(string message)
+        public void AppendHistory(string message)
         {
             _logger.Info($"{nameof(History)}: {message}");
             History.Insert(0, message);
@@ -256,8 +284,5 @@ namespace vergiBlueDesktop.Views
                 column, row);
             ViewObjectList.Add(uiPiece);
         }
-
-
     }
-    
 }
