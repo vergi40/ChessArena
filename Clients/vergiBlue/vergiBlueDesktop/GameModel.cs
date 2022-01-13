@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using log4net;
 using vergiBlue;
 using vergiBlue.Pieces;
@@ -24,14 +19,13 @@ namespace vergiBlueDesktop
         
         private Logic AiLogic { get; set; }
 
-        public Board Board { get; set; }
-
         private MainViewModel _viewModel { get; }
 
         /// <summary>
         /// temp
         /// </summary>
         private GameModelProxy _proxy { get; }
+        public GameSession Session { get; set; }
         
         public GameModel(MainViewModel viewModel)
         {
@@ -51,18 +45,12 @@ namespace vergiBlueDesktop
         {
             _viewModel.ViewUpdateGameStart();
             InitializeEnvironment(true, true);
-
-            AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
-            AiLogic.Settings = _viewModel.AiLogicSettings;
         }
 
         private void StartBlack(object parameter)
         {
             _viewModel.ViewUpdateGameStart();
             InitializeEnvironment(false, true);
-
-            AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
-            AiLogic.Settings = _viewModel.AiLogicSettings;
 
             var interfaceMoveData = AiLogic.CreateMove();
             _viewModel.UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
@@ -88,17 +76,20 @@ namespace vergiBlueDesktop
                 initializedBoard.InitializeEmptyBoard();
             }
 
-            Board = initializedBoard;
+            Session = new GameSession(initializedBoard, playerIsWhite, isWhiteTurn, _viewModel.AiLogicSettings);
 
-            _viewModel.InitializeViewModel(playerIsWhite, isWhiteTurn, Board.PieceList, _proxy);
+            AiLogic = new Logic(!playerIsWhite, initializedBoard);
+            AiLogic.Settings = Session.Settings;
+
+            _viewModel.InitializeViewModel(Session, _proxy);
         }
         
         // TODO this needs some refactoring to smaller 
         public async void TurnFinished(SingleMove move, bool pieceNotMovedInView)
         {
-            move = Board.CollectMoveProperties(move);
+            move = Session.Board.CollectMoveProperties(move);
             _viewModel.UpdateGraphics(move, pieceNotMovedInView);
-            Board.ExecuteMove(move);
+            Session.Board.ExecuteMove(move);
             _viewModel.UpdatePostGraphics(move, _proxy);
 
             // Game ended?
@@ -110,10 +101,10 @@ namespace vergiBlueDesktop
             }
 
             TurnCount++;
-            _viewModel.AppendHistory(move, TurnCount, Board.IsCheck(_viewModel.IsWhiteTurn));
-            _viewModel.IsWhiteTurn = !_viewModel.IsWhiteTurn;
+            _viewModel.AppendHistory(move, TurnCount, Session.Board.IsCheck(Session.IsWhiteTurn));
+            Session.TurnChanged();
 
-            if (_viewModel.IsWhiteTurn != _viewModel.PlayerIsWhite)
+            if (Session.IsWhiteTurn != Session.PlayerIsWhite)
             {
                 // Ai turn
                 // TODO some busy-wrapper
@@ -153,9 +144,6 @@ namespace vergiBlueDesktop
 
             _viewModel.ViewUpdateGameStart();
             InitializeEnvironment(true, true, board);
-
-            AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
-            AiLogic.Settings = _viewModel.AiLogicSettings;
         }
 
         private void PromotionTest(object parameter)
@@ -182,8 +170,6 @@ namespace vergiBlueDesktop
             _viewModel.ViewUpdateGameStart();
             InitializeEnvironment(true, true, board);
 
-            AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
-            AiLogic.Settings = _viewModel.AiLogicSettings;
         }
 
         private void CastlingTest(object parameter)
@@ -218,9 +204,6 @@ namespace vergiBlueDesktop
 
             _viewModel.ViewUpdateGameStart();
             InitializeEnvironment(true, true, board);
-
-            AiLogic = new Logic(!_viewModel.PlayerIsWhite, Board);
-            AiLogic.Settings = _viewModel.AiLogicSettings;
         }
 
         private void Test2(object parameter)

@@ -70,10 +70,25 @@ namespace vergiBlueDesktop.Views
         // ---------------
 
 
-        public bool PlayerIsWhite { get; set; }
-        public bool IsWhiteTurn { get; set; }
-        
-        
+        public bool PlayerIsWhite
+        {
+            get
+            {
+                if (_session == null) return true;
+                return _session.PlayerIsWhite;
+            }
+        }
+
+        public bool IsWhiteTurn
+        {
+            get
+            {
+                if (_session == null) return true;
+                return _session.IsWhiteTurn;
+            }
+        }
+
+
         /// <summary>
         /// Actual graphics binded to view
         /// </summary>
@@ -109,15 +124,15 @@ namespace vergiBlueDesktop.Views
         public ICommand Test2Command { get; set; }
         public ICommand Test3Command { get; set; }
 
+        private GameSession _session { get; set; }
+
         public MainViewModel()
         {
         }
 
-        public void InitializeViewModel(bool playerIsWhite, bool isWhiteTurn, List<PieceBase> pieceList, GameModelProxy modelProxy)
+        public void InitializeViewModel(GameSession session, GameModelProxy modelProxy)
         {
-            PlayerIsWhite = playerIsWhite;
-            // TODO this is always true?
-            IsWhiteTurn = isWhiteTurn;
+            _session = session;
 
             History.Clear();
             AiMoveDiagnostics.Clear();
@@ -128,7 +143,7 @@ namespace vergiBlueDesktop.Views
             PreviousPosition.Clear();
 
             // Add pieces
-            foreach (var piece in pieceList)
+            foreach (var piece in _session.Board.PieceList)
             {
                 AddUiPiece(piece, piece.CurrentPosition.column, piece.CurrentPosition.row, modelProxy);
             }
@@ -194,7 +209,7 @@ namespace vergiBlueDesktop.Views
                     && o.IsWhite == IsWhiteTurn);
                 ViewObjectList.Remove(pieceToDelete);
 
-                var promotionPieceBase = proxy.Model.Board.ValueAtDefinitely(move.NewPos);
+                var promotionPieceBase = proxy.Model.Session.Board.ValueAtDefinitely(move.NewPos);
                 AddPromotionPiece(promotionPieceBase, move, proxy);
             }
 

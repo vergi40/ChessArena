@@ -30,8 +30,8 @@ namespace vergiBlueDesktop.Views
         
         public void VisualizePossibleTiles()
         {
-            var moves = PieceModel.Moves(_gameModel.Model.Board);
-            moves = _gameModel.Model.Board.FilterOutIllegalMoves(moves, IsWhite);
+            var moves = PieceModel.Moves(_gameModel.Model.Session.Board);
+            moves = _gameModel.Model.Session.Board.FilterOutIllegalMoves(moves, IsWhite);// TODO how to fix?
 
             var borderColor = Brushes.Chartreuse;
             if (IsWhite != Main.PlayerIsWhite) borderColor = Brushes.Coral;
