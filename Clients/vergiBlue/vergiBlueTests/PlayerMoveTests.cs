@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
 using vergiBlue;
+using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
 namespace vergiBlueTests
@@ -62,7 +63,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerWhitePawnShouldEatOpponent()
         {
-            var logic = new Logic(true, CreateMockPawnSetup());
+            var logic = LogicFactory.CreateForTest(true, CreateMockPawnSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
@@ -72,7 +73,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerBlackPawnShouldEatOpponent()
         {
-            var logic = new Logic(false, CreateMockPawnSetup());
+            var logic = LogicFactory.CreateForTest(false, CreateMockPawnSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
@@ -82,7 +83,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerWhiteRookShouldEatOpponentRook()
         {
-            var logic = new Logic(true, CreateMockPawnRookSetup());
+            var logic = LogicFactory.CreateForTest(true, CreateMockPawnRookSetup());
             var playerMove = logic.CreateMoveWithDepth(2);
 
             // Let's see if the best move selected
@@ -94,7 +95,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerBlackRookShouldEatOpponentRook()
         {
-            var logic = new Logic(false, CreateMockPawnRookSetup());
+            var logic = LogicFactory.CreateForTest(false, CreateMockPawnRookSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
@@ -115,7 +116,7 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var logic = new Logic(true);
+            var logic = LogicFactory.CreateWithoutBoardInit(true);
             logic.Board = new Board();
 
             // Pawns

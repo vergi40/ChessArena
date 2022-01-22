@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
 using vergiBlue;
 using vergiBlue.Algorithms;
+using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
 namespace vergiBlueTests
@@ -61,7 +62,7 @@ namespace vergiBlueTests
         public void Transpositions_Depth1()
         {
             var searchDepth = 1;
-            var player = new Logic(false, BenchMarking.CreateRuyLopezOpeningBoard());
+            var player = LogicFactory.CreateForTest(false, BenchMarking.CreateRuyLopezOpeningBoard());
 
             player.Settings = new LogicSettings()
             {
@@ -105,7 +106,7 @@ namespace vergiBlueTests
             };
             whiteBoard.AddNew(pieces);
 
-            var white = new Logic(true, whiteBoard);
+            var white = LogicFactory.CreateForTest(true, whiteBoard);
 
             white.Settings = new LogicSettings()
             {

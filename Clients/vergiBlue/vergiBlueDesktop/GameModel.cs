@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using log4net;
 using vergiBlue;
+using vergiBlue.Logic;
 using vergiBlue.Pieces;
 using vergiBlueDesktop.Views;
 
@@ -78,7 +79,7 @@ namespace vergiBlueDesktop
 
             Session = new GameSession(initializedBoard, playerIsWhite, isWhiteTurn, _viewModel.AiLogicSettings);
 
-            AiLogic = new Logic(!playerIsWhite, initializedBoard);
+            AiLogic = LogicFactory.CreateForTest(!playerIsWhite, initializedBoard);
             AiLogic.Settings = Session.Settings;
 
             _viewModel.InitializeViewModel(Session, _proxy);

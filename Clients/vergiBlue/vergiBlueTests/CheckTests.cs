@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
 using vergiBlue;
+using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
 namespace vergiBlueTests
@@ -26,7 +27,7 @@ namespace vergiBlueTests
 
             var move = new SingleMove("a1", "a2");
             //player1.Board.ExecuteMove(move);
-            var player1 = new Logic(true, new Board(board, move));
+            var player1 = LogicFactory.CreateForTest(true, new Board(board, move));
 
             var kingReference = player1.Board.Kings.white;
             kingReference.ShouldNotBeNull();
@@ -54,7 +55,7 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
             player.SearchDepth = 4;
 
@@ -88,7 +89,7 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
 
             var board = new Board();
@@ -128,10 +129,10 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
 
-            var opponent = new Logic(false);
+            var opponent = LogicFactory.CreateWithoutBoardInit(false);
             opponent.Strategy.Phase = GamePhase.EndGame;
 
             var board = new Board();
@@ -179,10 +180,10 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
 
-            var opponent = new Logic(false);
+            var opponent = LogicFactory.CreateWithoutBoardInit(false);
             opponent.Strategy.Phase = GamePhase.EndGame;
             opponent.LatestOpponentMove = new MoveImplementation(){Check = true};
 
@@ -231,7 +232,7 @@ namespace vergiBlueTests
             // 2   R|
             // 1    |
             //  ABCD EFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
 
             var previousMove = new MoveImplementation()

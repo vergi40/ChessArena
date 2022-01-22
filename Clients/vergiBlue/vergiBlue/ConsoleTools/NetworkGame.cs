@@ -10,6 +10,7 @@ using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
 using log4net;
+using vergiBlue.Logic;
 
 namespace vergiBlue.ConsoleTools
 {
@@ -55,7 +56,7 @@ namespace vergiBlue.ConsoleTools
             Log("Starting logic...");
             LogicBase ai;
             if (connectionTesting) ai = new ConnectionTesterLogic(startInformation.WhitePlayer);
-            else ai = new Logic(startInformation);
+            else ai = LogicFactory.Create(startInformation);
 
             Log("Start game loop");
 

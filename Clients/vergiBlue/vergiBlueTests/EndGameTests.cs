@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using vergiBlue;
+using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
 namespace vergiBlueTests
@@ -50,8 +51,8 @@ namespace vergiBlueTests
                 new King(false, "e7")
             };
             board.AddNew(pieces);
-            var player = new Logic(true, board);
-            var opponent = new Logic(false, board);
+            var player = LogicFactory.CreateForTest(true, board);
+            var opponent = LogicFactory.CreateForTest(false, board);
             
             var playerMove = player.CreateMoveWithDepth(8);
             playerMove.Move.EndPosition.ShouldBe("e6");

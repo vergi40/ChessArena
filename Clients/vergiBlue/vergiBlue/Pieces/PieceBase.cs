@@ -72,7 +72,7 @@ namespace vergiBlue.Pieces
         /// <returns></returns>
         protected virtual SingleMove? CanMoveTo((int, int) target, Board board, bool validateBorders = false)
         {
-            if (validateBorders && Logic.IsOutside(target)) return null;
+            if (validateBorders && Logic.Logic.IsOutside(target)) return null;
 
             var valueAt = board.ValueAt(target);
             if (valueAt == null)
