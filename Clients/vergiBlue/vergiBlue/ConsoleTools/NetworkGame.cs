@@ -17,7 +17,7 @@ namespace vergiBlue.ConsoleTools
     {
         private static readonly ILog _localLogger = LogManager.GetLogger(typeof(NetworkGame));
         private static void Log(string message) => Logger.LogWithConsole(message, _localLogger);
-        public static void Start(grpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
+        public static void Start(IGrpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
         {
             // We could use while(true) to play games indefinitely. But probably better to play single game per opened client
             try
@@ -41,7 +41,7 @@ namespace vergiBlue.ConsoleTools
             }
         }
 
-        public static async Task MainGameLoop(grpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
+        public static async Task MainGameLoop(IGrpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
         {
             Log(Environment.NewLine);
             var startInformation = await grpcClientConnection.Initialize(playerName);
