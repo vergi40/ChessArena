@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using vergiBlue;
+using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
@@ -32,7 +33,7 @@ namespace vergiBlueTests
             // 4... Bd7 5. Bxg6!
          
             
-            var board = new Board();
+            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "b4"),

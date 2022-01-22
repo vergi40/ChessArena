@@ -10,8 +10,11 @@ using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
 using log4net;
 using vergiBlue.Algorithms;
+using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
+using vergiBlue.BoardModel;
+
 
 namespace vergiBlue.ConsoleTools
 {
@@ -20,7 +23,7 @@ namespace vergiBlue.ConsoleTools
         private static readonly ILog _localLogger = LogManager.GetLogger(typeof(LocalGame));
         private static void Log(string message) => Logger.LogWithConsole(message, _localLogger);
 
-        public static void Start(int minDelayInMs, int? overrideOpponentMaxDepth, Board? overrideBoard = null)
+        public static void Start(int minDelayInMs, int? overrideOpponentMaxDepth, IBoard? overrideBoard = null)
         {
             Log(Environment.NewLine);
             // TODO async
@@ -102,7 +105,7 @@ namespace vergiBlue.ConsoleTools
             }
             else if (input.KeyChar.ToString() == "2")
             {
-                var board = new Board();
+                var board = BoardFactory.Create();
                 var pieces = new List<PieceBase>
                 {
                     new Rook(true, "a1"),
@@ -121,7 +124,7 @@ namespace vergiBlue.ConsoleTools
             }
             else if (input.KeyChar.ToString() == "3")
             {
-                var board = new Board();
+                var board = BoardFactory.Create();
                 var pieces = new List<PieceBase>
                 {
                     new Rook(true, "a1"),
@@ -141,7 +144,7 @@ namespace vergiBlue.ConsoleTools
             }
             else if (input.KeyChar.ToString() == "4")
             {
-                var board = new Board();
+                var board = BoardFactory.Create();
                 var pieces = new List<PieceBase>
                 {
                     new Pawn(true, "c2"),

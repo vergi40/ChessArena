@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using vergiBlue;
+using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
@@ -299,7 +300,7 @@ namespace vergiBlueTests
 
         }
 
-        internal static Board CreateRuyLopezOpeningBoard()
+        internal static IBoard CreateRuyLopezOpeningBoard()
         {
             // 8R BQ|KBNR
             // 7PPPP| PPP
@@ -310,7 +311,7 @@ namespace vergiBlueTests
             // 2PPPP| PPP
             // 1RNBQ|K  R
             //  ABCD EFGH
-            var board = new Board();
+            var board = BoardFactory.Create();
             board.InitializeEmptyBoard();
 
             // 1.e4 e5 2.Nf3 Nc6 3.Bb5
@@ -333,7 +334,7 @@ namespace vergiBlueTests
             // 2PPPP| PPP
             // 1RNBQ|K  R
             //  ABCD EFGH
-            var player = LogicFactory.CreateForTest(false, new Board(CreateRuyLopezOpeningBoard()));
+            var player = LogicFactory.CreateForTest(false, BoardFactory.CreateClone(CreateRuyLopezOpeningBoard()));
             player.Settings = settings;
 
             var playerMove = player.CreateMoveWithDepth(searchDepth);
@@ -395,7 +396,7 @@ namespace vergiBlueTests
 
         public void GreatestEndings_1_MidGame(int searchDepth, LogicSettings settings)
         {
-            var board = new Board();
+            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "a4"),
@@ -446,7 +447,7 @@ namespace vergiBlueTests
             // 2    K
             // 1
             //  ABCDEFGH
-            var board = new Board();
+            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Rook(false, "d5"),

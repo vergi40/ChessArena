@@ -4,6 +4,7 @@ using System.Linq;
 using CommonNetStandard.Client;
 using CommonNetStandard.Interface;
 using vergiBlue.Algorithms;
+using vergiBlue.BoardModel;
 
 namespace vergiBlue.Logic
 {
@@ -17,7 +18,7 @@ namespace vergiBlue.Logic
         public IMove? LatestOpponentMove { get; set; }
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
         
-        public Board Board { get; set; } = new Board();
+        public IBoard Board { get; set; } = BoardFactory.Create();
         private OpeningLibrary Openings { get; } = new OpeningLibrary();
 
         /// <summary>
@@ -44,16 +45,16 @@ namespace vergiBlue.Logic
         /// <summary>
         /// For tests. Start board known. Test environment handles initializations.
         /// </summary>
-        public Logic(bool isPlayerWhite, Board board, int? overrideMaxDepth = null) : base(isPlayerWhite)
+        public Logic(bool isPlayerWhite, IBoard board, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, Settings.UseTranspositionTables);
-            Board = new Board(board);
+            Board = BoardFactory.CreateClone(board);
         }
 
-        public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, Board? overrideBoard = null) : base(startInformation.WhitePlayer)
+        public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
         {
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth, Settings.UseTranspositionTables);
-            if(overrideBoard != null) Board = new Board(overrideBoard);
+            if(overrideBoard != null) Board = BoardFactory.CreateClone(overrideBoard);
             else Board.InitializeEmptyBoard();
             
             // Opponent non-null only if player is black

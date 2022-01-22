@@ -11,7 +11,7 @@ namespace vergiBlue.Logic
         /// <summary>
         /// Create new AI logic to be used in any game
         /// </summary>
-        public static Logic Create(IGameStartInformation startInformation, int? overrideMaxDepth = null, Board? overrideBoard = null)
+        public static Logic Create(IGameStartInformation startInformation, int? overrideMaxDepth = null, BoardModel.IBoard? overrideBoard = null)
         {
             return new Logic(startInformation, overrideMaxDepth, overrideBoard);
         }
@@ -19,7 +19,7 @@ namespace vergiBlue.Logic
         /// <summary>
         /// For tests. Start board known. Test environment handles initializations.
         /// </summary>
-        public static Logic CreateForTest(bool isPlayerWhite, Board board, int? overrideMaxDepth = null)
+        public static Logic CreateForTest(bool isPlayerWhite, BoardModel.IBoard board, int? overrideMaxDepth = null)
         {
             return new Logic(isPlayerWhite, board, overrideMaxDepth);
         }

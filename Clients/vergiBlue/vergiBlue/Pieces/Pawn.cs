@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using vergiBlue.BoardModel;
+
 
 namespace vergiBlue.Pieces
 {
@@ -30,7 +32,7 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        protected override SingleMove? CanMoveTo((int, int) target, Board board, bool validateBorders = false)
+        protected override SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false)
         {
             if (validateBorders && Logic.Logic.IsOutside(target)) return null;
 
@@ -42,7 +44,7 @@ namespace vergiBlue.Pieces
             return null;
         }
 
-        private SingleMove? CanCapture((int, int) target, Board board)
+        private SingleMove? CanCapture((int, int) target, IBoard board)
         {
             if(Logic.Logic.IsOutside(target)) return null;
 
@@ -66,7 +68,7 @@ namespace vergiBlue.Pieces
         /// List all allowed
         /// </summary>
         /// <returns></returns>
-        public override IEnumerable<SingleMove> Moves(Board board)
+        public override IEnumerable<SingleMove> Moves(IBoard board)
         {
             var (column, row) = CurrentPosition;
 

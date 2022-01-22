@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using log4net;
 using vergiBlue;
+using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 using vergiBlueDesktop.Views;
@@ -68,12 +69,12 @@ namespace vergiBlueDesktop
         /// <summary>
         /// Initialize board and view with pieces
         /// </summary>
-        private void InitializeEnvironment(bool playerIsWhite, bool isWhiteTurn, Board initializedBoard = null)
+        private void InitializeEnvironment(bool playerIsWhite, bool isWhiteTurn, IBoard initializedBoard = null)
         {
             TurnCount = 0;
             if (initializedBoard == null)
             {
-                initializedBoard = new Board();
+                initializedBoard = BoardFactory.Create();
                 initializedBoard.InitializeEmptyBoard();
             }
 
@@ -133,7 +134,7 @@ namespace vergiBlueDesktop
             // 2    K
             // 1
             //  ABCDEFGH
-            var board = new Board();
+            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Rook(false, "d5"),
@@ -158,7 +159,7 @@ namespace vergiBlueDesktop
             // 2  P  
             // 1  
             //  ABCDEFGH
-            var board = new Board();
+            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new King(true, "f6"),
@@ -184,7 +185,7 @@ namespace vergiBlueDesktop
             // 2     PPP
             // 1    K  R
             //  ABCDEFGH
-            var board = new Board();
+            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Rook(true, "h1"),

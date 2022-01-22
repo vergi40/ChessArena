@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue;
+using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 
 namespace vergiBlueDesktop
@@ -13,7 +14,7 @@ namespace vergiBlueDesktop
     /// </summary>
     public class GameSession
     {
-        public Board Board { get; }
+        public IBoard Board { get; }
 
         /// <summary>
         /// Binded to viewmodel - view
@@ -26,7 +27,7 @@ namespace vergiBlueDesktop
 
         public bool IsWhiteTurn => _isWhiteTurn;
 
-        public GameSession(Board board, bool playerIsWhite, bool isWhiteTurn, LogicSettings settings)
+        public GameSession(IBoard board, bool playerIsWhite, bool isWhiteTurn, LogicSettings settings)
         {
             Board = board;
             PlayerIsWhite = playerIsWhite;

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using vergiBlue.BoardModel;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.Algorithms
@@ -68,7 +66,7 @@ namespace vergiBlue.Algorithms
     {
         public Dictionary<ulong, Transposition> Tables { get; set; } = new ();
         
-        private bool _isInitialized { get; set; } = false;
+        private bool _isInitialized { get; set; }
         
         private ulong[,] hashTable = new ulong[0, 0];
         
@@ -104,7 +102,7 @@ namespace vergiBlue.Algorithms
         /// <summary>
         /// Use at start initialization
         /// </summary>
-        public ulong CreateBoardHash(Board board)
+        public ulong CreateBoardHash(IBoard board)
         {
             ulong hash = 0;
             for (int i = 0; i < board.PieceList.Count; i++)
@@ -121,7 +119,7 @@ namespace vergiBlue.Algorithms
         /// <summary>
         /// Get board hash for given move (with pre-move board reference and it's hash)
         /// </summary>
-        public ulong GetNewBoardHash(SingleMove move, Board oldBoard, ulong oldHash)
+        public ulong GetNewBoardHash(SingleMove move, IBoard oldBoard, ulong oldHash)
         {
             // Erase capture
             if (move.Capture)
@@ -186,7 +184,7 @@ namespace vergiBlue.Algorithms
         /// </summary>
         public void Add(ulong boardHash, int depth, double evaluation, NodeType nodeType, int gameTurnCount)
         {
-            if (boardHash == 0) throw new ArgumentException($"Board hash was empty.");
+            if (boardHash == 0) throw new ArgumentException("Board hash was empty.");
             if(Tables.TryGetValue(boardHash, out var transposition))
             {
                 // Replacement scheme: always replace
@@ -214,7 +212,7 @@ namespace vergiBlue.Algorithms
         /// </summary>
         public void Update(ulong hash, int depth, double evaluation, NodeType nodeType, int gameTurnCount)
         {
-            if (hash == 0) throw new ArgumentException($"Board hash was empty.");
+            if (hash == 0) throw new ArgumentException("Board hash was empty.");
             
             // Replacement scheme: always replace
             var transposition = Tables[hash];
@@ -232,7 +230,7 @@ namespace vergiBlue.Algorithms
         /// Check if the given move is already calculated (with pre-move board reference).
         /// Fast (could be even faster with tables indexing).
         /// </summary>
-        public bool ContainsMove(Board oldBoard, SingleMove newMove)
+        public bool ContainsMove(IBoard oldBoard, SingleMove newMove)
         {
             var oldHash = oldBoard.BoardHash;
             var newHash = GetNewBoardHash(newMove, oldBoard, oldHash);
@@ -245,7 +243,7 @@ namespace vergiBlue.Algorithms
         /// Get value of the already calculated move (with pre-move board reference)
         /// </summary>
         /// <returns>Null if no transposition exists</returns>
-        public Transposition? GetTranspositionForMove(Board oldBoard, SingleMove newMove)
+        public Transposition? GetTranspositionForMove(IBoard oldBoard, SingleMove newMove)
         {
             var oldHash = oldBoard.BoardHash;
             var newHash = GetNewBoardHash(newMove, oldBoard, oldHash);
@@ -259,7 +257,7 @@ namespace vergiBlue.Algorithms
 
         public Transposition? GetTranspositionForBoard(ulong boardHash)
         {
-            if (boardHash == 0) throw new ArgumentException($"Board hash was empty.");
+            if (boardHash == 0) throw new ArgumentException("Board hash was empty.");
             if (Tables.TryGetValue(boardHash, out var transposition))
             {
                 return transposition;

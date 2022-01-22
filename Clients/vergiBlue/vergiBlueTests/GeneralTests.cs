@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
 using vergiBlue;
 using vergiBlue.Algorithms;
+using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
@@ -20,7 +21,7 @@ namespace vergiBlueTests
             var transposition = new TranspositionTables();
             transposition.Initialize();
 
-            var board = new Board();
+            var board = BoardFactory.Create();
             board.InitializeEmptyBoard();
 
             var hash = board.BoardHash;
@@ -33,7 +34,7 @@ namespace vergiBlueTests
             var transposition = new TranspositionTables();
             transposition.Initialize();
 
-            var board = new Board();
+            var board = BoardFactory.Create();
             board.InitializeEmptyBoard();
 
             // 
@@ -97,7 +98,7 @@ namespace vergiBlueTests
             // Obvious board.
             // If white starts, pawn is sure to be lost
 
-            var whiteBoard = new Board();
+            var whiteBoard = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Pawn(false, "a4"),
@@ -121,7 +122,7 @@ namespace vergiBlueTests
             white.Board.ExecuteMove(new SingleMove("c3", "b4"));
 
             // Calculate optimal move hash beforehand and compare to choice made
-            var expectedBoard = new Board();
+            var expectedBoard = BoardFactory.Create();
             var expectedPieces = new List<PieceBase>
             {
                 new Pawn(false, "a4"),
@@ -131,7 +132,7 @@ namespace vergiBlueTests
             expectedBoard.AddNew(expectedPieces);
             
             // Refresh hash
-            expectedBoard = new Board(expectedBoard);
+            expectedBoard = BoardFactory.CreateClone(expectedBoard);
             
             white.Board.BoardHash.ShouldBe(expectedBoard.BoardHash);
 
@@ -159,8 +160,8 @@ namespace vergiBlueTests
             // 1
             //  ABCDEFGH
 
-            var board1 = new Board();
-            var board2 = new Board();
+            var board1 = BoardFactory.Create();
+            var board2 = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Pawn(false, "a4"),
@@ -187,7 +188,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PawnAllowedMoves()
         {
-            var board = new Board();
+            var board = BoardFactory.Create();
             var pawn1 = new Pawn(true, (0, 1));
 
             var pawn2 = new Pawn(false, (1, 2));

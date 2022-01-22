@@ -30,7 +30,7 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(Board board)
+        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
         {
             var moves = BishopMoves(board);
             return moves.Concat(RookMoves(board));

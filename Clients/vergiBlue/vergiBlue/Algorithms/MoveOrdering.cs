@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using vergiBlue.BoardModel;
 
 namespace vergiBlue.Algorithms
 {
@@ -10,7 +9,7 @@ namespace vergiBlue.Algorithms
     {
         // ------------
         // Order by light score guessing
-        public static IList<SingleMove> SortMovesByGuessWeight(IList<SingleMove> moves, Board board, bool isMaximizing)
+        public static IList<SingleMove> SortMovesByGuessWeight(IList<SingleMove> moves, IBoard board, bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
             var list = CreateGuessWeightedList(moves, board, isMaximizing);
@@ -27,7 +26,7 @@ namespace vergiBlue.Algorithms
         /// <param name="isMaximizing"></param>
         /// <returns></returns>
         private static IList<(double eval, SingleMove move)> CreateGuessWeightedList(IEnumerable<SingleMove> moves,
-            Board board, bool isMaximizing)
+            IBoard board, bool isMaximizing)
         {
             IList<(double weight, SingleMove move)> list = new List<(double weight, SingleMove move)>();
             foreach (var singleMove in moves)
@@ -62,7 +61,7 @@ namespace vergiBlue.Algorithms
         // -----------
         // Order by evaluation
 
-        public static IList<SingleMove> SortMovesByEvaluation(IList<SingleMove> moves, Board board, bool isMaximizing)
+        public static IList<SingleMove> SortMovesByEvaluation(IList<SingleMove> moves, IBoard board, bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
             var list = CreateEvaluationList(moves, board, isMaximizing);
@@ -71,12 +70,12 @@ namespace vergiBlue.Algorithms
         }
 
         private static IList<(double eval, SingleMove move)> CreateEvaluationList(IEnumerable<SingleMove> moves,
-            Board board, bool isMaximizing)
+            IBoard board, bool isMaximizing)
         {
             IList<(double eval, SingleMove move)> list = new List<(double eval, SingleMove move)>();
             foreach (var singleMove in moves)
             {
-                var newBoard = new Board(board, singleMove);
+                var newBoard = BoardFactory.CreateFromMove(board, singleMove);
                 var eval = newBoard.Evaluate(isMaximizing, false);
                 list.Add((eval, singleMove));
             }
@@ -110,11 +109,9 @@ namespace vergiBlue.Algorithms
                     if (move1.weight > move2.weight) return 1;
                     return -1;
                 }
-                else
-                {
-                    if (move1.weight < move2.weight) return 1;
-                    return -1;
-                }
+
+                if (move1.weight < move2.weight) return 1;
+                return -1;
             }
 
             // 

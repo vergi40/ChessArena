@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.Logic;
+using vergiBlue.BoardModel;
 
 namespace vergiBlue
 {
@@ -69,7 +70,7 @@ namespace vergiBlue
             TurnCount = turnCount;
         }
 
-        public int DecideSearchDepth(DiagnosticsData previous, List<SingleMove> allMoves, Board board)
+        public int DecideSearchDepth(DiagnosticsData previous, List<SingleMove> allMoves, IBoard board)
         {
             _previous = previous;
             var previousDepth = SearchDepth;
@@ -117,7 +118,7 @@ namespace vergiBlue
             //return SearchDepth;
         }
 
-        private int AssessTimeForMiniMaxDepth(int depth, IList<SingleMove> availableMoves, Board board,
+        private int AssessTimeForMiniMaxDepth(int depth, IList<SingleMove> availableMoves, IBoard board,
             int previousDepth, DiagnosticsData previousData)
         {
             var previousTime = previousData.TimeElapsed.TotalMilliseconds;
@@ -147,7 +148,7 @@ namespace vergiBlue
 
             return (int) (timeEstimate * factor);
         }
-        private int GetMaxDepthForCurrentBoard(Board board)
+        private int GetMaxDepthForCurrentBoard(IBoard board)
         {
             var tempOffset = -1;
 
@@ -159,7 +160,7 @@ namespace vergiBlue
             return 10 + tempOffset;
         }
 
-        private int GetMaxDepthForCurrentBoardWithTranspositions(Board board)
+        private int GetMaxDepthForCurrentBoardWithTranspositions(IBoard board)
         {
             var tempOffset = -1;
             
@@ -172,7 +173,7 @@ namespace vergiBlue
         }
 
 
-        private void AnalyzeGamePhase(int movePossibilities, Board board)
+        private void AnalyzeGamePhase(int movePossibilities, IBoard board)
         {
             var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
 
@@ -195,7 +196,7 @@ namespace vergiBlue
         /// </summary>
         /// <param name="movePossibilities"></param>
         /// <param name="board"></param>
-        private void AnalyzeHighPieceCountPhase(int movePossibilities, Board board)
+        private void AnalyzeHighPieceCountPhase(int movePossibilities, IBoard board)
         {
             // Game start
             if (_previous.TimeElapsed.Equals(TimeSpan.Zero))
@@ -225,7 +226,7 @@ namespace vergiBlue
             }
         }
 
-        private void AnalyzeMediumPieceCountPhase(int movePossibilities, Board board)
+        private void AnalyzeMediumPieceCountPhase(int movePossibilities, IBoard board)
         {
             // 
             if (Phase != GamePhase.Middle && Phase != GamePhase.MidEndGame)
@@ -264,7 +265,7 @@ namespace vergiBlue
             }
         }
 
-        private void AnalyzeLowPieceCountPhase(int movePossibilities, Board board)
+        private void AnalyzeLowPieceCountPhase(int movePossibilities, IBoard board)
         {
             // 
             if (Phase != GamePhase.EndGame)

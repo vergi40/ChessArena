@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace vergiBlue.Algorithms
 {
@@ -22,8 +18,8 @@ namespace vergiBlue.Algorithms
         public double Min { get; set; } = 1000000;
         public double Max { get; set; } = -1000000;
 
-        private bool _minIsCapture = false;
-        private bool _maxIsCapture = false;
+        private bool _minIsCapture;
+        private bool _maxIsCapture;
 
         public SingleMove MinMove { get; set; } = new SingleMove((-1,-1), (-1,-1));
         public SingleMove MaxMove { get; set; } = new SingleMove((-1, -1), (-1, -1));

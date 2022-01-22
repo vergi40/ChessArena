@@ -7,80 +7,9 @@ using log4net;
 using vergiBlue.Algorithms;
 using vergiBlue.Pieces;
 
-namespace vergiBlue
+namespace vergiBlue.BoardModel
 {
-    /// <summary>
-    /// Data class that has same informations shared to all search depths.
-    /// </summary>
-    public class SharedData
-    {
-        /// <summary>
-        /// Total game turn count
-        /// </summary>
-        public int GameTurnCount { get; set; } = 0;
-        
-        public TranspositionTables Transpositions { get; }
-        
-        public SharedData()
-        {
-            Transpositions = new TranspositionTables();
-            Transpositions.Initialize();
-        }
-    }
-
-    /// <summary>
-    /// Data class that is updated for each depth in search.
-    /// </summary>
-    public class StrategicData
-    {
-        /// <summary>
-        /// Tracks turn count for search.
-        /// </summary>
-        public int TurnCountInCurrentDepth { get; set; }
-        
-        /// <summary>
-        /// How close to end the game is. Range 0.0 (start) - 1.0 (empty board).
-        /// </summary>
-        public double EndGameWeight { get; set; }
-
-        public bool WhiteLeftCastlingValid { get; set; } = true;
-        public bool WhiteRightCastlingValid { get; set; } = true;
-        public bool BlackLeftCastlingValid { get; set; } = true;
-        public bool BlackRightCastlingValid { get; set; } = true;
-
-        public StrategicData()
-        {
-            // Empty board = end value-
-            EndGameWeight = 1;
-            TurnCountInCurrentDepth = 0;
-        }
-
-        public StrategicData(StrategicData previous)
-        {
-            EndGameWeight = previous.EndGameWeight;
-            WhiteLeftCastlingValid = previous.WhiteLeftCastlingValid;
-            WhiteRightCastlingValid = previous.WhiteRightCastlingValid;
-            BlackLeftCastlingValid = previous.BlackLeftCastlingValid;
-            BlackRightCastlingValid = previous.BlackRightCastlingValid;
-        }
-
-
-        public void UpdateCastlingStatusFromMove(SingleMove move)
-        {
-            if (move.NewPos.row == 0)
-            {
-                WhiteLeftCastlingValid = false;
-                WhiteRightCastlingValid = false;
-            }
-            else if(move.NewPos.row == 7)
-            {
-                BlackLeftCastlingValid = false;
-                BlackRightCastlingValid = false;
-            }
-        }
-    }
-    
-    public class Board
+    public class Board : IBoard
     {
         private static readonly ILog _localLogger = LogManager.GetLogger(typeof(Board));
         /// <summary>
@@ -158,16 +87,15 @@ namespace vergiBlue
         /// <summary>
         /// Create board clone for testing purposes. Set kings explicitly
         /// </summary>
-        /// <param name="previous"></param>
-        public Board(Board previous)
+        public Board(IBoard other)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             
-            InitializeFromReference(previous);
+            InitializeFromReference(other);
 
-            Shared = previous.Shared;
-            Strategic = new StrategicData(previous.Strategic);
+            Shared = other.Shared;
+            Strategic = new StrategicData(other.Strategic);
             
             // Create new hash as tests might not initialize board properly
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
@@ -177,17 +105,15 @@ namespace vergiBlue
         /// <summary>
         /// Create board setup after move
         /// </summary>
-        /// <param name="previous"></param>
-        /// <param name="move"></param>
-        public Board(Board previous, SingleMove move)
+        public Board(IBoard other, SingleMove move)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             
-            InitializeFromReference(previous);
-            Shared = previous.Shared;
-            Strategic = new StrategicData(previous.Strategic);
-            BoardHash = previous.BoardHash;
+            InitializeFromReference(other);
+            Shared = other.Shared;
+            Strategic = new StrategicData(other.Strategic);
+            BoardHash = other.BoardHash;
 
             ExecuteMove(move);
         }
@@ -300,7 +226,7 @@ namespace vergiBlue
         /// <returns></returns>
         public double GetPowerPiecePercent()
         {
-            var powerPieces = PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
+            var powerPieces = PieceList.Count(p => Math.Abs((double)p.RelativeStrength) > PieceBaseStrength.Pawn);
             return powerPieces / 16.0;
         }
 
@@ -358,7 +284,7 @@ namespace vergiBlue
             }
         }
 
-        private void InitializeFromReference(Board previous)
+        private void InitializeFromReference(IBoard previous)
         {
             foreach (var piece in previous.PieceList)
             {
@@ -397,7 +323,7 @@ namespace vergiBlue
         /// <summary>
         /// Return piece at coordinates. Known to have value
         /// </summary>
-        /// <returns>Can be null</returns>
+        /// <exception cref="ArgumentException"></exception>
         public PieceBase ValueAtDefinitely((int column, int row) target)
         {
             var piece = BoardArray[target.column, target.row];
@@ -537,7 +463,7 @@ namespace vergiBlue
                     if (kingInDanger)
                     {
                         // Only allow moves that don't result in check
-                        var newBoard = new Board(this, singleMove);
+                        var newBoard = BoardFactory.CreateFromMove(this, singleMove);
                         if (newBoard.IsCheck(!forWhite)) continue;
                     }
 
@@ -561,7 +487,7 @@ namespace vergiBlue
                     if (kingInDanger)
                     {
                         // Only allow moves that don't result in check
-                        var newBoard = new Board(this, singleMove);
+                        var newBoard = BoardFactory.CreateFromMove(this, singleMove);
                         if (newBoard.IsCheck(!forWhite)) continue;
                     }
 
@@ -674,7 +600,7 @@ namespace vergiBlue
             var opponentMoves = Moves(!isWhiteOffensive, false);
             foreach (var singleMove in opponentMoves)
             {
-                var newBoard = new Board(this, singleMove);
+                var newBoard = BoardFactory.CreateFromMove(this, singleMove);
                 if (!newBoard.IsCheck(isWhiteOffensive))
                 {
                     // Found possible move
@@ -776,7 +702,7 @@ namespace vergiBlue
             }
 
             // Check and checkmate
-            var nextBoard = new Board(this, move);
+            var nextBoard = BoardFactory.CreateFromMove(this, move);
             move.Check = nextBoard.IsCheck(isWhite);
             move.CheckMate = nextBoard.IsCheckMate(isWhite, move.Check);
             return move;
