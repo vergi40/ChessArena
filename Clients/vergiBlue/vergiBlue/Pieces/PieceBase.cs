@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using CommonNetStandard.Interface;
+using vergiBlue.BoardModel;
+
 
 namespace vergiBlue.Pieces
 {
@@ -70,9 +72,9 @@ namespace vergiBlue.Pieces
         /// <param name="board"></param>
         /// <param name="validateBorders"></param>
         /// <returns></returns>
-        protected virtual SingleMove? CanMoveTo((int, int) target, Board board, bool validateBorders = false)
+        protected virtual SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false)
         {
-            if (validateBorders && Logic.IsOutside(target)) return null;
+            if (validateBorders && Logic.Logic.IsOutside(target)) return null;
 
             var valueAt = board.ValueAt(target);
             if (valueAt == null)
@@ -90,7 +92,7 @@ namespace vergiBlue.Pieces
         /// Each move the piece can make in current board setting
         /// </summary>
         /// <returns></returns>
-        public abstract IEnumerable<SingleMove> Moves(Board board);
+        public abstract IEnumerable<SingleMove> Moves(IBoard board);
 
         /// <summary>
         /// Copy needs to be made with the derived class constructor so type matches
@@ -98,7 +100,7 @@ namespace vergiBlue.Pieces
         /// <returns></returns>
         public abstract PieceBase CreateCopy();
 
-        protected IEnumerable<SingleMove> RookMoves(Board board)
+        protected IEnumerable<SingleMove> RookMoves(IBoard board)
         {
             var column = CurrentPosition.column;
             var row = CurrentPosition.row;
@@ -152,7 +154,7 @@ namespace vergiBlue.Pieces
             }
         }
 
-        protected IEnumerable<SingleMove> BishopMoves(Board board)
+        protected IEnumerable<SingleMove> BishopMoves(IBoard board)
         {
             var column = CurrentPosition.column;
             var row = CurrentPosition.row;

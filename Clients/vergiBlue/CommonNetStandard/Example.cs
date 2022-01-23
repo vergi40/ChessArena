@@ -13,7 +13,7 @@ namespace CommonNetStandard
     {
         static void Main()
         {
-            using var connection = new grpcClientConnection("127.0.0.1:30052");
+            using var connection = GrpcClientConnectionFactory.Create("127.0.0.1:30052");
             var startInformation = connection.Initialize("example player");
 
             // Wait for the server to respond

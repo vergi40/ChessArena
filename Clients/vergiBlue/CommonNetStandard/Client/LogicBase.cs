@@ -3,7 +3,7 @@
 namespace CommonNetStandard.Client
 {
     /// <summary>
-    /// Inherit custom AI logic from this class and inject it to <see cref="grpcClientConnection"/>
+    /// Inherit custom AI logic from this class and inject it to <see cref="GrpcClientConnection"/>
     /// </summary>
     public abstract class LogicBase
     {

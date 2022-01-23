@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using log4net;
 using vergiBlue;
+using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
 namespace vergiBlueDesktop.Views

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using vergiBlue.BoardModel;
+
 
 namespace vergiBlue.Pieces
 {
@@ -30,7 +32,7 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(Board board)
+        public override IEnumerable<SingleMove> Moves(IBoard board)
         {
             return BishopMoves(board);
         }

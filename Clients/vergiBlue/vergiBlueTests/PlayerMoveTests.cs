@@ -5,6 +5,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
 using vergiBlue;
+using vergiBlue.BoardModel;
+using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
 namespace vergiBlueTests
@@ -18,7 +20,7 @@ namespace vergiBlueTests
         /// <returns></returns>
         private Board CreateMockPawnSetup()
         {
-            var board = new Board();
+            var board = BoardFactory.Create();
 
             // Lonely pawns, not very high eval
             for (int i = 1; i < 4; i++)
@@ -47,7 +49,7 @@ namespace vergiBlueTests
             return board;
         }
 
-        private Board CreateMockPawnRookSetup()
+        private IBoard CreateMockPawnRookSetup()
         {
             var board = CreateMockPawnSetup();
             var whiteRook = new Rook(true, (0, 0));
@@ -62,7 +64,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerWhitePawnShouldEatOpponent()
         {
-            var logic = new Logic(true, CreateMockPawnSetup());
+            var logic = LogicFactory.CreateForTest(true, CreateMockPawnSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
@@ -72,7 +74,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerBlackPawnShouldEatOpponent()
         {
-            var logic = new Logic(false, CreateMockPawnSetup());
+            var logic = LogicFactory.CreateForTest(false, CreateMockPawnSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
@@ -82,7 +84,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerWhiteRookShouldEatOpponentRook()
         {
-            var logic = new Logic(true, CreateMockPawnRookSetup());
+            var logic = LogicFactory.CreateForTest(true, CreateMockPawnRookSetup());
             var playerMove = logic.CreateMoveWithDepth(2);
 
             // Let's see if the best move selected
@@ -94,7 +96,7 @@ namespace vergiBlueTests
         [TestMethod]
         public void PlayerBlackRookShouldEatOpponentRook()
         {
-            var logic = new Logic(false, CreateMockPawnRookSetup());
+            var logic = LogicFactory.CreateForTest(false, CreateMockPawnRookSetup());
             var playerMove = logic.CreateMoveWithDepth(1);
 
             // Let's see if the best move selected
@@ -115,8 +117,8 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var logic = new Logic(true);
-            logic.Board = new Board();
+            var logic = LogicFactory.CreateWithoutBoardInit(true);
+            logic.Board = BoardFactory.Create();
 
             // Pawns
             var pawnPositions = new List<string> { "a5", "b6", "c7", "d8", "e7", "f6", "g5" };
@@ -135,7 +137,7 @@ namespace vergiBlueTests
             Logger.LogMessage($"Test: {nameof(PlayerWhiteRookShouldEatPawnNotDefended)}, diagnostics: {playerMove.Diagnostics}");
         }
 
-        public void CreatePawns(IEnumerable<(int,int)> coordinateList, Board board, bool isWhite)
+        public void CreatePawns(IEnumerable<(int,int)> coordinateList, IBoard board, bool isWhite)
         {
             foreach(var coordinates in coordinateList)
             {

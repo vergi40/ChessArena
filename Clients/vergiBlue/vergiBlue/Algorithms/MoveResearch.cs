@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using vergiBlue.BoardModel;
 
 namespace vergiBlue.Algorithms
 {
@@ -14,7 +14,7 @@ namespace vergiBlue.Algorithms
         
         // TODO Delete. somehow unnecessary and complicated.
         public static EvaluationResult GetMoveScoreList(IList<SingleMove> moves,
-            int searchDepth, Board board, bool isMaximizing, bool useTranspositions)
+            int searchDepth, IBoard board, bool isMaximizing, bool useTranspositions)
         {
             var result = new EvaluationResult();
             var alpha = DefaultAlpha;
@@ -34,7 +34,7 @@ namespace vergiBlue.Algorithms
                     else
                     {
                         // Board evaluation at current depth
-                        var newBoard = new Board(board, move);
+                        var newBoard = BoardFactory.CreateFromMove(board, move);
                         var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, alpha, beta,
                             !isMaximizing);
                         result.Add(value, move);
@@ -58,7 +58,7 @@ namespace vergiBlue.Algorithms
                 foreach (var move in moves)
                 {
                     // Board evaluation at current depth
-                    var newBoard = new Board(board, move);
+                    var newBoard = BoardFactory.CreateFromMove(board, move);
                     var value = MiniMax.ToDepth(newBoard, searchDepth, alpha, beta, !isMaximizing);
                     result.Add(value, move);
 
@@ -78,7 +78,7 @@ namespace vergiBlue.Algorithms
         }
 
 
-        public static EvaluationResult GetMoveScoreListParallel(IList<SingleMove> moves, int searchDepth, Board board, bool isMaximizing)
+        public static EvaluationResult GetMoveScoreListParallel(IList<SingleMove> moves, int searchDepth, IBoard board, bool isMaximizing)
         {
             var result = new EvaluationResult();
             var evaluated = new List<(double, SingleMove)>();
@@ -89,12 +89,12 @@ namespace vergiBlue.Algorithms
                 () => new List<(double, SingleMove)>(), // Local initialization. Need to inform compiler the type by initializing
                 (move, loopState, localState) => // Predefined lambda expression (Func<SingleMove, ParallelLoopState, thread-local variable, body>)
                 {
-                    var newBoard = new Board(board, move);
+                    var newBoard = BoardFactory.CreateFromMove(board, move);
                     var value = MiniMax.ToDepth(newBoard, searchDepth, DefaultAlpha, DefaultBeta, !isMaximizing);
                     localState.Add((value, move));
                     return localState;
                 },
-                (finalResult) =>
+                finalResult =>
                 {
                     lock (syncObject) evaluated.AddRange(finalResult);
                 });
@@ -106,31 +106,31 @@ namespace vergiBlue.Algorithms
         public static SingleMove SelectBestMove(EvaluationResult evaluated, bool isMaximizing, bool prioritizeCaptures)
         {
             if (isMaximizing) return evaluated.MaxMove;
-            else return evaluated.MinMove;
+            return evaluated.MinMove;
         }
         
         private static double BestValue(bool isMaximizing)
         {
             if (isMaximizing) return 1000000;
-            else return -1000000;
+            return -1000000;
         }
 
         private static double WorstValue(bool isMaximizing)
         {
             if (isMaximizing) return -1000000;
-            else return 1000000;
+            return 1000000;
         }
 
         /// <summary>
         /// Returns checkmate move or null.
         /// </summary>
         /// <returns></returns>
-        public static SingleMove? ImmediateCheckMateAvailable(IList<SingleMove> moves, Board board, bool isMaximizing)
+        public static SingleMove? ImmediateCheckMateAvailable(IList<SingleMove> moves, IBoard board, bool isMaximizing)
         {
             // Brute search checkmate
             foreach (var singleMove in moves)
             {
-                var newBoard = new Board(board, singleMove);
+                var newBoard = BoardFactory.CreateFromMove(board, singleMove);
                 if (newBoard.IsCheckMate(isMaximizing, false))
                 {
                     singleMove.CheckMate = true;
@@ -141,12 +141,12 @@ namespace vergiBlue.Algorithms
             return null;
         }
 
-        public static IList<SingleMove> CheckMateInTwoTurns(IList<SingleMove> moves, Board board, bool isMaximizing)
+        public static IList<SingleMove> CheckMateInTwoTurns(IList<SingleMove> moves, IBoard board, bool isMaximizing)
         {
             IList<SingleMove> checkMates = new List<SingleMove>();
             foreach (var singleMove in moves)
             {
-                var newBoard = new Board(board, singleMove);
+                var newBoard = BoardFactory.CreateFromMove(board, singleMove);
                 if (CheckMate.InTwoTurns(newBoard, isMaximizing))
                 {
                     // TODO collect all choices and choose best
@@ -162,23 +162,21 @@ namespace vergiBlue.Algorithms
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ...
         /// 
         /// </summary>
-        public static SingleMove SelectBestWithIterativeDeepening(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, bool useTranspositions, int timeLimitInMs)
+        public static SingleMove SelectBestWithIterativeDeepening(IList<SingleMove> allMoves, int searchDepth, IBoard board, bool isMaximizing, bool useTranspositions, int timeLimitInMs)
         {
             if (useTranspositions)
             {
                 return IterativeDeepeningWithTranspositions(allMoves, searchDepth, board, isMaximizing, timeLimitInMs);
             }
-            else
-            {
-                return IterativeDeepeningBasic(allMoves, searchDepth, board, isMaximizing, timeLimitInMs);
-            }
+
+            return IterativeDeepeningBasic(allMoves, searchDepth, board, isMaximizing, timeLimitInMs);
         }
 
         /// <summary>
         /// Iterative deepening sub-method.
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ... 
         /// </summary>
-        private static SingleMove IterativeDeepeningBasic(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, int timeLimitInMs = 5000)
+        private static SingleMove IterativeDeepeningBasic(IList<SingleMove> allMoves, int searchDepth, IBoard board, bool isMaximizing, int timeLimitInMs = 5000)
         {
             // 
             var minimumSearchPercentForHigherDepthUse = 1 / (double) 3;
@@ -205,7 +203,7 @@ namespace vergiBlue.Algorithms
                 
                 foreach (var move in currentIterationMoves)
                 {
-                    var newBoard = new Board(board, move);
+                    var newBoard = BoardFactory.CreateFromMove(board, move);
                     var evaluation = MiniMax.ToDepth(newBoard, i, alpha, beta, !isMaximizing);
                     midResult.Add((evaluation, move));
 
@@ -262,7 +260,7 @@ namespace vergiBlue.Algorithms
             return finalResult.First().move;
         }
 
-        private static void AddIterativeDeepeningResultDiagnostics(int depthUsed, int totalMoveCount, int searchMoveCount, double evaluation, SingleMove? move = null, Board? board = null)
+        private static void AddIterativeDeepeningResultDiagnostics(int depthUsed, int totalMoveCount, int searchMoveCount, double evaluation, SingleMove? move = null, IBoard? board = null)
         {
             if (searchMoveCount < totalMoveCount)
             {
@@ -277,7 +275,7 @@ namespace vergiBlue.Algorithms
             // DEBUG
             if (move != null && board != null && board.Strategic.EndGameWeight > 0.50)
             {
-                var newBoard = new Board(board, move);
+                var newBoard = BoardFactory.CreateFromMove(board, move);
                 var isWhite = newBoard.ValueAtDefinitely(move.NewPos).IsWhite;
                 Diagnostics.AddMessage(" EndGameKingToCornerEvaluation: " + newBoard.EndGameKingToCornerEvaluation(isWhite));
             }
@@ -288,7 +286,7 @@ namespace vergiBlue.Algorithms
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ...
         /// 
         /// </summary>
-        private static SingleMove IterativeDeepeningWithTranspositions(IList<SingleMove> allMoves, int searchDepth, Board board, bool isMaximizing, int timeLimitInMs = 5000)
+        private static SingleMove IterativeDeepeningWithTranspositions(IList<SingleMove> allMoves, int searchDepth, IBoard board, bool isMaximizing, int timeLimitInMs = 5000)
         {
             // 
             var minimumSearchPercentForHigherDepthUse = 1 / (double)3;
@@ -315,7 +313,7 @@ namespace vergiBlue.Algorithms
 
                 foreach (var move in currentIterationMoves)
                 {
-                    var newBoard = new Board(board, move);
+                    var newBoard = BoardFactory.CreateFromMove(board, move);
                     var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, alpha, beta, !isMaximizing);
                     midResult.Add((evaluation, move));
                     
@@ -323,19 +321,11 @@ namespace vergiBlue.Algorithms
                     {
                         alpha = Math.Max(alpha, evaluation);
                         if (alpha >= beta) { /* */ }
-                        else
-                        {
-                            //newBoard.Shared.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, newBoard.Shared.GameTurnCount);
-                        }
                     }
                     else
                     {
                         beta = Math.Min(beta, evaluation);
                         if(beta <= alpha) { /* */ }
-                        else
-                        {
-                            //newBoard.Shared.Transpositions.Add(newBoard.BoardHash, i, evaluation, NodeType.Exact, newBoard.Shared.GameTurnCount);
-                        }
                     }
 
                     if (watch.ElapsedMilliseconds > timeLimitInMs)
@@ -392,10 +382,8 @@ namespace vergiBlue.Algorithms
                 {
                     return PieceBaseStrength.King;
                 }
-                else
-                {
-                    return -PieceBaseStrength.King;
-                }
+
+                return -PieceBaseStrength.King;
             }
 
             return evalScore;
@@ -409,10 +397,8 @@ namespace vergiBlue.Algorithms
                 {
                     return PieceBaseStrength.King + depth;
                 }
-                else
-                {
-                    return -PieceBaseStrength.King - depth;
-                }
+
+                return -PieceBaseStrength.King - depth;
             }
 
             return evalScore;

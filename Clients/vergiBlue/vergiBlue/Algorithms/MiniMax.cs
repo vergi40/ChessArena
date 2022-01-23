@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading.Tasks;
+using vergiBlue.BoardModel;
 
 namespace vergiBlue.Algorithms
 {
@@ -35,7 +32,7 @@ namespace vergiBlue.Algorithms
         /// <param name="beta">The lowest known value at previous recursion level</param>
         /// <param name="maximizingPlayer">Maximizing = white, minimizing = black</param>
         /// <returns></returns>
-        public static double ToDepth(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
+        public static double ToDepth(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
             if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, false, depth);
             var allMoves = newBoard.Moves(maximizingPlayer, false);
@@ -47,7 +44,7 @@ namespace vergiBlue.Algorithms
                 var value = -1000000.0;
                 foreach (var move in allMoves)
                 {
-                    var nextBoard = new Board(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
                     value = Math.Max(value, ToDepth(nextBoard, depth - 1, alpha, beta, false));
                     alpha = Math.Max(alpha, value);
                     if (alpha >= beta)
@@ -65,7 +62,7 @@ namespace vergiBlue.Algorithms
                 var value = 1000000.0;
                 foreach (var move in allMoves)
                 {
-                    var nextBoard = new Board(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
                     value = Math.Min(value, ToDepth(nextBoard, depth - 1, alpha, beta, true));
                     beta = Math.Min(beta, value);
                     if (beta <= alpha)
@@ -111,7 +108,7 @@ namespace vergiBlue.Algorithms
         /// maximizing depth 4 receives 4 - ignored
         /// minimizing depth 3 receives 13 - ignored
         /// </summary>
-        public static double ToDepthWithTranspositions(Board newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
+        public static double ToDepthWithTranspositions(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
             if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, false, depth);
             
@@ -123,7 +120,7 @@ namespace vergiBlue.Algorithms
                 var transpositionEval = MoveResearch.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
                 
                 if (transposition.Type == NodeType.Exact) return transpositionEval;
-                else if (transposition.Type == NodeType.UpperBound && transpositionEval < beta)
+                if (transposition.Type == NodeType.UpperBound && transpositionEval < beta)
                 {
                     beta = transpositionEval;
                 }
@@ -151,7 +148,7 @@ namespace vergiBlue.Algorithms
                 var value = MoveResearch.DefaultAlpha;
                 foreach (var move in allMoves)
                 {
-                    var nextBoard = new Board(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
                     value = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false);
                     if (value >= beta)
                     {
@@ -166,7 +163,8 @@ namespace vergiBlue.Algorithms
                         Diagnostics.IncrementBeta();
                         break;
                     }
-                    else if(value > alpha)
+
+                    if(value > alpha)
                     {
                         // Value between alpha and beta. Save as exact score
                         // Update alpha for rest of iteration
@@ -184,7 +182,7 @@ namespace vergiBlue.Algorithms
                 var value = MoveResearch.DefaultBeta;
                 foreach (var move in allMoves)
                 {
-                    var nextBoard = new Board(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
                     value = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true);
                     if (value <= alpha)
                     {
@@ -199,7 +197,8 @@ namespace vergiBlue.Algorithms
                         Diagnostics.IncrementAlpha();
                         break;
                     }
-                    else if(value < beta)
+
+                    if(value < beta)
                     {
                         // Value between alpha and beta. Save as exact score
                         // Update beta for rest of iteration

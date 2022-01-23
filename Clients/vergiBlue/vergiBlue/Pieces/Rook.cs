@@ -32,7 +32,7 @@ namespace vergiBlue.Pieces
             return RelativeStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(Board board)
+        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
         {
             return RookMoves(board);
         }

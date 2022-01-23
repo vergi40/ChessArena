@@ -7,6 +7,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
 using vergiBlue;
+using vergiBlue.BoardModel;
+using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
 namespace vergiBlueTests
@@ -20,13 +22,13 @@ namespace vergiBlueTests
             var white = new King(true, "a1");
             var black = new King(false, "a8");
 
-            var board = new Board();
+            var board = BoardFactory.Create();
             board.AddNew(white, black);
             board.Kings = (white, black);
 
             var move = new SingleMove("a1", "a2");
             //player1.Board.ExecuteMove(move);
-            var player1 = new Logic(true, new Board(board, move));
+            var player1 = LogicFactory.CreateForTest(true, BoardFactory.CreateFromMove(board, move));
 
             var kingReference = player1.Board.Kings.white;
             kingReference.ShouldNotBeNull();
@@ -54,11 +56,11 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
             player.SearchDepth = 4;
 
-            var board = new Board();
+            var board = BoardFactory.Create();
             board.Shared.GameTurnCount = 20;
             // 
             var rookPositions = new List<string> { "a8", "b7" };
@@ -70,7 +72,7 @@ namespace vergiBlueTests
             board.AddNew(king);
             board.Kings = (null, king);
 
-            player.Board = new Board(board);
+            player.Board = BoardFactory.CreateClone(board);
             player.Board.IsCheckMate(true, false).ShouldBeTrue();
 
         }
@@ -88,10 +90,10 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
 
-            var board = new Board();
+            var board = BoardFactory.Create();
             // 
             var rookPositions = new List<string> { "a6", "b7" };
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
@@ -106,7 +108,7 @@ namespace vergiBlueTests
 
             board.Kings = (whiteKing, blackKing);
 
-            player.Board = new Board(board);
+            player.Board = BoardFactory.CreateClone(board);
 
             var playerMove = player.CreateMoveWithDepth(4);
             playerMove.Move.CheckMate.ShouldBeTrue();
@@ -128,13 +130,13 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
 
-            var opponent = new Logic(false);
+            var opponent = LogicFactory.CreateWithoutBoardInit(false);
             opponent.Strategy.Phase = GamePhase.EndGame;
 
-            var board = new Board();
+            var board = BoardFactory.Create();
             // 
             var rookPositions = new List<string> { "a6", "b5" };
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
@@ -149,8 +151,8 @@ namespace vergiBlueTests
 
             board.Kings = (whiteKing, blackKing);
 
-            player.Board = new Board(board);
-            opponent.Board = new Board(board);
+            player.Board = BoardFactory.CreateClone(board);
+            opponent.Board = BoardFactory.CreateClone(board);
 
             var playerMove = player.CreateMoveWithDepth(4);
             opponent.ReceiveMove(playerMove.Move);
@@ -179,14 +181,14 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
 
-            var opponent = new Logic(false);
+            var opponent = LogicFactory.CreateWithoutBoardInit(false);
             opponent.Strategy.Phase = GamePhase.EndGame;
             opponent.LatestOpponentMove = new MoveImplementation(){Check = true};
 
-            var board = new Board();
+            var board = BoardFactory.Create();
             // 
             var pieces = new List<PieceBase>
             {
@@ -206,8 +208,8 @@ namespace vergiBlueTests
 
             board.Kings = (whiteKing, blackKing);
 
-            player.Board = new Board(board);
-            opponent.Board = new Board(board);
+            player.Board = BoardFactory.CreateClone(board);
+            opponent.Board = BoardFactory.CreateClone(board);
 
             var opponentMove = opponent.CreateMoveWithDepth(4);
             opponentMove.Move.EndPosition.ShouldBe("g7");
@@ -231,7 +233,7 @@ namespace vergiBlueTests
             // 2   R|
             // 1    |
             //  ABCD EFGH
-            var player = new Logic(true);
+            var player = LogicFactory.CreateWithoutBoardInit(true);
             player.Strategy.Phase = GamePhase.EndGame;
 
             var previousMove = new MoveImplementation()
@@ -242,7 +244,7 @@ namespace vergiBlueTests
             player.LatestOpponentMove = previousMove;
             player.GameHistory.Add(previousMove);
 
-            var board = new Board();
+            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "b5"),
@@ -262,13 +264,13 @@ namespace vergiBlueTests
 
             board.Kings = (whiteKing, blackKing);
 
-            player.Board = new Board(board);
+            player.Board = BoardFactory.CreateClone(board);
 
             var playerMove = player.CreateMoveWithDepth(3);
             playerMove.Move.EndPosition.ShouldNotBe("f6");
         }
 
-        public void CreateRooks(IEnumerable<(int, int)> coordinateList, Board board, bool isWhite)
+        public void CreateRooks(IEnumerable<(int, int)> coordinateList, IBoard board, bool isWhite)
         {
             foreach (var coordinates in coordinateList)
             {
