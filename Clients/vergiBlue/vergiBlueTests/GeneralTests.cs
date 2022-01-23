@@ -22,7 +22,7 @@ namespace vergiBlueTests
             transposition.Initialize();
 
             var board = BoardFactory.Create();
-            board.InitializeEmptyBoard();
+            board.InitializeDefaultBoard();
 
             var hash = board.BoardHash;
             // 121398
@@ -35,7 +35,7 @@ namespace vergiBlueTests
             transposition.Initialize();
 
             var board = BoardFactory.Create();
-            board.InitializeEmptyBoard();
+            board.InitializeDefaultBoard();
 
             // 
             var firstPawnMove = new SingleMove("d2", "d4");

@@ -75,7 +75,7 @@ namespace vergiBlueDesktop
             if (initializedBoard == null)
             {
                 initializedBoard = BoardFactory.Create();
-                initializedBoard.InitializeEmptyBoard();
+                initializedBoard.InitializeDefaultBoard();
             }
 
             Session = new GameSession(initializedBoard, playerIsWhite, isWhiteTurn, _viewModel.AiLogicSettings);

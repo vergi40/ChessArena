@@ -117,14 +117,13 @@ namespace vergiBlue.BoardModel
 
             ExecuteMove(move);
         }
+
+        public void ExecuteMoveWithValidation(SingleMove move)
+        {
+            Validator.ValidateMove(this, move);
+            ExecuteMove(move);
+        }
         
-        /// <summary>
-        /// Apply single move to board.
-        /// Before executing, following should be applied:
-        /// * <see cref="CollectMoveProperties(vergiBlue.SingleMove)"/>
-        /// * (In desktop) UpdateGraphics()
-        /// </summary>
-        /// <param name="move"></param>
         public void ExecuteMove(SingleMove move)
         {
             BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
@@ -513,7 +512,7 @@ namespace vergiBlue.BoardModel
             return priorityList;
         }
 
-        public void InitializeEmptyBoard()
+        public void InitializeDefaultBoard()
         {
             // Pawns
             for (int i = 0; i < 8; i++)

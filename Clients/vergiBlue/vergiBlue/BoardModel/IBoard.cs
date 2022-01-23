@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using vergiBlue.Pieces;
 
@@ -47,6 +48,16 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Apply single move to board.
         /// Before executing, following should be applied:
+        /// * <see cref="CollectMoveProperties(vergiBlue.SingleMove)"/>
+        /// * (In desktop) UpdateGraphics()
+        /// </summary>
+        /// <param name="move"></param>
+        /// <exception cref="InvalidMoveException"></exception>
+        void ExecuteMoveWithValidation(SingleMove move);
+
+        /// <summary>
+        /// Apply single move to board.
+        /// Before executing, following should be applied:
         /// * <see cref="Board.CollectMoveProperties(vergiBlue.SingleMove)"/>
         /// * (In desktop) UpdateGraphics()
         /// </summary>
@@ -87,7 +98,7 @@ namespace vergiBlue.BoardModel
         IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false);
 
         IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false);
-        void InitializeEmptyBoard();
+        void InitializeDefaultBoard();
 
         /// <summary>
         /// If there is a player move that can eat other player king, and opponent has zero

@@ -38,17 +38,7 @@ namespace vergiBlue.Pieces
         }
 
         public (int column, int row) CurrentPosition { get; set; }
-
-        /// <summary>
-        /// If using this, need to set position explicitly
-        /// </summary>
-        /// <param name="isWhite"></param>
-        [Obsolete("Use constructor with position instead")]
-        protected PieceBase(bool isWhite)
-        {
-            IsWhite = isWhite;
-        }
-
+        
         protected PieceBase(bool isWhite, (int column, int row) position)
         {
             IsWhite = isWhite;
@@ -74,7 +64,7 @@ namespace vergiBlue.Pieces
         /// <returns></returns>
         protected virtual SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false)
         {
-            if (validateBorders && Logic.Logic.IsOutside(target)) return null;
+            if (validateBorders && Validator.IsOutside(target)) return null;
 
             var valueAt = board.ValueAt(target);
             if (valueAt == null)

@@ -25,6 +25,9 @@
 * Attack squares
   * This is tricky, as calculating for each depth is really expensive
   * For main logic board, could contain 'current turn data'
+* TDD move validation
+  * Invalid move throws InvalidMoveException
+  * This can be catched in main logic. Return backup move if stable game is required.
 
 ## Techniques
 * En passant moves missing

@@ -312,7 +312,7 @@ namespace vergiBlueTests
             // 1RNBQ|K  R
             //  ABCD EFGH
             var board = BoardFactory.Create();
-            board.InitializeEmptyBoard();
+            board.InitializeDefaultBoard();
 
             // 1.e4 e5 2.Nf3 Nc6 3.Bb5
             board.ExecuteMove(new SingleMove("e2", "e4"));

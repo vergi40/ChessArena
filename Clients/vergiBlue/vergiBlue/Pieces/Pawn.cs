@@ -34,7 +34,7 @@ namespace vergiBlue.Pieces
 
         protected override SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false)
         {
-            if (validateBorders && Logic.Logic.IsOutside(target)) return null;
+            if (validateBorders && Validator.IsOutside(target)) return null;
 
             if (board.ValueAt(target) == null)
             {
@@ -46,7 +46,7 @@ namespace vergiBlue.Pieces
 
         private SingleMove? CanCapture((int, int) target, IBoard board)
         {
-            if(Logic.Logic.IsOutside(target)) return null;
+            if(Validator.IsOutside(target)) return null;
 
             // Normal
             var diagonalPiece = board.ValueAt(target);

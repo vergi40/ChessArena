@@ -14,7 +14,7 @@ namespace vergiBlue
     
     // public class SingleMoveWithData
     
-    public class SingleMove : IEquatable<SingleMove>
+    public sealed class SingleMove : IEquatable<SingleMove>
     {
         public bool Capture { get; set; }
         public bool Promotion { get; set; }

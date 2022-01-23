@@ -55,7 +55,7 @@ namespace vergiBlue.Logic
         {
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth, Settings.UseTranspositionTables);
             if(overrideBoard != null) Board = BoardFactory.CreateClone(overrideBoard);
-            else Board.InitializeEmptyBoard();
+            else Board.InitializeDefaultBoard();
             
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
@@ -300,13 +300,6 @@ namespace vergiBlue.Logic
             Board.ExecuteMove(move);
             GameHistory.Add(opponentMove);
             Board.Shared.GameTurnCount++;
-        }
-
-        public static bool IsOutside((int, int) target)
-        {
-            if (target.Item1 < 0 || target.Item1 > 7 || target.Item2 < 0 || target.Item2 > 7)
-                return true;
-            return false;
         }
 
         /// <summary>

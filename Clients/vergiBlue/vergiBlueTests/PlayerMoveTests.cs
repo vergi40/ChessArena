@@ -18,7 +18,7 @@ namespace vergiBlueTests
         /// Create setup where each player has 3 pawns on start row and 1 pawn agaist each other
         /// </summary>
         /// <returns></returns>
-        private Board CreateMockPawnSetup()
+        private IBoard CreateMockPawnSetup()
         {
             var board = BoardFactory.Create();
 
