@@ -29,6 +29,10 @@
   * Invalid move throws InvalidMoveException
   * This can be catched in main logic. Return backup move if stable game is required.
 
+## Design
+* Strategy-pattern
+* Event system for turn start/end
+
 ## Techniques
 * En passant moves missing
 * Aspiration window

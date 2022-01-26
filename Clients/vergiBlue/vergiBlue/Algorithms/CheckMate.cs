@@ -4,14 +4,14 @@ namespace vergiBlue.Algorithms
 {
     public static class CheckMate
     {
-        public static bool InTwoTurns(IBoard board, bool isWhitePlayer)
+        public static bool InTwoTurns(IBoard boardAfterPlayerMove, bool isWhitePlayer)
         {
             // TODO could modify to support n depth
             // Opponent moves
-            var opponentMoves = board.Moves(!isWhitePlayer, false);
+            var opponentMoves = boardAfterPlayerMove.Moves(!isWhitePlayer, false);
             foreach (var opponentMove in opponentMoves)
             {
-                var newBoard = BoardFactory.CreateFromMove(board, opponentMove);
+                var newBoard = BoardFactory.CreateFromMove(boardAfterPlayerMove, opponentMove);
                 // Player moves
                 var playerMoves = newBoard.Moves(isWhitePlayer, false);
                 foreach (var playerMove in playerMoves)

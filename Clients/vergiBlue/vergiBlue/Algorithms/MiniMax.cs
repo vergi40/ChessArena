@@ -145,7 +145,7 @@ namespace vergiBlue.Algorithms
             
             if (maximizingPlayer)
             {
-                var value = MoveResearch.DefaultAlpha;
+                var value = MiniMaxGeneral.DefaultAlpha;
                 foreach (var move in allMoves)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
@@ -179,7 +179,7 @@ namespace vergiBlue.Algorithms
             }
             else
             {
-                var value = MoveResearch.DefaultBeta;
+                var value = MiniMaxGeneral.DefaultBeta;
                 foreach (var move in allMoves)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, move);

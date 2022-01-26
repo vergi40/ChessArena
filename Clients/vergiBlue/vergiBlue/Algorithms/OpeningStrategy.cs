@@ -172,17 +172,13 @@ namespace vergiBlue.Algorithms
             return true;
         }
 
-
-
         // C# 9.0 new data structure. Minimum boiler plate
         public record OpeningStrategy
         {
             public string Name { get; } = "";
-        public IList<SingleMove> Moves { get; } = new List<SingleMove>();
+            public IList<SingleMove> Moves { get; } = new List<SingleMove>();
 
-        public OpeningStrategy(string name, IList<SingleMove> moves) => (Name, Moves) = (name, moves);
+            public OpeningStrategy(string name, IList<SingleMove> moves) => (Name, Moves) = (name, moves);
+        }
     }
-    }
-
-
 }
