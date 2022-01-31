@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using CommonNetStandard.Client;
+using CommonNetStandard.Common;
+using CommonNetStandard.Interface;
 using log4net;
 using vergiBlue;
 using vergiBlue.BoardModel;
@@ -109,11 +113,36 @@ namespace vergiBlueDesktop
             if (Session.IsWhiteTurn != Session.PlayerIsWhite)
             {
                 // Ai turn
-                // TODO some busy-wrapper
+                // Improvement: some busy-wrapper
                 _viewModel.IsBusy = true;
-                // TODO synchronous
                 AiLogic.ReceiveMove(move.ToInterfaceMove());
-                var interfaceMoveData = await Task.Run(() => AiLogic.CreateMove());
+                var interfaceMoveData = await Task.Run(() =>
+                {
+                    try
+                    {
+                        return AiLogic.CreateMove();
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.Error(e.ToString());
+                        _viewModel.UpdateAiDiagnostics($"Error in AI move: {e.Message}");
+                        
+                        // TODO return error move
+                        // Temporarily implemented as empty move
+                        return new PlayerMoveImplementation(new MoveImplementation()
+                        {
+                            StartPosition = "",
+                            EndPosition = ""
+                        }, "");
+                    }
+                });
+                if (string.IsNullOrEmpty(interfaceMoveData.Move.StartPosition))
+                {
+                    _viewModel.AppendHistory($"Game ended to draw/stalemate/exception. See log.");
+                    _viewModel.ViewUpdateGameEnd();
+                    return;
+                }
+
                 _viewModel.UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
                 _viewModel.IsBusy = false;
                 var nextMove = new SingleMove(interfaceMoveData.Move);

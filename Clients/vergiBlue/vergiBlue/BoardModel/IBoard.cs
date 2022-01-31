@@ -117,7 +117,15 @@ namespace vergiBlue.BoardModel
         bool IsCheck(bool isWhiteOffensive);
 
         /// <summary>
+        /// Collect before the moves are executed to board.
+        /// NOTE: time consuming, only use in upper level
+        /// Prerequisite: move is valid
+        /// </summary>
+        IEnumerable<SingleMove> CollectMoveProperties(IEnumerable<SingleMove> moves);
+
+        /// <summary>
         /// Collect before the move is executed to board.
+        /// Prerequisite: move is valid
         /// </summary>
         SingleMove CollectMoveProperties(SingleMove move);
 

@@ -641,11 +641,14 @@ namespace vergiBlue.BoardModel
             return false;
         }
 
-        /// <summary>
-        /// Collect before the move is executed to board.
-        /// </summary>
-        /// <param name="move"></param>
-        /// <returns></returns>
+        public IEnumerable<SingleMove> CollectMoveProperties(IEnumerable<SingleMove> moves)
+        {
+            foreach (var basicMove in moves)
+            {
+                yield return CollectMoveProperties(basicMove.PrevPos, basicMove.NewPos);
+            }
+        }
+
         public SingleMove CollectMoveProperties(SingleMove move)
         {
             return CollectMoveProperties(move.PrevPos, move.NewPos);

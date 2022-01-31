@@ -16,7 +16,6 @@ namespace vergiBlueDesktop.Views
     /// * AI doesn't recognize concept of draw. For endgame this is crucial. This needs fine-tuning in evaluation function (commented out)
     ///
     /// UX/UI
-    /// * Castling choice - highlight differently
     /// * Better highlighing for previous move
     /// * Do a click sound when moving
     /// * Add ability to change board color and piece icons
@@ -35,7 +34,6 @@ namespace vergiBlueDesktop.Views
     /// * Substitute GameControllerWrapper with better design
     /// * Proper bindings and decoupling
     /// * Each piece it's own viewmodel
-    /// * Each game session could be encapsulated as GameSession or GameInstance
     /// </summary>
     public class MainViewModel : NotifyPropertyBase
     {
