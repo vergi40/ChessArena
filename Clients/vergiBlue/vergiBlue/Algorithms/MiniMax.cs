@@ -117,7 +117,7 @@ namespace vergiBlue.Algorithms
             if (transposition != null && transposition.Depth >= depth)
             {
                 Diagnostics.IncrementTranspositionsFound();
-                var transpositionEval = MoveResearch.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
+                var transpositionEval = Evaluator.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
                 
                 if (transposition.Type == NodeType.Exact) return transpositionEval;
                 if (transposition.Type == NodeType.UpperBound && transpositionEval < beta)

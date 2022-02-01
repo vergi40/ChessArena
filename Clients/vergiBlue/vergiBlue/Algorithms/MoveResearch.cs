@@ -63,36 +63,5 @@ namespace vergiBlue.Algorithms
 
             return checkMates;
         }
-
-        // TODO Could move to other place
-        public static double CheckMateScoreAdjustToEven(double evalScore)
-        {
-            if(Math.Abs(evalScore) > PieceBaseStrength.CheckMateThreshold)
-            {
-                if (evalScore > 0)
-                {
-                    return PieceBaseStrength.King;
-                }
-
-                return -PieceBaseStrength.King;
-            }
-
-            return evalScore;
-        }
-
-        public static double CheckMateScoreAdjustToDepthFixed(double evalScore, int depth)
-        {
-            if (Math.Abs(evalScore) > PieceBaseStrength.CheckMateThreshold)
-            {
-                if (evalScore > 0)
-                {
-                    return PieceBaseStrength.King + depth;
-                }
-
-                return -PieceBaseStrength.King - depth;
-            }
-
-            return evalScore;
-        }
     }
 }

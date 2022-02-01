@@ -26,7 +26,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             {
                 var newBoard = BoardFactory.CreateFromMove(board, move);
                 var isWhite = newBoard.ValueAtDefinitely(move.NewPos).IsWhite;
-                Diagnostics.AddMessage(" EndGameKingToCornerEvaluation: " + newBoard.EndGameKingToCornerEvaluation(isWhite));
+                Diagnostics.AddMessage(" EndGameKingToCornerEvaluation: " + Evaluator.EndGameKingToCornerEvaluation(newBoard, isWhite));
             }
         }
     }

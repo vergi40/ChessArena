@@ -73,6 +73,13 @@ namespace vergiBlue.BoardModel
         double GetPowerPiecePercent();
 
         /// <summary>
+        /// King location should be known at all times
+        /// </summary>
+        /// <param name="whiteKing"></param>
+        /// <returns></returns>
+        PieceBase? KingLocation(bool whiteKing);
+
+        /// <summary>
         /// Return piece at coordinates, null if empty.
         /// </summary>
         /// <returns>Can be null</returns>
@@ -88,9 +95,6 @@ namespace vergiBlue.BoardModel
         void AddNew(IEnumerable<PieceBase> pieces);
         void AddNew(params PieceBase[] pieces);
         double Evaluate(bool isMaximizing, bool simpleEvaluation, bool isInCheckForOther = false, int? currentSearchDepth = null);
-        double EvaluateSimple(bool isMaximizing, int? currentSearchDepth = null);
-        double EvaluateIntelligent(bool isMaximizing, bool isInCheckForOther, int? currentSearchDepth = null);
-        double EndGameKingToCornerEvaluation(bool isWhite);
 
         /// <summary>
         /// Find every possible move for every piece for given color.
