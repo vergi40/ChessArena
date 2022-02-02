@@ -59,5 +59,70 @@ namespace vergiBlueTests
             playerMove.Move.EndPosition.ShouldBe("e6");
 
         }
+
+        private IBoard CreateBoard_QueensAndKings()
+        {
+            // Occured when playing around. For some reason black wouldn't capture white queen
+            // Test with different settings
+
+            var pieces = new List<PieceBase>
+            {
+                new Queen(true, "d4"),
+                new Queen(false, "a1"),
+                new King(true, "f6"),
+                new King(false, "f3"),
+            };
+            var board = BoardFactory.Create();
+            board.AddNew(pieces);
+            return board;
+        }
+
+        [TestMethod]
+        public void QueensAndKings_ShouldCaptureQueen()
+        {
+            var board = CreateBoard_QueensAndKings();
+
+            var ai = LogicFactory.CreateForTest(false, board);
+            ai.Settings.UseTranspositionTables = false;
+            ai.Settings.UseIterativeDeepening = false;
+
+            var move = ai.CreateMoveWithDepth(5);
+            move.Move.EndPosition.ShouldBe("d4");
+        }
+
+        [TestMethod]
+        public void QueensAndKings_ID_ShouldCaptureQueen()
+        {
+            var board = CreateBoard_QueensAndKings();
+
+            var ai = LogicFactory.CreateForTest(false, board);
+            ai.Settings.UseIterativeDeepening = false;
+
+            var move = ai.CreateMoveWithDepth(5);
+            move.Move.EndPosition.ShouldBe("d4");
+        }
+
+        [TestMethod]
+        public void QueensAndKings_Transpositions_ShouldCaptureQueen()
+        {
+            var board = CreateBoard_QueensAndKings();
+
+            var ai = LogicFactory.CreateForTest(false, board);
+            ai.Settings.UseTranspositionTables = false;
+
+            var move = ai.CreateMoveWithDepth(5);
+            move.Move.EndPosition.ShouldBe("d4");
+        }
+
+        [TestMethod]
+        public void QueensAndKings_ID_Transpositions_ShouldCaptureQueen()
+        {
+            var board = CreateBoard_QueensAndKings();
+
+            var ai = LogicFactory.CreateForTest(false, board);
+
+            var move = ai.CreateMoveWithDepth(5);
+            move.Move.EndPosition.ShouldBe("d4");
+        }
     }
 }
