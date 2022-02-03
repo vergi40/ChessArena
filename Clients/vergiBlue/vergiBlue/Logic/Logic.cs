@@ -89,7 +89,10 @@ namespace vergiBlue.Logic
         {
             var isMaximizing = IsPlayerWhite;
             Diagnostics.StartMoveCalculations();
-            _algorithmController.TurnStartUpdate(isMaximizing, GameHistory.ToList(), Settings, PreviousData, overrideSearchDepth);
+
+            var startInfo = new TurnStartInfo(isMaximizing, GameHistory.ToList(), Settings, PreviousData,
+                overrideSearchDepth);
+            _algorithmController.TurnStartUpdate(startInfo);
 
             // Common start measures - WIP
             if (Settings.UseTranspositionTables)

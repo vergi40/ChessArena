@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 
@@ -21,16 +22,9 @@ namespace vergiBlue.Algorithms
 
         public bool IsWhite { get; }
 
-        /// <summary>
-        /// Predefined search depth used
-        /// </summary>
-        public int? OverrideSearchDepth { get; set; }
 
-        private DiagnosticsData _previous { get; set; } = new DiagnosticsData();
         public GamePhase Phase { get; set; }
         public int SearchDepth { get; set; }
-
-        private bool _useTranspositionTables { get; set; } = false;
 
         /// <summary>
         /// Total game turn count
@@ -53,61 +47,58 @@ namespace vergiBlue.Algorithms
         public int MaxDepth { get; set; } = 5;
         const int MinDepth = 2;
 
-        public ContextAnalyzer(bool isWhite, int? overrideMaxDepth)
+        private TurnStartInfo _turnInfo { get; set; } =
+            new(false, new List<IMove>(), new LogicSettings(), new DiagnosticsData());
+
+        public ContextAnalyzer(bool isWhite, int? overrideGameMaxDepth)
         {
             IsWhite = isWhite;
             SearchDepth = 5;
 
-            OverrideSearchDepth = overrideMaxDepth;
-            if (overrideMaxDepth != null)
+            if (overrideGameMaxDepth != null)
             {
-                MaxDepth = overrideMaxDepth.Value;
+                MaxDepth = overrideGameMaxDepth.Value;
             }
         }
 
         /// <summary>
         /// Refresh data in beginning of each turn
         /// </summary>
-        public void TurnStartUpdate(DiagnosticsData data, int turnCount, bool useTranspositionTables, int? overrideMaxDepth)
+        public void TurnStartUpdate(TurnStartInfo turnInfo, int turnCount)
         {
-
-            _previous = data;
+            _turnInfo = turnInfo;
             TurnCount = turnCount;
 
-            _useTranspositionTables = useTranspositionTables;
-            if (useTranspositionTables)
+            if (turnInfo.settings.UseTranspositionTables)
             {
                 //SearchDepth = 6;
                 SearchDepth = 5;
             }
 
-            OverrideSearchDepth = overrideMaxDepth;
-            if (overrideMaxDepth != null)
+            if (turnInfo.IsSearchDepthFixed)
             {
-                MaxDepth = overrideMaxDepth.Value;
+                MaxDepth = turnInfo.SearchDepthFixed;
             }
         }
 
-        public int DecideSearchDepth(DiagnosticsData previous, IReadOnlyList<SingleMove> allMoves, IBoard board)
+        public int DecideSearchDepth(IReadOnlyList<SingleMove> allMoves, IBoard board)
         {
-            _previous = previous;
-
-            if (OverrideSearchDepth != null)
+            if (_turnInfo.IsSearchDepthFixed)
             {
-                return OverrideSearchDepth.Value;
+                return _turnInfo.SearchDepthFixed;
             }
 
             var previousDepth = SearchDepth;
 
             // Previous was opening move from database
-            if (previous.EvaluationCount == 0 && previous.CheckCount == 0)
+            if (_turnInfo.previousMoveData.EvaluationCount == 0 && _turnInfo.previousMoveData.CheckCount == 0)
             {
                 
                 return SearchDepth;
             }
 
             // Logic needs to be rewritten when using transposition tables, because of how much they affect speed.
-            if (_useTranspositionTables)
+            if (_turnInfo.settings.UseTranspositionTables)
             {
                 SearchDepth = GetMaxDepthForCurrentBoardWithTranspositions(board);
                 return SearchDepth;
@@ -121,7 +112,7 @@ namespace vergiBlue.Algorithms
             var previousEstimate = 0;
             for (int i = 3; i <= maxDepth; i++)
             {
-                var estimation = AssessTimeForMiniMaxDepth(i, allMoves, board, previousDepth, previous);
+                var estimation = AssessTimeForMiniMaxDepth(i, allMoves, board, previousDepth, _turnInfo.previousMoveData);
 
                 // Use 50% tolerance for target time
                 if (estimation > TargetTime * 1.50)
@@ -223,8 +214,10 @@ namespace vergiBlue.Algorithms
         /// <param name="board"></param>
         private void AnalyzeHighPieceCountPhase(int movePossibilities, IBoard board)
         {
+            var previous = _turnInfo.previousMoveData;
+
             // Game start
-            if (_previous.TimeElapsed.Equals(TimeSpan.Zero))
+            if (previous.TimeElapsed.Equals(TimeSpan.Zero))
             {
                 SearchDepth = Math.Min(MaxDepth, 3);
                 Phase = GamePhase.Start;
@@ -238,12 +231,12 @@ namespace vergiBlue.Algorithms
 
 
 
-            if ((_previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, _previous.EvaluationCount) > criticalEvalCount) && SearchDepth > MinDepth)
+            if ((previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, previous.EvaluationCount) > criticalEvalCount) && SearchDepth > MinDepth)
             {
                 SearchDepth--;
                 Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
             }
-            else if ((_previous.TimeElapsed.TotalMilliseconds < 200 || Math.Max(_previous.EvaluationCount, approximateEvalCount) < 50000) && SearchDepth < MaxDepth - 1)
+            else if ((previous.TimeElapsed.TotalMilliseconds < 200 || Math.Max(previous.EvaluationCount, approximateEvalCount) < 50000) && SearchDepth < MaxDepth - 1)
             {
                 // Only raise to max depth if possibilities are low enough
                 SearchDepth++;
@@ -263,27 +256,29 @@ namespace vergiBlue.Algorithms
             }
             const int criticalEvalCount = 400000;
             const int criticalCheckCount = 1000;
+            var previous = _turnInfo.previousMoveData;
+
 
             var approximateEvalCount = Math.Pow(movePossibilities, SearchDepth);
 
-            if ((_previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, _previous.EvaluationCount) > criticalEvalCount) && SearchDepth > MinDepth)
+            if ((previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, previous.EvaluationCount) > criticalEvalCount) && SearchDepth > MinDepth)
             {
                 SearchDepth--;
                 Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
             }
-            else if ((_previous.TimeElapsed.TotalMilliseconds < 200 || Math.Max(_previous.EvaluationCount, approximateEvalCount) < 50000) && SearchDepth < MaxDepth)
+            else if ((previous.TimeElapsed.TotalMilliseconds < 200 || Math.Max(previous.EvaluationCount, approximateEvalCount) < 50000) && SearchDepth < MaxDepth)
             {
                 // Only raise to max depth if possibilities are low enough
                 SearchDepth++;
                 Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
             }
 
-            if (Phase == GamePhase.Middle && _previous.CheckCount >= criticalCheckCount)
+            if (Phase == GamePhase.Middle && previous.CheckCount >= criticalCheckCount)
             {
                 Phase = GamePhase.MidEndGame;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
             }
-            else if (Phase == GamePhase.MidEndGame && _previous.CheckCount < criticalCheckCount)
+            else if (Phase == GamePhase.MidEndGame && previous.CheckCount < criticalCheckCount)
             {
                 Phase = GamePhase.Middle;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
@@ -302,16 +297,17 @@ namespace vergiBlue.Algorithms
             }
             const int criticalHighEvalCount = 1000000;
             const int criticalLowEvalCount = 150000;
+            var previous = _turnInfo.previousMoveData;
             //const int criticalCheckCount = 1000;
 
             var approximateEvalCount = Math.Pow(movePossibilities, SearchDepth);
 
-            if ((_previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, _previous.EvaluationCount) > criticalHighEvalCount) && SearchDepth > MinDepth + 1)
+            if ((previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, previous.EvaluationCount) > criticalHighEvalCount) && SearchDepth > MinDepth + 1)
             {
                 SearchDepth--;
                 Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
             }
-            else if ((_previous.TimeElapsed.TotalMilliseconds < 400 || Math.Max(_previous.EvaluationCount, approximateEvalCount) < criticalLowEvalCount) && SearchDepth < MaxDepth + 2)
+            else if ((previous.TimeElapsed.TotalMilliseconds < 400 || Math.Max(previous.EvaluationCount, approximateEvalCount) < criticalLowEvalCount) && SearchDepth < MaxDepth + 2)
             {
                 // Only raise to max depth if possibilities are low enough
                 SearchDepth++;
@@ -357,13 +353,14 @@ namespace vergiBlue.Algorithms
             }
             const int criticalEvalCount = 400000;
             const int criticalCheckCount = 1000;
-            
-            if (Phase == GamePhase.Middle && _previous.CheckCount >= criticalCheckCount)
+            var previous = _turnInfo.previousMoveData;
+
+            if (Phase == GamePhase.Middle && previous.CheckCount >= criticalCheckCount)
             {
                 Phase = GamePhase.MidEndGame;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
             }
-            else if (Phase == GamePhase.MidEndGame && _previous.CheckCount < criticalCheckCount)
+            else if (Phase == GamePhase.MidEndGame && previous.CheckCount < criticalCheckCount)
             {
                 Phase = GamePhase.Middle;
                 Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
