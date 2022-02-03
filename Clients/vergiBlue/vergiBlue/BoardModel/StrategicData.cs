@@ -20,6 +20,11 @@
         public bool BlackLeftCastlingValid { get; set; } = true;
         public bool BlackRightCastlingValid { get; set; } = true;
 
+        /// <summary>
+        /// For testing. Don't want to use opening book for arbitrary test situations. 
+        /// </summary>
+        public bool SkipOpeningChecks { get; set; } = false;
+
         public StrategicData()
         {
             // Empty board = end value-

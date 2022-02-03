@@ -32,13 +32,30 @@ namespace vergiBlueDesktop.Views
         {
             var moves = PieceModel.Moves(_gameModel.Model.Session.Board);
             moves = _gameModel.Model.Session.Board.FilterOutIllegalMoves(moves, IsWhite);// TODO how to fix awkward referencing?
+            var detailedMoves = _gameModel.Model.Session.Board.CollectMoveProperties(moves);
 
-            var borderColor = Brushes.Chartreuse;
-            if (IsWhite != Main.PlayerIsWhite) borderColor = Brushes.Coral;
-            foreach (var singleMove in moves)
+            var basicColor = Brushes.Chartreuse;
+            if (IsWhite != Main.PlayerIsWhite) basicColor = Brushes.Coral;
+            var castlingColor = Brushes.BlueViolet;
+            var startColor = Brushes.Gray;
+
+            foreach (var singleMove in detailedMoves)
             {
-                Main.VisualizationTiles.Add(new Position(singleMove.NewPos.row, singleMove.NewPos.column, borderColor));
+                if (singleMove.Castling && PieceModel.Identity == 'K')
+                {
+                    Main.VisualizationTiles.Add(new Position(singleMove.NewPos.row, singleMove.NewPos.column,
+                        castlingColor));
+                }
+                else
+                {
+                    Main.VisualizationTiles.Add(new Position(singleMove.NewPos.row, singleMove.NewPos.column,
+                        basicColor));
+                }
             }
+
+            // Add also start position for "help"
+            Main.VisualizationTiles.Add(new Position(PieceModel.CurrentPosition.row, PieceModel.CurrentPosition.column,
+                startColor));
         }
 
         public void ClearPossibleTiles()

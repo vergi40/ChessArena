@@ -19,7 +19,6 @@ namespace vergiBlue.Logic
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
         
         public IBoard Board { get; set; } = BoardFactory.Create();
-        private OpeningLibrary Openings { get; } = new OpeningLibrary();
 
         /// <summary>
         /// For testing single next turn, overwrite this.
@@ -32,6 +31,7 @@ namespace vergiBlue.Logic
         /// </summary>
         public LogicSettings Settings { get; set; } = new LogicSettings();
 
+        private AlgorithmController _algorithmController { get; } = new AlgorithmController();
 
         /// <summary>
         /// For tests. Need to set board explicitly. Test environment handles initializations.
@@ -40,6 +40,7 @@ namespace vergiBlue.Logic
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, Settings.UseTranspositionTables);
+            _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
         }
 
         /// <summary>
@@ -48,13 +49,15 @@ namespace vergiBlue.Logic
         public Logic(bool isPlayerWhite, IBoard board, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, Settings.UseTranspositionTables);
+            _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             Board = BoardFactory.CreateClone(board);
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
         {
             Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth, Settings.UseTranspositionTables);
-            if(overrideBoard != null) Board = BoardFactory.CreateClone(overrideBoard);
+            _algorithmController.Initialize(startInformation.WhitePlayer, overrideMaxDepth);
+            if (overrideBoard != null) Board = BoardFactory.CreateClone(overrideBoard);
             else Board.InitializeDefaultBoard();
             
             // Opponent non-null only if player is black
@@ -65,28 +68,30 @@ namespace vergiBlue.Logic
         /// Create move from arbitral situation
         /// </summary>
         /// <param name="searchDepth"></param>
-        /// <param name="checkOpenings"></param>
+        /// <param name="checkOpenings">For testing. Don't want to use opening book for arbitrary test situations. </param>
         /// <param name="previousMoveCount"></param>
         /// <returns></returns>
         public IPlayerMove CreateMoveWithDepth(int searchDepth, bool checkOpenings = false, int previousMoveCount = 0)
         {
             Board.Shared.GameTurnCount = previousMoveCount;
             Board.Strategic.TurnCountInCurrentDepth = previousMoveCount;
-            return CreateNewMove(checkOpenings, searchDepth);
+            Board.Strategic.SkipOpeningChecks = !checkOpenings;
+            return CreateNewMove(searchDepth);
         }
-
 
         public override IPlayerMove CreateMove()
         {
-            return CreateNewMove(true);
+            return CreateNewMove();
         }
 
-        private IPlayerMove CreateNewMove(bool checkOpenings, int? overrideSearchDepth = null)
+
+        private IPlayerMove CreateNewMove(int? overrideSearchDepth = null)
         {
             var isMaximizing = IsPlayerWhite;
             Diagnostics.StartMoveCalculations();
+            _algorithmController.TurnStartUpdate(isMaximizing, GameHistory.ToList(), Settings, PreviousData, overrideSearchDepth);
 
-            // Common start measures
+            // Common start measures - WIP
             if (Settings.UseTranspositionTables)
             {
                 // Delete old entries from tables
@@ -118,69 +123,46 @@ namespace vergiBlue.Logic
                     }
                 }
             }
-            
 
-            // Opening
-            if (GameHistory.Count < 10 && checkOpenings)
-            {
-                var previousMoves = GetPreviousMoves();
-                var openingMove = Openings.NextMove(previousMoves);
-
-                if (openingMove != null)
-                {
-                    var openingMoveWithData = Board.CollectMoveProperties(openingMove);
-                    Board.ExecuteMove(openingMoveWithData);
-                    Board.Shared.GameTurnCount++;
-                    PreviousData = Diagnostics.CollectAndClear();
-
-                    var result = new PlayerMoveImplementation(
-                        openingMove.ToInterfaceMove(), PreviousData.ToString());
-                    GameHistory.Add(result.Move);
-                    return result;
-                }
-            }
+            // Opening -- done
 
             // Get all available moves and do necessary filtering
-            List<SingleMove> allMoves = Board.Moves(isMaximizing, true, true).ToList();
-            if (allMoves.Count == 0)
-            {
-                // Game ended to stalemate
-                
-                throw new ArgumentException(
-                    $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
-            }
+            List<SingleMove> validMoves = Board.Moves(isMaximizing, true, true).ToList();
+            
+            // TODO do more testing with the promotions
 
             if (MoveHistory.IsLeaningToDraw(GameHistory))
             {
+                // Repetition
                 // Take 4th from the end of list
                 var repetionMove = GameHistory[^4];
-                allMoves.RemoveAll(m =>
+                validMoves.RemoveAll(m =>
                     m.PrevPos.ToAlgebraic() == repetionMove.StartPosition &&
                     m.NewPos.ToAlgebraic() == repetionMove.EndPosition);
             }
 
-            Diagnostics.AddMessage($"Available moves found: {allMoves.Count}. ");
+            if (validMoves.Count == 0)
+            {
+                // Game ended to stalemate
+                throw new ArgumentException(
+                    $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
+            }
 
-            // 
-            if(overrideSearchDepth == null)
-            {
-                Strategy.Update(PreviousData, Board.Shared.GameTurnCount);
-                SearchDepth = Strategy.DecideSearchDepth(PreviousData, allMoves, Board);
-            }
-            else
-            {
-                SearchDepth = overrideSearchDepth.Value;
-            }
+            Diagnostics.AddMessage($"Available moves found: {validMoves.Count}. ");
             
-            var bestMove = AnalyzeBestMove(allMoves);
+            // Use controller - WIP
+            var aiMove = _algorithmController.GetBestMove(Board, validMoves);
 
-            if (bestMove == null)
+            if (aiMove == null)
                 throw new ArgumentException(
                     $"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
 
+            if (Board.Shared.Transpositions.Tables.Count > 0)
+                Diagnostics.AddMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
+
             // Update local
-            var moveWithData = Board.CollectMoveProperties(bestMove);
-            Board.ExecuteMove(moveWithData);
+            var moveWithData = Board.CollectMoveProperties(aiMove);
+            Board.ExecuteMoveWithValidation(moveWithData);
             Board.Shared.GameTurnCount++;
             
             PreviousData = Diagnostics.CollectAndClear(Settings.UseFullDiagnostics);
@@ -190,78 +172,6 @@ namespace vergiBlue.Logic
             GameHistory.Add(move.Move);
             return move;
         }
-
-        private IList<SingleMove> GetPreviousMoves()
-        {
-            var moves = new List<SingleMove>();
-            foreach (var move in GameHistory)
-            {
-                // TODO optimal case would have capture moves tagged also
-                moves.Add(new SingleMove(move));
-            }
-
-            return moves;
-        }
-
-        /// <summary>
-        /// Player should at least:
-        /// * Check if there is immediate checkmate available
-        /// * Check if there is possible checkmate in two turns.
-        /// 
-        /// </summary>
-        /// <param name="allMoves"></param>
-        /// <returns></returns>
-        private SingleMove? AnalyzeBestMove(IList<SingleMove> allMoves)
-        {
-            var isMaximizing = IsPlayerWhite;
-
-            if (Strategy.Phase == GamePhase.MidEndGame || Strategy.Phase == GamePhase.EndGame)
-            {
-                var checkMate = MoveResearch.ImmediateCheckMateAvailable(allMoves, Board, isMaximizing);
-                if (checkMate != null) return checkMate;
-
-                var twoTurnCheckMates = MoveResearch.CheckMateInTwoTurns(allMoves, Board, isMaximizing);
-                if (twoTurnCheckMates.Count > 1)
-                {
-                    var evaluatedCheckMates = MoveResearch.GetMoveScoreListParallel(twoTurnCheckMates, SearchDepth, Board, isMaximizing);
-                    return MoveResearch.SelectBestMove(evaluatedCheckMates, isMaximizing, true);
-                }
-                else if (twoTurnCheckMates.Count > 0)
-                {
-                    return twoTurnCheckMates.First();
-                }
-            }
-            
-            if(Settings.UseIterativeDeepening)
-            {
-                return MoveResearch.SelectBestWithIterativeDeepening(allMoves, SearchDepth, Board, isMaximizing,
-                    Settings.UseTranspositionTables, Settings.TranspositionTimeLimitInMs);
-            }
-
-            EvaluationResult evaluated;
-            if (Settings.UseParallelComputation)
-            {
-                // CPU profiler - first breakpoint here
-                evaluated = MoveResearch
-                    .GetMoveScoreListParallel(allMoves, SearchDepth, Board, isMaximizing);
-                
-                if(evaluated.Empty)
-                {
-                    throw new ArgumentException($"Logical error - parallel computing lost moves during evaluation.");
-                }
-            }
-            else
-            {
-                evaluated = MoveResearch.GetMoveScoreList(allMoves, SearchDepth, Board, isMaximizing, Settings.UseTranspositionTables);
-                
-                if(Board.Shared.Transpositions.Tables.Count > 0)
-                    Diagnostics.AddMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
-            }
-            
-            return MoveResearch.SelectBestMove(evaluated, isMaximizing, true);
-            // CPU profiler - second breakpoint here
-        }
-
 
         public sealed override void ReceiveMove(IMove? opponentMove)
         {
@@ -297,7 +207,7 @@ namespace vergiBlue.Logic
                 }
             }
 
-            Board.ExecuteMove(move);
+            Board.ExecuteMoveWithValidation(move);
             GameHistory.Add(opponentMove);
             Board.Shared.GameTurnCount++;
         }

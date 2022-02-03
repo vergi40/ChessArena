@@ -117,7 +117,7 @@ namespace vergiBlue.Algorithms
             if (transposition != null && transposition.Depth >= depth)
             {
                 Diagnostics.IncrementTranspositionsFound();
-                var transpositionEval = MoveResearch.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
+                var transpositionEval = Evaluator.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
                 
                 if (transposition.Type == NodeType.Exact) return transpositionEval;
                 if (transposition.Type == NodeType.UpperBound && transpositionEval < beta)
@@ -145,7 +145,7 @@ namespace vergiBlue.Algorithms
             
             if (maximizingPlayer)
             {
-                var value = MoveResearch.DefaultAlpha;
+                var value = MiniMaxGeneral.DefaultAlpha;
                 foreach (var move in allMoves)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
@@ -179,7 +179,7 @@ namespace vergiBlue.Algorithms
             }
             else
             {
-                var value = MoveResearch.DefaultBeta;
+                var value = MiniMaxGeneral.DefaultBeta;
                 foreach (var move in allMoves)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, move);

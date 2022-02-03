@@ -190,7 +190,7 @@ namespace vergiBlue.Algorithms
                 // Replacement scheme: always replace
                 if (depth >= transposition.Depth)
                 {
-                    evaluation = MoveResearch.CheckMateScoreAdjustToEven(evaluation);
+                    evaluation = Evaluator.CheckMateScoreAdjustToEven(evaluation);
                     transposition.Depth = depth;
                     transposition.Evaluation = evaluation;
                     transposition.Type = nodeType;
@@ -218,7 +218,7 @@ namespace vergiBlue.Algorithms
             var transposition = Tables[hash];
             if (depth >= transposition.Depth)
             {
-                evaluation = MoveResearch.CheckMateScoreAdjustToEven(evaluation);
+                evaluation = Evaluator.CheckMateScoreAdjustToEven(evaluation);
                 transposition.Depth = depth;
                 transposition.Evaluation = evaluation;
                 transposition.Type = nodeType;

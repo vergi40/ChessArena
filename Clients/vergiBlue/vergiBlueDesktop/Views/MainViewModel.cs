@@ -34,7 +34,6 @@ namespace vergiBlueDesktop.Views
     /// * Substitute GameControllerWrapper with better design
     /// * Proper bindings and decoupling
     /// * Each piece it's own viewmodel
-    /// * Each game session could be encapsulated as GameSession or GameInstance
     /// </summary>
     public class MainViewModel : NotifyPropertyBase
     {
