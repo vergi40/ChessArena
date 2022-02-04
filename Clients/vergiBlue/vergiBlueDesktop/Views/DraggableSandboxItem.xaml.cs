@@ -11,10 +11,10 @@ using vergiBlue;
 namespace vergiBlueDesktop.Views
 {
     /// <summary>
-    /// Interaction logic for DraggableItem.xaml
+    /// Interaction logic for DraggableSandboxItem.xaml
     /// https://stackoverflow.com/questions/1495408/how-to-drag-a-usercontrol-inside-a-canvas
     /// </summary>
-    partial class DraggableItem : UserControl, IViewObject, INotifyPropertyChanged
+    partial class DraggableSandboxItem : UserControl, IViewObject, INotifyPropertyChanged
     {
         public const int BlockSize = 60;
 
@@ -46,8 +46,8 @@ namespace vergiBlueDesktop.Views
 
         public IPieceWithUiControl Model { get; set; }
 
-        public DraggableItem() { }
-        public DraggableItem(IPieceWithUiControl model, int column, int row)
+        public DraggableSandboxItem() { }
+        public DraggableSandboxItem(IPieceWithUiControl model, int column, int row)
         {
             Model = model;
             
@@ -126,11 +126,19 @@ namespace vergiBlueDesktop.Views
 
         private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // Remove piece
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.Delete))
+            {
+                Model.Main.RemovePiece(this);
+                return;
+            }
+
             isDragging = true;
             var draggableControl = (sender as UserControl);
             mousePosition = e.GetPosition(Parent as UIElement);
             draggableControl.CaptureMouse();
 
+            // Might throw if bad position
             Model.VisualizePossibleTiles();
         }
 
@@ -142,13 +150,8 @@ namespace vergiBlueDesktop.Views
             var transform = (draggable.RenderTransform as TranslateTransform);
             if (transform != null)
             {
-                if (Model.Main.PlayerIsWhite != Model.IsWhite)
-                {
-                    UpdateImageLocation(CurrentPosition.Column, CurrentPosition.Row, false);
-                    // Return
-                }
                 // Piece in the same position - cancel
-                else if (Math.Abs(prevX - transform.X) < double.Epsilon
+                if (Math.Abs(prevX - transform.X) < double.Epsilon
                     && Math.Abs(prevY - transform.Y) < double.Epsilon)
                 {
                     // Return
@@ -160,29 +163,18 @@ namespace vergiBlueDesktop.Views
 
                     var column = (int)Math.Round(x / BlockSize);
                     var row = (int)Math.Round(y / BlockSize);
-                    if(Model.Main.VisualizationTiles.Contains(new Position(row, column)))
-                    {
-                        // Piece in allowed position
-                        prevX = transform.X;
-                        prevY = transform.Y;
 
-                        UpdateInternalLocation(prevX, prevY);
-                        turnFinished = true;
-                    }
-                    else
-                    {
-                        // Piece in not-allowed position
-                        // Revert
-                        UpdateImageLocation(CurrentPosition.Column, CurrentPosition.Row, false);
-                    }
+                    prevX = transform.X;
+                    prevY = transform.Y;
 
-                    
+                    UpdateInternalLocation(prevX, prevY);
+                    turnFinished = true;
                 }
             }
             draggable.ReleaseMouseCapture();
             Model.ClearPossibleTiles();
 
-            if (turnFinished) Model.TurnFinished(PreviousPosition, CurrentPosition);
+            if (turnFinished) Model.SandboxTurnFinished(PreviousPosition, CurrentPosition);
         }
 
         private void UserControl_MouseMove(object sender, MouseEventArgs e)
@@ -209,17 +201,6 @@ namespace vergiBlueDesktop.Views
                 // Set position with diff and previous position
                 transform.X = x + prevX;
                 transform.Y = y + prevY;
-                
-                // TODO restrict borders
-
-                //transform.X += prevX;
-                //transform.Y += prevY;
-
-                //if (prevX > 0)
-                //{
-                //    transform.X += prevX;
-                //    transform.Y += prevY;
-                //}
             }
         }
 
@@ -256,36 +237,5 @@ namespace vergiBlueDesktop.Views
             }
             OnPropertyChanged(memberExpression.Member.Name);
         }
-
-    }
-
-    // https://stackoverflow.com/questions/35036894/how-to-bind-to-an-unbindable-property-without-violating-mvvm
-    public class SvgViewboxAttachedProperties : DependencyObject
-    {
-        public static string GetSource(DependencyObject obj)
-        {
-            return (string)obj.GetValue(SourceProperty);
-        }
-
-        public static void SetSource(DependencyObject obj, string value)
-        {
-            obj.SetValue(SourceProperty, value);
-        }
-
-        private static void OnSourceChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
-        {
-            var svgControl = obj as SvgViewbox;
-            if (svgControl != null)
-            {
-                var path = (string)e.NewValue;
-                svgControl.Source = string.IsNullOrWhiteSpace(path) ? default(Uri) : new Uri(path);
-            }
-        }
-
-        public static readonly DependencyProperty SourceProperty =
-            DependencyProperty.RegisterAttached("Source",
-                typeof(string), typeof(SvgViewboxAttachedProperties),
-                // default value: null
-                new PropertyMetadata(null, OnSourceChanged));
     }
 }

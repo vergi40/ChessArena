@@ -265,7 +265,27 @@ namespace vergiBlue.BoardModel
             BoardArray[move.NewPos.Item1, move.NewPos.Item2] = piece;
         }
 
-        private void RemovePiece((int column, int row) position)
+        /// <summary>
+        /// Cast IBoard to Board to use this in testing.
+        /// If there is any piece in target square, it's deleted
+        /// </summary>
+        /// <param name="move"></param>
+        public void UpdateBoardArray(SingleMove move)
+        {
+            var piece = ValueAtDefinitely(move.PrevPos);
+
+            var toBeDeleted = ValueAt(move.NewPos);
+            if (toBeDeleted != null)
+            {
+                RemovePiece(move.NewPos);
+            }
+
+            piece.CurrentPosition = move.NewPos;
+            BoardArray[move.PrevPos.Item1, move.PrevPos.Item2] = null;
+            BoardArray[move.NewPos.Item1, move.NewPos.Item2] = piece;
+        }
+
+        public void RemovePiece((int column, int row) position)
         {
             var piece = ValueAt(position);
             if (piece == null) throw new ArgumentException($"Piece in position {position} was null");

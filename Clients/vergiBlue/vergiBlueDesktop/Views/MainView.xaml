@@ -30,6 +30,7 @@
                 <Button Command="{Binding Test1Command}" Content="Test 1" />
                 <Button Command="{Binding Test2Command}" Content="Test 2" />
                 <Button Command="{Binding Test3Command}" Content="Test 3" />
+                <Button Command="{Binding SandboxCommand}" Content="Sandbox" />
             </WrapPanel>
             <Expander Margin="3">
                 <StackPanel Orientation="Vertical" >

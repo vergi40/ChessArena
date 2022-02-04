@@ -69,5 +69,12 @@ namespace vergiBlueDesktop.Views
                 (currentPosition.Column, currentPosition.Row));
             _gameModel.Model.TurnFinished(move, false);
         }
+
+        public void SandboxTurnFinished(Position previousPosition, Position currentPosition)
+        {
+            var move = new SingleMove((previousPosition.Column, previousPosition.Row),
+                (currentPosition.Column, currentPosition.Row));
+            _gameModel.Model.SandboxTurnFinished(move);
+        }
     }
 }

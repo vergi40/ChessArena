@@ -71,4 +71,17 @@
     <Resource Include="Resources\kosal\wr.svg" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Views\DraggableSandboxItem.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\DraggableSandboxItem.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
 </Project>

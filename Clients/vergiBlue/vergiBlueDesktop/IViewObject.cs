@@ -45,6 +45,7 @@ namespace vergiBlueDesktop
         void VisualizePossibleTiles();
         void ClearPossibleTiles();
         void TurnFinished(Position previousPosition, Position currentPosition);
+        void SandboxTurnFinished(Position previousPosition, Position currentPosition);
     }
 
     public interface IPiece

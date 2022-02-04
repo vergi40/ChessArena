@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CommonNetStandard.Client;
 using CommonNetStandard.Common;
@@ -32,6 +33,8 @@ namespace vergiBlueDesktop
         /// </summary>
         private GameModelProxy _proxy { get; }
         public GameSession Session { get; set; }
+
+        private bool _sandboxMode { get; set; }
         
         public GameModel(MainViewModel viewModel)
         {
@@ -45,6 +48,8 @@ namespace vergiBlueDesktop
             _viewModel.Test1Command = new RelayCommand<object>(DoubleRookTest);
             _viewModel.Test2Command = new RelayCommand<object>(PromotionTest);
             _viewModel.Test3Command = new RelayCommand<object>(CastlingTest);
+
+            _viewModel.SandboxCommand = new RelayCommand<object>(SandboxGame);
         }
 
         private void StartWhite(object parameter)
@@ -95,6 +100,7 @@ namespace vergiBlueDesktop
         {
             move = Session.Board.CollectMoveProperties(move);
             _viewModel.UpdateGraphics(move, pieceNotMovedInView);
+
             Session.Board.ExecuteMove(move);
             _viewModel.UpdatePostGraphics(move, _proxy);
 
@@ -237,12 +243,32 @@ namespace vergiBlueDesktop
             InitializeEnvironment(true, true, board);
         }
 
-        private void Test2(object parameter)
+        private void SandboxGame(object obj)
         {
+            _viewModel.ViewUpdateGameStart();
+            InitializeEnvironment(true, true);
+
+            TurnCount = 0;
+            var initializedBoard = BoardFactory.Create();
+            initializedBoard.InitializeDefaultBoard();
+
+            Session = new GameSession(initializedBoard, true, true, _viewModel.AiLogicSettings);
+
+            _viewModel.InitializeViewModel(Session, _proxy, true);
+
+            _sandboxMode = true;
         }
 
-        private void Test3(object parameter)
+        public void SandboxTurnFinished(SingleMove move)
         {
+            var capture =
+                _viewModel.ViewObjectList.Count(o => o.Column == move.NewPos.column && o.Row == move.NewPos.row) == 2;
+            move.Capture = capture;
+
+            _viewModel.UpdateGraphics(move, false);
+
+            var board = Session.Board as Board;
+            board.UpdateBoardArray(move);
         }
     }
 

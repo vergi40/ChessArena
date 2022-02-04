@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using log4net;
 using vergiBlue;
+using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
@@ -22,12 +23,12 @@ namespace vergiBlueDesktop.Views
     /// * Add timer
     /// * Ask ai to give hint
     /// * Endgame scenarios with thumbnail pictures
-    /// * Get all possible moves and compare to made move. Eg king cant be lost on purpose
     /// * Show captured pieces on top and bottom, in place of buttons
     /// * - Also highlight player which turn is going
     ///
     /// General
     /// * Save user settings to local app.config. Add restore defaults button
+    /// * "Sandbox"-mode. Position pieces as you like. Extra: show valid moves even when custom positioned
     ///
     /// Design ideas
     /// * Make this as an example MVVM project
@@ -123,6 +124,7 @@ namespace vergiBlueDesktop.Views
         public ICommand Test1Command { get; set; }
         public ICommand Test2Command { get; set; }
         public ICommand Test3Command { get; set; }
+        public ICommand SandboxCommand { get; set; }
 
         private GameSession _session { get; set; }
 
@@ -130,7 +132,7 @@ namespace vergiBlueDesktop.Views
         {
         }
 
-        public void InitializeViewModel(GameSession session, GameModelProxy modelProxy)
+        public void InitializeViewModel(GameSession session, GameModelProxy modelProxy, bool sandboxMode = false)
         {
             _session = session;
 
@@ -145,7 +147,7 @@ namespace vergiBlueDesktop.Views
             // Add pieces
             foreach (var piece in _session.Board.PieceList)
             {
-                AddUiPiece(piece, piece.CurrentPosition.column, piece.CurrentPosition.row, modelProxy);
+                AddUiPiece(piece, piece.CurrentPosition.column, piece.CurrentPosition.row, modelProxy, sandboxMode);
             }
         }
 
@@ -281,23 +283,45 @@ namespace vergiBlueDesktop.Views
         
         public void AddPromotionPiece(PieceBase piece, SingleMove move, GameModelProxy modelProxy)
         {
-            AddUiPiece(piece, move.NewPos.column, move.NewPos.row, modelProxy);
+            AddUiPiece(piece, move.NewPos.column, move.NewPos.row, modelProxy, false);
         }
 
         /// <summary>
         /// Add piece to view
         /// </summary>
-        public void AddUiPiece(PieceBase piece, int column, int row, GameModelProxy modelProxy)
+        public void AddUiPiece(PieceBase piece, int column, int row, GameModelProxy modelProxy, bool sandboxMode)
         {
-            var uiPiece = new DraggableItem(
-                new PieceViewModel(this, modelProxy)
-                {
-                    IsWhite = piece.IsWhite,
-                    PieceModel = piece,
-                    SourceUri = GetUriForPiece(piece),
-                },
-                column, row);
-            ViewObjectList.Add(uiPiece);
+            if (sandboxMode)
+            {
+                var uiPiece = new DraggableSandboxItem(
+                    new PieceViewModel(this, modelProxy)
+                    {
+                        IsWhite = piece.IsWhite,
+                        PieceModel = piece,
+                        SourceUri = GetUriForPiece(piece),
+                    },
+                    column, row);
+                ViewObjectList.Add(uiPiece);
+            }
+            else
+            {
+                var uiPiece = new DraggableItem(
+                    new PieceViewModel(this, modelProxy)
+                    {
+                        IsWhite = piece.IsWhite,
+                        PieceModel = piece,
+                        SourceUri = GetUriForPiece(piece),
+                    },
+                    column, row);
+                ViewObjectList.Add(uiPiece);
+            }
+        }
+
+        public void RemovePiece(IViewObject piece)
+        {
+            ViewObjectList.Remove(piece);
+            var board = _session.Board as Board;
+            board.RemovePiece((piece.CurrentPosition.Column, piece.CurrentPosition.Row));
         }
     }
 }
