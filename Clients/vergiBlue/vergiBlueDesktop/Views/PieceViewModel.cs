@@ -34,17 +34,15 @@ namespace vergiBlueDesktop.Views
             moves = _gameModel.Model.Session.Board.FilterOutIllegalMoves(moves, IsWhite);// TODO how to fix awkward referencing?
             var detailedMoves = _gameModel.Model.Session.Board.CollectMoveProperties(moves);
 
-            var basicColor = Brushes.Chartreuse;
-            if (IsWhite != Main.PlayerIsWhite) basicColor = Brushes.Coral;
-            var castlingColor = Brushes.BlueViolet;
-            var startColor = Brushes.Gray;
+            var basicColor = GraphicConstants.PlayerMoveColor;
+            if (IsWhite != Main.PlayerIsWhite) basicColor = GraphicConstants.OpponentMoveColor;
 
             foreach (var singleMove in detailedMoves)
             {
                 if (singleMove.Castling && PieceModel.Identity == 'K')
                 {
                     Main.VisualizationTiles.Add(new Position(singleMove.NewPos.row, singleMove.NewPos.column,
-                        castlingColor));
+                        GraphicConstants.CastlingColor));
                 }
                 else
                 {
@@ -55,7 +53,7 @@ namespace vergiBlueDesktop.Views
 
             // Add also start position for "help"
             Main.VisualizationTiles.Add(new Position(PieceModel.CurrentPosition.row, PieceModel.CurrentPosition.column,
-                startColor));
+                GraphicConstants.StartPositionColor));
         }
 
         public void ClearPossibleTiles()

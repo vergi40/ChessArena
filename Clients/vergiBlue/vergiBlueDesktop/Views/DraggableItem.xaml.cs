@@ -16,9 +16,8 @@ namespace vergiBlueDesktop.Views
     /// </summary>
     partial class DraggableItem : UserControl, IViewObject, INotifyPropertyChanged
     {
-        public const int BlockSize = 60;
+        private static int BlockSize = GraphicConstants.BlockSize;
 
-        
         public Uri SourceUri => Model.SourceUri;
         public bool IsWhite => Model.IsWhite;
 
@@ -74,7 +73,7 @@ namespace vergiBlueDesktop.Views
         {
             var x = column * BlockSize;
             // UserControl transform system has mirrored y-axis
-            var y = 420 - row * BlockSize;
+            var y = (7 - row) * BlockSize;
 
             if (updatePreviousPixelLocation)
             {
@@ -126,8 +125,10 @@ namespace vergiBlueDesktop.Views
 
         private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            var draggableControl = sender as UserControl;
+            if (draggableControl == null) return; 
+            
             isDragging = true;
-            var draggableControl = (sender as UserControl);
             mousePosition = e.GetPosition(Parent as UIElement);
             draggableControl.CaptureMouse();
 
@@ -136,11 +137,12 @@ namespace vergiBlueDesktop.Views
 
         private void UserControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            var draggable = sender as UserControl;
+            if (draggable == null) return;
+
             isDragging = false;
             var turnFinished = false;
-            var draggable = (sender as UserControl);
-            var transform = (draggable.RenderTransform as TranslateTransform);
-            if (transform != null)
+            if (draggable.RenderTransform is TranslateTransform transform)
             {
                 if (Model.Main.PlayerIsWhite != Model.IsWhite)
                 {
@@ -175,8 +177,6 @@ namespace vergiBlueDesktop.Views
                         // Revert
                         UpdateImageLocation(CurrentPosition.Column, CurrentPosition.Row, false);
                     }
-
-                    
                 }
             }
             draggable.ReleaseMouseCapture();
@@ -187,11 +187,13 @@ namespace vergiBlueDesktop.Views
 
         private void UserControl_MouseMove(object sender, MouseEventArgs e)
         {
-            var draggableControl = (sender as UserControl);
-            if (isDragging && draggableControl != null)
+            var draggableControl = sender as UserControl;
+            if (draggableControl == null) return;
+
+            if (isDragging)
             {
                 var currentPosition = e.GetPosition(Parent as UIElement);
-                var transform = (draggableControl.RenderTransform as TranslateTransform);
+                var transform = draggableControl.RenderTransform as TranslateTransform;
                 if (transform == null)
                 {
                     transform = new TranslateTransform();
@@ -199,36 +201,20 @@ namespace vergiBlueDesktop.Views
                 }
 
                 // diff
-                var x = (currentPosition.X - mousePosition.X);
-                var y = (currentPosition.Y - mousePosition.Y);
+                var x = currentPosition.X - mousePosition.X;
+                var y = currentPosition.Y - mousePosition.Y;
 
                 // Only allow movement to tiles
-                x = Math.Round(x / 60) * 60;
-                y = Math.Round(y / 60) * 60;
+                x = Math.Round(x / BlockSize) * BlockSize;
+                y = Math.Round(y / BlockSize) * BlockSize;
 
                 // Set position with diff and previous position
                 transform.X = x + prevX;
                 transform.Y = y + prevY;
                 
-                // TODO restrict borders
-
-                //transform.X += prevX;
-                //transform.Y += prevY;
-
-                //if (prevX > 0)
-                //{
-                //    transform.X += prevX;
-                //    transform.Y += prevY;
-                //}
+                // Extra: restrict borders
             }
         }
-
-        public void TestIncrRow()
-        {
-            UpdateImageLocation(Column, Row + 1, false);
-            Row++;
-        }
-
 
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 

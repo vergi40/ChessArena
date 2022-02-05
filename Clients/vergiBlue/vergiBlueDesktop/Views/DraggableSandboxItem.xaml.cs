@@ -16,9 +16,8 @@ namespace vergiBlueDesktop.Views
     /// </summary>
     partial class DraggableSandboxItem : UserControl, IViewObject, INotifyPropertyChanged
     {
-        public const int BlockSize = 60;
+        private static int BlockSize = GraphicConstants.BlockSize;
 
-        
         public Uri SourceUri => Model.SourceUri;
         public bool IsWhite => Model.IsWhite;
 
@@ -74,7 +73,7 @@ namespace vergiBlueDesktop.Views
         {
             var x = column * BlockSize;
             // UserControl transform system has mirrored y-axis
-            var y = 420 - row * BlockSize;
+            var y = (7 - row) * BlockSize;
 
             if (updatePreviousPixelLocation)
             {
@@ -82,11 +81,11 @@ namespace vergiBlueDesktop.Views
                 prevY = y;
             }
 
-            var transform = this.RenderTransform as TranslateTransform;
+            var transform = RenderTransform as TranslateTransform;
             if (transform == null)
             {
                 transform = new TranslateTransform();
-                this.RenderTransform = transform;
+                RenderTransform = transform;
             }
             transform.X = x;
             transform.Y = y;
@@ -134,7 +133,7 @@ namespace vergiBlueDesktop.Views
             }
 
             isDragging = true;
-            var draggableControl = (sender as UserControl);
+            var draggableControl = sender as UserControl;
             mousePosition = e.GetPosition(Parent as UIElement);
             draggableControl.CaptureMouse();
 
@@ -158,12 +157,6 @@ namespace vergiBlueDesktop.Views
                 }
                 else
                 {
-                    var x = transform.X;
-                    var y = 420 - transform.Y;
-
-                    var column = (int)Math.Round(x / BlockSize);
-                    var row = (int)Math.Round(y / BlockSize);
-
                     prevX = transform.X;
                     prevY = transform.Y;
 
@@ -195,22 +188,15 @@ namespace vergiBlueDesktop.Views
                 var y = (currentPosition.Y - mousePosition.Y);
 
                 // Only allow movement to tiles
-                x = Math.Round(x / 60) * 60;
-                y = Math.Round(y / 60) * 60;
+                x = Math.Round(x / BlockSize) * BlockSize;
+                y = Math.Round(y / BlockSize) * BlockSize;
 
                 // Set position with diff and previous position
                 transform.X = x + prevX;
                 transform.Y = y + prevY;
             }
         }
-
-        public void TestIncrRow()
-        {
-            UpdateImageLocation(Column, Row + 1, false);
-            Row++;
-        }
-
-
+        
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
         public void OnPropertyChanged(string propertyName)

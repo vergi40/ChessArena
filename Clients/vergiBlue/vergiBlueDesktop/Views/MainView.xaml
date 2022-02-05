@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:vergiBlueDesktop.Views"
         xmlns:views1="clr-namespace:vergiBlueDesktop.Views"
-        Width="900"
-        Height="800"
+        Width="1000"
+        Height="900"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance {x:Type local:MainViewModel}}"
         >

@@ -36,7 +36,6 @@ namespace vergiBlueDesktop
 
         void UpdateImageLocation(int column, int row, bool updatePreviousPixelLocation);
         void UpdateInternalLocation(int column, int row);
-        void TestIncrRow();
     }
 
     public interface IPieceWithUiControl : IPiece

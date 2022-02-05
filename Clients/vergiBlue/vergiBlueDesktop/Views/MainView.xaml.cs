@@ -13,11 +13,6 @@ namespace vergiBlueDesktop.Views
     /// </summary>
     public partial class MainView : Window
     {
-        public const int BlockSize = 60;
-        static readonly Brush DarkTile = Brushes.DarkGray;
-        static readonly Brush LightTile = Brushes.AntiqueWhite;
-        static readonly Brush BorderColor = Brushes.Black;
-        
         public MainView()
         {
             InitializeComponent();
@@ -31,7 +26,7 @@ namespace vergiBlueDesktop.Views
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    AddRectangle(i * BlockSize, j * BlockSize, isWhite);
+                    AddRectangle(i * GraphicConstants.BlockSize, j * GraphicConstants.BlockSize, isWhite);
                     isWhite = !isWhite;
                 }
 
@@ -51,20 +46,20 @@ namespace vergiBlueDesktop.Views
         Rectangle DrawRectangle(bool isWhite)
         {
             var rec = new Rectangle();
-            rec.Height = BlockSize;
-            rec.Width = BlockSize;
+            rec.Height = GraphicConstants.BlockSize;
+            rec.Width = GraphicConstants.BlockSize;
             rec.HorizontalAlignment = HorizontalAlignment.Left;
             rec.VerticalAlignment = VerticalAlignment.Bottom;
 
             if (isWhite)
             {
-                rec.Fill = LightTile;
-                rec.Stroke = BorderColor;
+                rec.Fill = GraphicConstants.BoardLightTile;
+                rec.Stroke = GraphicConstants.BoardBorderColor;
             }
             else
             {
-                rec.Fill = DarkTile;
-                rec.Stroke = BorderColor;
+                rec.Fill = GraphicConstants.BoardDarkTile;
+                rec.Stroke = GraphicConstants.BoardBorderColor;
             }
 
             return rec;
