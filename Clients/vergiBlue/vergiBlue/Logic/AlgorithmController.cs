@@ -82,7 +82,7 @@ namespace vergiBlue.Logic
 
 
             _currentTurnIsWhite = turnInfo.isWhiteTurn;
-            _contextAnalyzer.TurnStartUpdate(turnInfo, _moveHistory.Count);
+            _contextAnalyzer.TurnStartUpdate(turnInfo);
         }
         
         private void UpdateGameHistory(IReadOnlyList<IMove> gameHistory)
@@ -121,17 +121,10 @@ namespace vergiBlue.Logic
             // Select wanted algorithm and calculate
             
 
-            // TODO rework all these
-            //
-            var depth = _contextAnalyzer.DecideSearchDepth(validMoves, board);
+            var depthResult = _contextAnalyzer.DecideSearchDepth(validMoves, board);
 
-            // TODO TESTING
-            depth = Math.Min(depth, 7);
-            Diagnostics.AddMessage($"Search depth {depth}. Algo: {_algorithm.GetType().Name}");
-            
-            var gamePhase = _contextAnalyzer.DecideGamePhaseTemp(validMoves.Count, board);
-
-            SetAlgorithm(depth, gamePhase);
+            SetAlgorithm(depthResult.depth, depthResult.phase);
+            Diagnostics.AddMessage($"Algo: {_algorithm.GetType().Name}");
 
             var context = new BoardContext()
             {
@@ -140,12 +133,12 @@ namespace vergiBlue.Logic
                 IsWhiteTurn = _currentTurnIsWhite,
                 CurrentBoard = board,
                 ValidMoves = validMoves,
-                NominalSearchDepth = depth,
+                NominalSearchDepth = depthResult.depth,
                 MaxTimeMs = _turnInfo.settings.TranspositionTimeLimitInMs
             };
 
             // Next should check it there is easy check mate in horizon
-            var checkMateMove = FindCheckMate(gamePhase, context);
+            var checkMateMove = FindCheckMate(depthResult.phase, context);
             if (checkMateMove != null) return checkMateMove;
 
             return _algorithm.CalculateBestMove(context);

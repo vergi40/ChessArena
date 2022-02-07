@@ -4,6 +4,8 @@
     {
         // Config bools. Default values used in real game
         public bool UseTranspositionTables { get; set; } = true;
+
+        // TODO rename
         public int TranspositionTimeLimitInMs { get; set; } = 5000;
 
         public bool UseParallelComputation { get; set; } = false;

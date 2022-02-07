@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard.Interface;
+using vergiBlue.Algorithms.Context;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 
@@ -14,309 +15,141 @@ namespace vergiBlue.Algorithms
     /// </summary>
     internal class ContextAnalyzer
     {
-        /// <summary>
-        /// Try to do calculations in same time scale as target. Milliseconds.
-        /// Can change for each turn, based on how much total time there is left. 
-        /// </summary>
-        public int TargetTime { get; set; } = 5000;
-
         public bool IsWhite { get; }
-
-
+        
         public GamePhase Phase { get; set; }
-        public int SearchDepth { get; set; }
+        
+        private int _previousDepth { get; set; } = 5;
+        private GamePhase _previousPhase { get; set; } = GamePhase.Start;
 
-        /// <summary>
-        /// Total game turn count
-        /// </summary>
-        public int TurnCount { get; set; } = 0;
-
-        /// <summary>
-        /// Starts from 0
-        /// </summary>
-        public int PlayerTurnCount
-        {
-            get
-            {
-                if (IsWhite) return TurnCount / 2;
-                return (TurnCount - 1) / 2;
-            }
-        }
-
-        // TODO as start parameters
-        public int MaxDepth { get; set; } = 5;
-        const int MinDepth = 2;
+        private DepthController _depthController { get; } = new DepthController();
 
         private TurnStartInfo _turnInfo { get; set; } =
             new(false, new List<IMove>(), new LogicSettings(), new DiagnosticsData());
 
+        private int? _overrideGameMaxDepth { get; }
+
+
         public ContextAnalyzer(bool isWhite, int? overrideGameMaxDepth)
         {
             IsWhite = isWhite;
-            SearchDepth = 5;
-
-            if (overrideGameMaxDepth != null)
-            {
-                MaxDepth = overrideGameMaxDepth.Value;
-            }
+            _overrideGameMaxDepth = overrideGameMaxDepth;
         }
 
         /// <summary>
         /// Refresh data in beginning of each turn
         /// </summary>
-        public void TurnStartUpdate(TurnStartInfo turnInfo, int turnCount)
+        public void TurnStartUpdate(TurnStartInfo turnInfo)
         {
             _turnInfo = turnInfo;
-            TurnCount = turnCount;
-
-            if (turnInfo.settings.UseTranspositionTables)
-            {
-                //SearchDepth = 6;
-                SearchDepth = 5;
-            }
-
-            if (turnInfo.IsSearchDepthFixed)
-            {
-                MaxDepth = turnInfo.SearchDepthFixed;
-            }
         }
 
-        public int DecideSearchDepth(IReadOnlyList<SingleMove> allMoves, IBoard board)
+        public (int depth, GamePhase phase) DecideSearchDepth(IReadOnlyList<SingleMove> allMoves, IBoard board)
         {
+            var gamePhase = DecideGamePhaseTemp(allMoves.Count, board);
+
             if (_turnInfo.IsSearchDepthFixed)
             {
-                return _turnInfo.SearchDepthFixed;
+                _previousDepth = _turnInfo.SearchDepthFixed;
+                return (_turnInfo.SearchDepthFixed, gamePhase);
             }
-
-            var previousDepth = SearchDepth;
-
             // Previous was opening move from database
-            if (_turnInfo.previousMoveData.EvaluationCount == 0 && _turnInfo.previousMoveData.CheckCount == 0)
+            //if (_turnInfo.previousMoveData.EvaluationCount == 0 && _turnInfo.previousMoveData.CheckCount == 0)
+            //{
+
+            //    return SearchDepth;
+            //}
+
+            // TODO do multiple checks
+            // Track previous depth and time. Only +1 or -1 if enough points tick the box
+            // 
+            // Decide game phase
+            // Min&max depth from settings (algorithm type) and game phase - update each turn
+            // Estimate time by amount of possible moves to board
+            // Compare estimate time to previous time and possibilities
+
+            // Clamp()
+            // PrintChanges(newDepth) - if changes
+            var (minDepth, maxDepth) = GetDepthMinMax(_turnInfo, board, gamePhase);
+            if (_overrideGameMaxDepth != null)
             {
+                maxDepth = _overrideGameMaxDepth.Value;
+                minDepth = Math.Min(minDepth, _overrideGameMaxDepth.Value);
+            }
+
+            var depthEstimate = _depthController.GetDepthEstimate(allMoves, board, _turnInfo, maxDepth);
+
+            var resultDepth = (int)Math.Round(depthEstimate);
+            resultDepth = Math.Clamp(resultDepth, minDepth, maxDepth);
+
+            PrintChanges(resultDepth, depthEstimate, Phase);
+            _previousDepth = resultDepth;
+            _previousPhase = Phase;
+
+            return (resultDepth, gamePhase);
+        }
+
+        private void PrintChanges(int depth, double estimate, GamePhase phase)
+        {
+            if (depth != _previousDepth)
+            {
+                Diagnostics.AddMessage($"Search depth update {_previousDepth} -> {depth} (estimate {estimate:F2}");
+            }
+
+            if (phase != _previousPhase)
+            {
+                Diagnostics.AddMessage($"Game phase update {_previousPhase} -> {phase}");
+            }
+        }
+
+        private (int minDepth, int maxDepth) GetDepthMinMax(TurnStartInfo turnInfo, IBoard board, GamePhase phase)
+        {
+            // NOTE: take phase into account
+            var settings = turnInfo.settings;
+
+            if (settings.UseTranspositionTables && settings.UseIterativeDeepening)
+            {
+                var tempOffset = -1;
                 
-                return SearchDepth;
-            }
-
-            // Logic needs to be rewritten when using transposition tables, because of how much they affect speed.
-            if (_turnInfo.settings.UseTranspositionTables)
-            {
-                SearchDepth = GetMaxDepthForCurrentBoardWithTranspositions(board);
-                return SearchDepth;
-            }
-
-            var maxDepth = GetMaxDepthForCurrentBoard(board);
-            SearchDepth = maxDepth;
-            // TODO Skip until correlated to new speeds
-            return maxDepth;
-
-            var previousEstimate = 0;
-            for (int i = 3; i <= maxDepth; i++)
-            {
-                var estimation = AssessTimeForMiniMaxDepth(i, allMoves, board, previousDepth, _turnInfo.previousMoveData);
-
-                // Use 50% tolerance for target time
-                if (estimation > TargetTime * 1.50)
+                // Cool new switch structure
+                var powerPieceCount = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
+                var max = powerPieceCount switch
                 {
-                    SearchDepth = i - 1;
-                    Diagnostics.AddMessage($"Using search depth {SearchDepth}. Time estimation was {previousEstimate} ms.");
-                    return SearchDepth;
-                }
-                else previousEstimate = estimation;
+                    > 7 => 7 + tempOffset,
+                    > 6 => 8 + tempOffset,
+                    > 4 => 9 + tempOffset,
+                    _ => 10 + tempOffset
+                };
+
+                return (3, max);
             }
 
-            SearchDepth = maxDepth;
-            Diagnostics.AddMessage($"Failed to assess - using search depth {SearchDepth}. ");
-            return maxDepth;
-            //AnalyzeGamePhase(allMoves.Count, board);
-            //return SearchDepth;
-        }
-
-        private int AssessTimeForMiniMaxDepth(int depth, IReadOnlyList<SingleMove> availableMoves, IBoard board,
-            int previousDepth, DiagnosticsData previousData)
-        {
-            var previousTime = previousData.TimeElapsed.TotalMilliseconds;
-            var prevousEvalCount = previousData.EvaluationCount + previousData.CheckCount;
-
-            // Need a equation to model evalcount <-> time
-            // movecount ^ depth = evalcount
-            // evalcount correlates to time
-
-            // Estimated evaluation speed. moves per millisecond
-            // Speed = count / time
-            var previousEvalSpeed = prevousEvalCount / previousTime;
-
-            var evalCount = Math.Pow(Math.Max(availableMoves.Count, 6), depth);
-            // lets say 20 ^ 5 = 3 200 000
-
-            // Estimated total time with previous speed
-            // Time = count /  speed
-            var timeEstimate = evalCount / previousEvalSpeed;
-
-            // Increase estimate proportionally depending of piece count
-            // All pieces -> use as is
-            // 1 piece -> 1/16 of the time
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
-            var factor = (double)powerPieces / 16;
-            //var factor = 0.5 + (double)powerPieces / 32;
-
-            return (int)(timeEstimate * factor);
-        }
-
-        private int GetMaxDepthForCurrentBoard(IBoard board)
-        {
-            var tempOffset = -1;
-
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
-            if (powerPieces > 9) return 6 + tempOffset;
-            if (powerPieces > 7) return 7 + tempOffset;
-            if (powerPieces > 6) return 8 + tempOffset;
-            if (powerPieces > 4) return 9 + tempOffset;
-            return 10 + tempOffset;
-        }
-
-        private int GetMaxDepthForCurrentBoardWithTranspositions(IBoard board)
-        {
-            var tempOffset = -1;
-
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
-            if (powerPieces > 9) return 6 + tempOffset;
-            if (powerPieces > 7) return 7 + tempOffset;
-            if (powerPieces > 6) return 8 + tempOffset;
-            if (powerPieces > 4) return 9 + tempOffset;
-            return 10 + tempOffset;
-        }
-
-
-
-        // TODO DEPRECATED
-        private void AnalyzeGamePhase(int movePossibilities, IBoard board)
-        {
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
-
-            if (powerPieces > 10)
+            if (settings.UseTranspositionTables || settings.UseIterativeDeepening)
             {
-                AnalyzeHighPieceCountPhase(movePossibilities, board);
+                var tempOffset = -2;
+
+                var powerPieceCount = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
+                var max = powerPieceCount switch
+                {
+                    > 9 => 7 + tempOffset,
+                    > 6 => 8 + tempOffset,
+                    > 4 => 9 + tempOffset,
+                    _ => 10 + tempOffset
+                };
+
+                return (3, max);
             }
-            else if (powerPieces > 7)
+
+            if (settings.UseParallelComputation)
             {
-                AnalyzeMediumPieceCountPhase(movePossibilities, board);
+                return (3, 6);
             }
-            else
-            {
-                AnalyzeLowPieceCountPhase(movePossibilities, board);
-            }
+
+            return (3, 5);
         }
 
         /// <summary>
-        /// Cap the search depth lower
-        /// </summary>
-        /// <param name="movePossibilities"></param>
-        /// <param name="board"></param>
-        private void AnalyzeHighPieceCountPhase(int movePossibilities, IBoard board)
-        {
-            var previous = _turnInfo.previousMoveData;
-
-            // Game start
-            if (previous.TimeElapsed.Equals(TimeSpan.Zero))
-            {
-                SearchDepth = Math.Min(MaxDepth, 3);
-                Phase = GamePhase.Start;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
-                return;
-            }
-
-            const int criticalEvalCount = 300000;
-            var approximateEvalCount = Math.Pow(movePossibilities, SearchDepth);
-            Phase = GamePhase.Start;
-
-
-
-            if ((previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, previous.EvaluationCount) > criticalEvalCount) && SearchDepth > MinDepth)
-            {
-                SearchDepth--;
-                Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
-            }
-            else if ((previous.TimeElapsed.TotalMilliseconds < 200 || Math.Max(previous.EvaluationCount, approximateEvalCount) < 50000) && SearchDepth < MaxDepth - 1)
-            {
-                // Only raise to max depth if possibilities are low enough
-                SearchDepth++;
-                Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
-            }
-        }
-
-        private void AnalyzeMediumPieceCountPhase(int movePossibilities, IBoard board)
-        {
-            // 
-            if (Phase != GamePhase.Middle && Phase != GamePhase.MidEndGame)
-            {
-                SearchDepth = Math.Min(MaxDepth, 4);
-                Phase = GamePhase.Middle;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
-                return;
-            }
-            const int criticalEvalCount = 400000;
-            const int criticalCheckCount = 1000;
-            var previous = _turnInfo.previousMoveData;
-
-
-            var approximateEvalCount = Math.Pow(movePossibilities, SearchDepth);
-
-            if ((previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, previous.EvaluationCount) > criticalEvalCount) && SearchDepth > MinDepth)
-            {
-                SearchDepth--;
-                Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
-            }
-            else if ((previous.TimeElapsed.TotalMilliseconds < 200 || Math.Max(previous.EvaluationCount, approximateEvalCount) < 50000) && SearchDepth < MaxDepth)
-            {
-                // Only raise to max depth if possibilities are low enough
-                SearchDepth++;
-                Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
-            }
-
-            if (Phase == GamePhase.Middle && previous.CheckCount >= criticalCheckCount)
-            {
-                Phase = GamePhase.MidEndGame;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
-            }
-            else if (Phase == GamePhase.MidEndGame && previous.CheckCount < criticalCheckCount)
-            {
-                Phase = GamePhase.Middle;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
-            }
-        }
-
-        private void AnalyzeLowPieceCountPhase(int movePossibilities, IBoard board)
-        {
-            // 
-            if (Phase != GamePhase.EndGame)
-            {
-                SearchDepth = Math.Min(MaxDepth, 5);
-                Phase = GamePhase.EndGame;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. Search depth {SearchDepth}. ");
-                return;
-            }
-            const int criticalHighEvalCount = 1000000;
-            const int criticalLowEvalCount = 150000;
-            var previous = _turnInfo.previousMoveData;
-            //const int criticalCheckCount = 1000;
-
-            var approximateEvalCount = Math.Pow(movePossibilities, SearchDepth);
-
-            if ((previous.TimeElapsed.TotalMilliseconds > 1500 || Math.Max(approximateEvalCount, previous.EvaluationCount) > criticalHighEvalCount) && SearchDepth > MinDepth + 1)
-            {
-                SearchDepth--;
-                Diagnostics.AddMessage($"Decreased search depth to {SearchDepth}. ");
-            }
-            else if ((previous.TimeElapsed.TotalMilliseconds < 400 || Math.Max(previous.EvaluationCount, approximateEvalCount) < criticalLowEvalCount) && SearchDepth < MaxDepth + 2)
-            {
-                // Only raise to max depth if possibilities are low enough
-                SearchDepth++;
-                Diagnostics.AddMessage($"Increased search depth to {SearchDepth}. ");
-            }
-        }
-
-        /// <summary>
-        /// TODO Separate game phase and search depth deductions
+        /// TODO Refactor out side effects (publis Phase)
         /// </summary>
         /// <param name="movePossibilities"></param>
         /// <param name="board"></param>
@@ -346,9 +179,7 @@ namespace vergiBlue.Algorithms
             // 
             if (Phase != GamePhase.Middle && Phase != GamePhase.MidEndGame)
             {
-                //SearchDepth = Math.Min(MaxDepth, 4);
                 Phase = GamePhase.Middle;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
                 return;
             }
             const int criticalEvalCount = 400000;
@@ -358,12 +189,10 @@ namespace vergiBlue.Algorithms
             if (Phase == GamePhase.Middle && previous.CheckCount >= criticalCheckCount)
             {
                 Phase = GamePhase.MidEndGame;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
             }
             else if (Phase == GamePhase.MidEndGame && previous.CheckCount < criticalCheckCount)
             {
                 Phase = GamePhase.Middle;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
             }
         }
 
@@ -372,9 +201,7 @@ namespace vergiBlue.Algorithms
             // 
             if (Phase != GamePhase.EndGame)
             {
-                //SearchDepth = Math.Min(MaxDepth, 5);
                 Phase = GamePhase.EndGame;
-                Diagnostics.AddMessage($"Game phase changed to {Phase.ToString()}. ");
             }
         }
     }
