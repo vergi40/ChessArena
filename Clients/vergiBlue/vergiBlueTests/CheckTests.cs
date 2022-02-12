@@ -56,9 +56,6 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = LogicFactory.CreateWithoutBoardInit(true);
-            player.Strategy.Phase = GamePhase.EndGame;
-            player.SearchDepth = 4;
 
             var board = BoardFactory.Create();
             board.Shared.GameTurnCount = 20;
@@ -72,7 +69,7 @@ namespace vergiBlueTests
             board.AddNew(king);
             board.Kings = (null, king);
 
-            player.Board = BoardFactory.CreateClone(board);
+            var player = LogicFactory.CreateForTest(true, board);
             player.Board.IsCheckMate(true, false).ShouldBeTrue();
 
         }
@@ -90,8 +87,6 @@ namespace vergiBlueTests
             // 2
             // 1
             //  ABCDEFGH
-            var player = LogicFactory.CreateWithoutBoardInit(true);
-            player.Strategy.Phase = GamePhase.EndGame;
 
             var board = BoardFactory.Create();
             // 
@@ -108,8 +103,7 @@ namespace vergiBlueTests
 
             board.Kings = (whiteKing, blackKing);
 
-            player.Board = BoardFactory.CreateClone(board);
-
+            var player = LogicFactory.CreateForTest(true, board);
             var playerMove = player.CreateMoveWithDepth(4);
             playerMove.Move.CheckMate.ShouldBeTrue();
             Logger.LogMessage($"Test: {nameof(WhiteRooksShouldCheckMateInOneTurn)}, diagnostics: {playerMove.Diagnostics}");
@@ -131,10 +125,8 @@ namespace vergiBlueTests
             // 1
             //  ABCDEFGH
             var player = LogicFactory.CreateWithoutBoardInit(true);
-            player.Strategy.Phase = GamePhase.EndGame;
 
             var opponent = LogicFactory.CreateWithoutBoardInit(false);
-            opponent.Strategy.Phase = GamePhase.EndGame;
 
             var board = BoardFactory.Create();
             // 
@@ -182,10 +174,7 @@ namespace vergiBlueTests
             // 1
             //  ABCDEFGH
             var player = LogicFactory.CreateWithoutBoardInit(true);
-            player.Strategy.Phase = GamePhase.EndGame;
-
             var opponent = LogicFactory.CreateWithoutBoardInit(false);
-            opponent.Strategy.Phase = GamePhase.EndGame;
             opponent.LatestOpponentMove = new MoveImplementation(){Check = true};
 
             var board = BoardFactory.Create();
@@ -234,7 +223,6 @@ namespace vergiBlueTests
             // 1    |
             //  ABCD EFGH
             var player = LogicFactory.CreateWithoutBoardInit(true);
-            player.Strategy.Phase = GamePhase.EndGame;
 
             var previousMove = new MoveImplementation()
             {

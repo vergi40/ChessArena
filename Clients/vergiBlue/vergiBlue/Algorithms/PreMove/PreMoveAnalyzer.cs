@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CommonNetStandard.Interface;
-using vergiBlue.Algorithms.Context;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 
-namespace vergiBlue.Algorithms
+namespace vergiBlue.Algorithms.PreMove
 {
     /// <summary>
     /// Analyze next move context information
     /// </summary>
-    internal class ContextAnalyzer
+    internal class PreMoveAnalyzer
     {
         public bool IsWhite { get; }
         
@@ -30,7 +27,7 @@ namespace vergiBlue.Algorithms
         private int? _overrideGameMaxDepth { get; }
 
 
-        public ContextAnalyzer(bool isWhite, int? overrideGameMaxDepth)
+        public PreMoveAnalyzer(bool isWhite, int? overrideGameMaxDepth)
         {
             IsWhite = isWhite;
             _overrideGameMaxDepth = overrideGameMaxDepth;
@@ -112,7 +109,7 @@ namespace vergiBlue.Algorithms
                 var tempOffset = -1;
                 
                 // Cool new switch structure
-                var powerPieceCount = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
+                var powerPieceCount = board.PieceList.Count(p => Math.Abs((double)p.RelativeStrength) > PieceBaseStrength.Pawn);
                 var max = powerPieceCount switch
                 {
                     > 7 => 7 + tempOffset,

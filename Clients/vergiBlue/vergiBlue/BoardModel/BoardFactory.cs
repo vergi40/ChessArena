@@ -3,7 +3,7 @@
     public static class BoardFactory
     {
         /// <summary>
-        /// Start game initialization
+        /// Create empty board. Add pieces with <see cref="Board.AddNew(vergiBlue.Pieces.PieceBase)"/>
         /// </summary>
         public static IBoard Create()
         {

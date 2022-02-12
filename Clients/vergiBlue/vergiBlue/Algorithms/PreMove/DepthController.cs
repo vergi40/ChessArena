@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 
-namespace vergiBlue.Algorithms.Context
+namespace vergiBlue.Algorithms.PreMove
 {
     class DepthController
     {

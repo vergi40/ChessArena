@@ -8,6 +8,7 @@ using vergiBlue.Algorithms;
 using vergiBlue.Algorithms.Basic;
 using vergiBlue.Algorithms.IterativeDeepening;
 using vergiBlue.Algorithms.Parallel;
+using vergiBlue.Algorithms.PreMove;
 using vergiBlue.BoardModel;
 
 namespace vergiBlue.Logic
@@ -61,7 +62,7 @@ namespace vergiBlue.Logic
         private OpeningLibrary _openings { get; } = new OpeningLibrary();
         private bool _openingPhase = true;
 
-        private ContextAnalyzer _contextAnalyzer { get; set; } = new(false, null);
+        private PreMoveAnalyzer _contextAnalyzer { get; set; } = new(false, null);
 
         private TurnStartInfo _turnInfo { get; set; } =
             new(false, new List<IMove>(), new LogicSettings(), new DiagnosticsData());
@@ -71,7 +72,7 @@ namespace vergiBlue.Logic
         // min depth
         public void Initialize(bool isWhite, int? overrideMaxDepth = null)
         {
-            _contextAnalyzer = new ContextAnalyzer(isWhite, overrideMaxDepth);
+            _contextAnalyzer = new PreMoveAnalyzer(isWhite, overrideMaxDepth);
         }
 
         public void TurnStartUpdate(TurnStartInfo turnInfo)
