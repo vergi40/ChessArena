@@ -8,6 +8,7 @@ using vergiBlue.Algorithms;
 using vergiBlue.Algorithms.Basic;
 using vergiBlue.Algorithms.IterativeDeepening;
 using vergiBlue.Algorithms.Parallel;
+using vergiBlue.Algorithms.PreMove;
 using vergiBlue.BoardModel;
 
 namespace vergiBlue.Logic
@@ -15,6 +16,28 @@ namespace vergiBlue.Logic
     interface IAlgorithm
     {
         SingleMove CalculateBestMove(BoardContext context);
+    }
+
+    /// <summary>
+    /// Pre-algorithm infos
+    /// </summary>
+    public record TurnStartInfo(bool isWhiteTurn, IReadOnlyList<IMove> gameHistory, LogicSettings settings,
+        DiagnosticsData previousMoveData, int? overrideSearchDepth = null)
+    {
+        public bool IsSearchDepthFixed => overrideSearchDepth != null;
+
+        public int SearchDepthFixed
+        {
+            get
+            {
+                if (overrideSearchDepth != null)
+                {
+                    return overrideSearchDepth.Value;
+                }
+
+                return -1;
+            }
+        }
     }
 
     /// <summary>
@@ -39,43 +62,40 @@ namespace vergiBlue.Logic
         private OpeningLibrary _openings { get; } = new OpeningLibrary();
         private bool _openingPhase = true;
 
-        private ContextAnalyzer _contextAnalyzer { get; set; } = new(false, null);
+        private PreMoveAnalyzer _contextAnalyzer { get; set; } = new(false, null);
 
-        private LogicSettings _settings { get; set; } = new();
-        private DiagnosticsData _previousData { get; set; } = new();
+        private TurnStartInfo _turnInfo { get; set; } =
+            new(false, new List<IMove>(), new LogicSettings(), new DiagnosticsData());
 
         // time limit
         // max depth
         // min depth
         public void Initialize(bool isWhite, int? overrideMaxDepth = null)
         {
-            _contextAnalyzer = new ContextAnalyzer(isWhite, overrideMaxDepth);
+            _contextAnalyzer = new PreMoveAnalyzer(isWhite, overrideMaxDepth);
         }
 
-        public void TurnStartUpdate(bool isWhiteTurn, IReadOnlyList<IMove> gameHistory, LogicSettings settings,
-            DiagnosticsData previousMoveData, int? overrideSearchDepth = null)
+        public void TurnStartUpdate(TurnStartInfo turnInfo)
         {
-            // WIP target next
-            UpdateGameHistory(gameHistory);
+            _turnInfo = turnInfo;
+            UpdateGameHistory(_turnInfo.gameHistory);
 
-            _currentTurnIsWhite = isWhiteTurn;
-            _previousData = previousMoveData;
-            _settings = settings;
-            _contextAnalyzer.TurnStartUpdate(previousMoveData, _moveHistory.Count, settings.UseTranspositionTables, overrideSearchDepth);
+
+
+            _currentTurnIsWhite = turnInfo.isWhiteTurn;
+            _contextAnalyzer.TurnStartUpdate(turnInfo);
         }
         
         private void UpdateGameHistory(IReadOnlyList<IMove> gameHistory)
         {
-            // Check if still opening phase
             var moves = new List<SingleMove>();
             foreach (var move in gameHistory)
             {
-                // TODO optimal case would have capture moves tagged also
                 moves.Add(new SingleMove(move));
             }
 
             _moveHistory = moves;
-            // TODO some checks about opponent last move decisions
+            // Note: could do some checks about opponent last move decisions
         }
         
         // Update target total time
@@ -102,17 +122,10 @@ namespace vergiBlue.Logic
             // Select wanted algorithm and calculate
             
 
-            // TODO rework all these
-            //
-            var depth = _contextAnalyzer.DecideSearchDepth(_previousData, validMoves, board);
+            var depthResult = _contextAnalyzer.DecideSearchDepth(validMoves, board);
 
-            // TODO TESTING
-            depth = Math.Min(depth, 7);
-            Diagnostics.AddMessage($"Search depth {depth}. Algo: {_algorithm.GetType().Name}");
-            
-            var gamePhase = _contextAnalyzer.DecideGamePhaseTemp(validMoves.Count, board);
-
-            SetAlgorithm(depth);
+            SetAlgorithm(depthResult.depth, depthResult.phase);
+            Diagnostics.AddMessage($"Algo: {_algorithm.GetType().Name}");
 
             var context = new BoardContext()
             {
@@ -121,26 +134,29 @@ namespace vergiBlue.Logic
                 IsWhiteTurn = _currentTurnIsWhite,
                 CurrentBoard = board,
                 ValidMoves = validMoves,
-                NominalSearchDepth = depth,
-                MaxTimeMs = _settings.TranspositionTimeLimitInMs
+                NominalSearchDepth = depthResult.depth,
+                MaxTimeMs = _turnInfo.settings.TranspositionTimeLimitInMs
             };
 
             // Next should check it there is easy check mate in horizon
-            var checkMateMove = FindCheckMate(gamePhase, context);
+            var checkMateMove = FindCheckMate(depthResult.phase, context);
             if (checkMateMove != null) return checkMateMove;
 
             return _algorithm.CalculateBestMove(context);
         }
 
-        private void SetAlgorithm(int searchDepth)
+        private void SetAlgorithm(int searchDepth, GamePhase gamePhase)
         {
-            if (_settings.UseParallelComputation)
+            if (_turnInfo.settings.UseParallelComputation)
             {
+                // At the moment overrides all else
                 _algorithm = new ParallelBasic();
             }
-            else if (_settings.UseTranspositionTables)
+            else if (_turnInfo.settings.UseTranspositionTables && gamePhase != GamePhase.EndGame)
             {
-                if (_settings.UseIterativeDeepening && searchDepth >= 3)
+                // Transpositions is still the most WIP of algorithms.
+                // Seems like messes up particularly endgame calculations
+                if (_turnInfo.settings.UseIterativeDeepening && searchDepth >= 3)
                 {
                     _algorithm = new IDWithTranspositions();
                 }
@@ -151,7 +167,7 @@ namespace vergiBlue.Logic
             }
             else
             {
-                if (_settings.UseIterativeDeepening && searchDepth >= 3)
+                if (_turnInfo.settings.UseIterativeDeepening && searchDepth >= 3)
                 {
                     _algorithm = new IDBasic();
                 }

@@ -11,10 +11,6 @@ namespace vergiBlue.Logic
     public class Logic : LogicBase
     {
         // Game strategic variables
-
-        public int SearchDepth { get; set; } = 5;
-        public Strategy Strategy { get; set; }
-        
         public IMove? LatestOpponentMove { get; set; }
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
         
@@ -39,7 +35,6 @@ namespace vergiBlue.Logic
         [Obsolete("For tests, use constructor with Board parameter.")]
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
-            Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, Settings.UseTranspositionTables);
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
         }
 
@@ -48,14 +43,12 @@ namespace vergiBlue.Logic
         /// </summary>
         public Logic(bool isPlayerWhite, IBoard board, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
-            Strategy = new Strategy(isPlayerWhite, overrideMaxDepth, Settings.UseTranspositionTables);
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             Board = BoardFactory.CreateClone(board);
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
         {
-            Strategy = new Strategy(startInformation.WhitePlayer, overrideMaxDepth, Settings.UseTranspositionTables);
             _algorithmController.Initialize(startInformation.WhitePlayer, overrideMaxDepth);
             if (overrideBoard != null) Board = BoardFactory.CreateClone(overrideBoard);
             else Board.InitializeDefaultBoard();
@@ -89,7 +82,10 @@ namespace vergiBlue.Logic
         {
             var isMaximizing = IsPlayerWhite;
             Diagnostics.StartMoveCalculations();
-            _algorithmController.TurnStartUpdate(isMaximizing, GameHistory.ToList(), Settings, PreviousData, overrideSearchDepth);
+
+            var startInfo = new TurnStartInfo(isMaximizing, GameHistory.ToList(), Settings, PreviousData,
+                overrideSearchDepth);
+            _algorithmController.TurnStartUpdate(startInfo);
 
             // Common start measures - WIP
             if (Settings.UseTranspositionTables)
