@@ -15,7 +15,13 @@
         /// </summary>
         public double EndGameWeight { get; set; }
 
+        /// <summary>
+        /// Queen side
+        /// </summary>
         public bool WhiteLeftCastlingValid { get; set; } = true;
+        /// <summary>
+        /// King side
+        /// </summary>
         public bool WhiteRightCastlingValid { get; set; } = true;
         public bool BlackLeftCastlingValid { get; set; } = true;
         public bool BlackRightCastlingValid { get; set; } = true;
@@ -54,6 +60,17 @@
                 BlackLeftCastlingValid = false;
                 BlackRightCastlingValid = false;
             }
+        }
+
+        /// <summary>
+        /// Status from FEN string (e.g. KQkq)
+        /// </summary>
+        public void SetCastlingStatus(string status)
+        {
+            WhiteRightCastlingValid = status.Contains('K');
+            WhiteLeftCastlingValid = status.Contains('Q');
+            BlackRightCastlingValid = status.Contains('k');
+            BlackLeftCastlingValid = status.Contains('q');
         }
     }
 }
