@@ -73,6 +73,11 @@ namespace vergiBlue.BoardModel
         private bool? _isCheckForOffensivePrecalculated { get; set; } = null;
 
         /// <summary>
+        /// Board that was in checkmate was continued
+        /// </summary>
+        public bool DebugPostCheckMate { get; set; }
+
+        /// <summary>
         /// Start game initialization
         /// </summary>
         public Board()
@@ -132,11 +137,15 @@ namespace vergiBlue.BoardModel
 
             if (move.Capture)
             {
-                // Ensure validation ends if king is eaten
                 var isWhite = piece.IsWhite;
                 if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
+                    // Ensure validation ends if king is eaten
+                    // TODO this should not happen
                     RemovePieces(!isWhite);
+                    UpdatePosition(piece, move);
+                    DebugPostCheckMate = true;
+                    return;
                 }
                 else
                 {
