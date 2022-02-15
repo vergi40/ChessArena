@@ -50,8 +50,9 @@ namespace vergiBlueDesktop
             _viewModel.Test3Command = new RelayCommand<object>(CastlingTest);
 
             _viewModel.SandboxCommand = new RelayCommand<object>(SandboxGame);
+            _viewModel.FenCommand = new RelayCommand<object>(LoadFenGame);
         }
-
+        
         private void StartWhite(object parameter)
         {
             _viewModel.ViewUpdateGameStart();
@@ -269,6 +270,31 @@ namespace vergiBlueDesktop
 
             var board = Session.Board as Board;
             board.UpdateBoardArray(move);
+        }
+
+        private void LoadFenGame(object obj)
+        {
+            var fen = Dialogs.AskFenString(out var playerWhite);
+            if (string.IsNullOrEmpty(fen))
+            {
+                _viewModel.AppendInfoText("FEN string input was empty");
+                return;
+            }
+
+            var board = BoardFactory.CreateFromFen(fen, out var isWhiteTurn);
+
+            _viewModel.ViewUpdateGameStart();
+            InitializeEnvironment(playerWhite, isWhiteTurn, board);
+
+            if (isWhiteTurn && !playerWhite || !isWhiteTurn && playerWhite)
+            {
+                // Ai starts
+                var interfaceMoveData = AiLogic.CreateMove();
+                _viewModel.UpdateAiDiagnostics(interfaceMoveData.Diagnostics);
+                var move = new SingleMove(interfaceMoveData.Move);
+
+                TurnFinished(move, true);
+            }
         }
     }
 

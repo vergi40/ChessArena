@@ -52,5 +52,14 @@ namespace vergiBlueTests
             board.Strategic.BlackLeftCastlingValid.ShouldBeFalse();
             board.Strategic.BlackRightCastlingValid.ShouldBeTrue();
         }
+
+        [TestMethod]
+        public void AfterFirstMoves_ShouldHaveAllPieces()
+        {
+            var fen = "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2";
+            var board = BoardFactory.CreateFromFen(fen, out _);
+
+            board.PieceList.Count(p => p.Identity == 'P').ShouldBe(16);
+        }
     }
 }

@@ -50,27 +50,34 @@ namespace vergiBlue.BoardModel
             for (int i = 0; i < 8; i++)
             {
                 var row = rows[i];
-                for (int j = 0; j < 8; j++)
+                var columnIndex = 0;
+                for (int j = 0; j < row.Length; j++)
                 {
+                    // Account rows like 2p5
+                    // Input<2>: inputIndex 0. outputIndex 0.
+                    // Input<p>: inputIndex 1. outputIndex 2
+                    // -> 
                     var tile = row[j];
                     if (char.IsDigit(tile))
                     {
-                        var skip = Convert.ToInt32(tile);
-                        j += skip - 1;
+                        var skip = int.Parse(tile.ToString());
+                        columnIndex += skip;
                         continue;
                     }
 
                     var rowIndex = 7 - i;
-                    var piece = PieceFactory.Create(tile, (j, rowIndex));
+                    var piece = PieceFactory.Create(tile, (columnIndex, rowIndex));
                     board.AddNew(piece);
+
+                    columnIndex++;
                 }
             }
             isWhiteTurn = char.Parse(components[1]) == 'w';
 
             board.Strategic.SetCastlingStatus(components[2]);
             var enPassantTarget = components[3];
-            var halfMoveClock = int.Parse(components[4]);
-            var fullMoveNumber = int.Parse(components[5]);
+            //var halfMoveClock = int.Parse(components[4]);
+            //var fullMoveNumber = int.Parse(components[5]);
 
             return board;
         }

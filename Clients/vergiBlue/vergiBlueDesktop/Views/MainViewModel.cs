@@ -125,6 +125,7 @@ namespace vergiBlueDesktop.Views
         public ICommand Test2Command { get; set; }
         public ICommand Test3Command { get; set; }
         public ICommand SandboxCommand { get; set; }
+        public ICommand FenCommand { get; set; }
 
         private GameSession _session { get; set; }
 
@@ -235,6 +236,11 @@ namespace vergiBlueDesktop.Views
             }
         }
 
+        public void AppendInfoText(string text)
+        {
+            _logger.Info($"Non-game event: {text}");
+            History.Insert(0, text);
+        }
 
         public void AppendHistory(SingleMove move, int turnCount, bool isCheck)
         {
