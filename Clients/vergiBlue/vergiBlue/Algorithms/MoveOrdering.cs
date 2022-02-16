@@ -44,7 +44,7 @@ namespace vergiBlue.Algorithms
 
                 if (singleMove.Promotion)
                 {
-                    // 
+                    // TODO add score based on promotion type
                     if (isMaximizing) scoreGuess += PieceBaseStrength.Queen;
                     else scoreGuess -= PieceBaseStrength.Queen;
                 }

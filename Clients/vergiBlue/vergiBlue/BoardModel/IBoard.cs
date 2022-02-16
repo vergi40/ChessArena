@@ -134,17 +134,11 @@ namespace vergiBlue.BoardModel
 
         /// <summary>
         /// Collect before the move is executed to board.
+        /// Any changes to board should be done in <see cref="Board.ExecuteMove"/>
         /// Prerequisite: move is valid
         /// </summary>
-        SingleMove CollectMoveProperties(SingleMove move);
-
-        /// <summary>
-        /// Collect before the move is executed to board.
-        /// Any changes to board should be done in <see cref="Board.ExecuteMove"/>
-        /// </summary>
-        /// <returns></returns>
-        SingleMove CollectMoveProperties((int column, int row) from, (int column, int row) to);
-
+        SingleMove CollectMoveProperties(SingleMove initialMove);
+        
         /// <summary>
         /// Return all valid moves the chosen color can do at current board
         /// </summary>

@@ -243,7 +243,14 @@ namespace vergiBlue.BoardModel
             if (move.Promotion)
             {
                 RemovePiece(piece.CurrentPosition);
-                piece = new Queen(piece.IsWhite, move.NewPos);
+                piece = move.PromotionType switch
+                {
+                    PromotionPieceType.Queen => new Queen(piece.IsWhite, move.NewPos),
+                    PromotionPieceType.Rook => new Rook(piece.IsWhite, move.NewPos),
+                    PromotionPieceType.Bishop => new Queen(piece.IsWhite, move.NewPos),
+                    PromotionPieceType.Knight => new Queen(piece.IsWhite, move.NewPos),
+                    _ => throw new ArgumentException($"Unknown promotion: {move.PromotionType}")
+                };
                 PieceList.Add(piece);
             }
             else
@@ -589,51 +596,42 @@ namespace vergiBlue.BoardModel
         {
             foreach (var basicMove in moves)
             {
-                yield return CollectMoveProperties(basicMove.PrevPos, basicMove.NewPos);
+                yield return CollectMoveProperties(basicMove);
             }
         }
 
-        public SingleMove CollectMoveProperties(SingleMove move)
+        public SingleMove CollectMoveProperties(SingleMove initialMove)
         {
-            return CollectMoveProperties(move.PrevPos, move.NewPos);
-        }
+            (int column, int row) from = initialMove.PrevPos;
+            (int column, int row) to = initialMove.NewPos;
 
-        /// <summary>
-        /// Collect before the move is executed to board.
-        /// Any changes to board should be done in <see cref="ExecuteMove"/>
-        /// </summary>
-        /// <returns></returns>
-        public SingleMove CollectMoveProperties((int column, int row) from, (int column, int row) to)
-        {
-            _isCheckForOffensivePrecalculated = null;
-            var move = new SingleMove(from, to);
-            
-            // TODO actual validation
-
-            // Now just check if there is info missing
             var ownPiece = ValueAtDefinitely(from);
             var isWhite = ownPiece.IsWhite;
 
-            // Capture
-            var opponentPiece = ValueAt(to);
-            if (opponentPiece != null)
+
+            _isCheckForOffensivePrecalculated = null;
+            var move = new SingleMove(from, to);
+            
+            // TODO make two variants of function. 1. captures are known beforehand. 2. not known
+            if (initialMove.Capture)
             {
-                if (opponentPiece.IsWhite != isWhite)
+                move.Capture = true;
+            }
+            else
+            {
+                var opponentPiece = ValueAt(to);
+                if (opponentPiece != null)
                 {
-                    move.Capture = true;
+                    if (opponentPiece.IsWhite != isWhite)
+                    {
+                        move.Capture = true;
+                    }
+                    else throw new ArgumentException($"Player with white={isWhite} tried to capture own piece. {ownPiece.IsWhite}: {initialMove.ToString()}");
                 }
-                else throw new ArgumentException($"Player with white={isWhite} tried to capture own piece.");
             }
 
             // Promotion
-            if (isWhite && ownPiece.Identity == 'P' && move.NewPos.row == 7)
-            {
-                move.Promotion = true;
-            }
-            else if (!isWhite && ownPiece.Identity == 'P' && move.NewPos.row == 0)
-            {
-                move.Promotion = true;
-            }
+            move.PromotionType = initialMove.PromotionType;
 
             // Castling
             var castlingRow = 0;
@@ -648,6 +646,7 @@ namespace vergiBlue.BoardModel
             }
 
             // Check and checkmate
+            // TODO heavy calculations. Make check variant of function 
             var nextBoard = BoardFactory.CreateFromMove(this, move);
             move.Check = nextBoard.IsCheck(isWhite);
             move.CheckMate = nextBoard.IsCheckMate(isWhite, move.Check);
@@ -660,13 +659,12 @@ namespace vergiBlue.BoardModel
             foreach (var singleMove in moves)
             {
                 var isLegal =
-                    legalMoves.FirstOrDefault(m => m.Equals(singleMove));
+                    legalMoves.FirstOrDefault(m => m.EqualPositions(singleMove));
                 if(isLegal != null)
                 {
                     // Move is ok
                     yield return singleMove;
                 }
-                
             }
         }
         
@@ -677,6 +675,9 @@ namespace vergiBlue.BoardModel
             return new List<(int column, int row)>();
         }
 
+        /// <summary>
+        /// Return as soon as possible
+        /// </summary>
         public bool CanCastleToLeft(bool white)
         {
             var row = 0;
@@ -712,6 +713,9 @@ namespace vergiBlue.BoardModel
             return true;
         }
 
+        /// <summary>
+        /// Return as soon as possible
+        /// </summary>
         public bool CanCastleToRight(bool white)
         {
             var row = 0;

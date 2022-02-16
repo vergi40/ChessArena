@@ -74,7 +74,7 @@ namespace Benchmarking
         {
             if (depth == 0) return 1;
 
-            var moves = newBoard.Moves(forWhite, false, false);
+            var moves = newBoard.Moves(forWhite, false, true);
             if (!moves.Any())
             {
                 return 0;
@@ -84,8 +84,6 @@ namespace Benchmarking
             foreach (var move in moves)
             {
                 var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
-                if (nextBoard.DebugPostCheckMate) continue;
-                
                 nodes += PerftRec(nextBoard, depth - 1, !forWhite);
             }
 
