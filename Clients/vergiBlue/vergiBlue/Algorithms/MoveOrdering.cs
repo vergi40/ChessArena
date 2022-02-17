@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 using vergiBlue.Pieces;
 
@@ -38,7 +39,8 @@ namespace vergiBlue.Algorithms
                     double relativeStrength;
                     if (singleMove.EnPassant)
                     {
-                        var opponentPawn = board.ValueAtDefinitely((singleMove.NewPos.column , singleMove.PrevPos.row));
+                        // This fails if pieces have been deleted externally (game ended or sandbox)
+                        var opponentPawn = board.ValueAtDefinitely(singleMove.EnPassantOpponentPosition);
                         relativeStrength = opponentPawn.RelativeStrength;
                     }
                     else
@@ -56,9 +58,18 @@ namespace vergiBlue.Algorithms
 
                 if (singleMove.Promotion)
                 {
-                    // TODO add score based on promotion type
-                    if (isMaximizing) scoreGuess += PieceBaseStrength.Queen;
-                    else scoreGuess -= PieceBaseStrength.Queen;
+                    // TODO positional strength missing
+                    var typeScore = singleMove.PromotionType switch
+                    {
+                        PromotionPieceType.Queen => PieceBaseStrength.Queen,
+                        PromotionPieceType.Rook => PieceBaseStrength.Rook,
+                        PromotionPieceType.Knight => PieceBaseStrength.Knight,
+                        PromotionPieceType.Bishop => PieceBaseStrength.Bishop,
+                        _ => 0.0
+                    };
+
+                    if (isMaximizing) scoreGuess += typeScore;
+                    else scoreGuess -= typeScore;
                 }
                 
                 // Penalize moving to position where opponent pawn is attacking

@@ -23,6 +23,8 @@
   - King attack
   - Rook bonuses
   - http://www.netlib.org/utk/lsi/pcwLSI/text/node343.html#SECTION001631100000000000000
+Evaluation strategies
+  - Inject strategy (instance) to move algorithm. Normal / endgame / check
 * Search extensions
   - In certain cases, extend search depth or otherwise widen search
   - http://www.frayn.net/beowulf/theory.html#history
@@ -31,6 +33,18 @@
 * Quiescent search
 * Null moves
 * Monte Carlo search
+* Attack squares
+  - Indirect check
+  - Bonus if opponent king in attack square
+  - Castling rights
+  - Legal moves
+
+
+## Dev
+* Create comment print from FEN
+* Output FEN-string from sandbox
+* Add console project with BenchmarkDotNet
+
 
 ## User experience
 * Better highlight for invalid squares

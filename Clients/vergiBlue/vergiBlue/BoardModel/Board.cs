@@ -140,7 +140,7 @@ namespace vergiBlue.BoardModel
                 var isWhite = piece.IsWhite;
                 if (move.EnPassant)
                 {
-                    RemovePiece((move.NewPos.column, move.NewPos.row - piece.Direction));
+                    RemovePiece(move.EnPassantOpponentPosition);
                 }
                 else if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
@@ -401,10 +401,16 @@ namespace vergiBlue.BoardModel
             }
         }
 
-        public double Evaluate(bool isMaximizing, bool simpleEvaluation, bool isInCheckForOther = false,
+        public double Evaluate(bool isMaximizing, bool simpleEvaluation,
             int? currentSearchDepth = null)
         {
-            return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, isInCheckForOther, currentSearchDepth);
+            return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
+        }
+
+        public double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
+        {
+            // TODO more logic
+            return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
         }
 
         /// <summary>
@@ -641,7 +647,7 @@ namespace vergiBlue.BoardModel
                     }
                     else throw new ArgumentException($"Player with white={isWhite} tried to capture own piece. {ownPiece.IsWhite}: {initialMove.ToString()}");
                 }
-                else if(ownPiece.Identity == 'P' && to == Strategic.EnPassantPossibility)
+                else if(ownPiece.Identity == 'P' && Strategic.EnPassantPossibility != null && to == Strategic.EnPassantPossibility.Value)
                 {
                     move.Capture = true;
                     move.EnPassant = true;
@@ -650,6 +656,12 @@ namespace vergiBlue.BoardModel
 
             // Promotion
             move.PromotionType = initialMove.PromotionType;
+            if (ownPiece.Identity == 'P' && move.PromotionType == PromotionPieceType.NoPromotion &&
+                (to.row == 0 || to.row == 7))
+            {
+                // Missing promotion. Fix to queen
+                move.PromotionType = PromotionPieceType.Queen;
+            }
 
             // Castling
             var castlingRow = 0;

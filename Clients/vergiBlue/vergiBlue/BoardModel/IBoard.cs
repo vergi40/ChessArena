@@ -61,22 +61,28 @@ namespace vergiBlue.BoardModel
         void ExecuteMoveWithValidation(SingleMove move);
 
         /// <summary>
-        /// Apply single move to board.
+        /// Apply single move to board. Most important function to keep consistent and error free.
+        /// Assumes that the SingleMove-object has all properties up to date
+        /// Actions in order:
+        /// * Update board hash
+        /// * Update capture
+        ///   * Update en passant
+        ///   * Remove opponent piece
+        ///   * If king (shouldn't happen) -> game end -> DebugPostCheckMate = true
+        /// * Update en passant status
+        /// * Check castling status
+        /// * Update castling status
+        /// * Update piece position
+        /// * Update endgame weight
+        /// * Update turn count
+        /// 
         /// Before executing, following should be applied:
         /// * <see cref="Board.CollectMoveProperties(vergiBlue.SingleMove)"/>
         /// * (In desktop) UpdateGraphics()
         /// </summary>
         /// <param name="move"></param>
         void ExecuteMove(SingleMove move);
-
-        void UpdateEndGameWeight();
-
-        /// <summary>
-        /// How many percent of non-pawn pieces exists on board
-        /// </summary>
-        /// <returns></returns>
-        double GetPowerPiecePercent();
-
+        
         /// <summary>
         /// King location should be known at all times
         /// </summary>
@@ -99,7 +105,12 @@ namespace vergiBlue.BoardModel
         void AddNew(PieceBase piece);
         void AddNew(IEnumerable<PieceBase> pieces);
         void AddNew(params PieceBase[] pieces);
-        double Evaluate(bool isMaximizing, bool simpleEvaluation, bool isInCheckForOther = false, int? currentSearchDepth = null);
+        double Evaluate(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null);
+
+        /// <summary>
+        /// Checkmate or stalemate
+        /// </summary>
+        double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null);
 
         /// <summary>
         /// Find every possible move for every piece for given color.

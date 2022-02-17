@@ -26,7 +26,16 @@ namespace vergiBlue
         /// </summary>
         public bool Check { get; set; }
         public bool CheckMate { get; set; }
+
         public bool EnPassant { get; set; }
+        public (int column, int row) EnPassantOpponentPosition
+        {
+            get
+            {
+                if (!EnPassant) return (-1, -1);
+                return (NewPos.column, PrevPos.row);
+            }
+        }
 
         public (int column, int row) PrevPos { get; }
         public (int column, int row) NewPos { get; }
