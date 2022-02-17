@@ -1,4 +1,6 @@
-﻿namespace vergiBlue.BoardModel
+﻿using vergiBlue.Pieces;
+
+namespace vergiBlue.BoardModel
 {
     /// <summary>
     /// Data class that is updated for each depth in search.
@@ -31,6 +33,11 @@
         /// </summary>
         public bool SkipOpeningChecks { get; set; } = false;
 
+        /// <summary>
+        /// If opponent pawn did a 2 square move, add tile behind it as en passant target. Otherwise null
+        /// </summary>
+        public (int column, int row)? EnPassantPossibility { get; set; } = null;
+
         public StrategicData()
         {
             // Empty board = end value-
@@ -45,6 +52,8 @@
             WhiteRightCastlingValid = previous.WhiteRightCastlingValid;
             BlackLeftCastlingValid = previous.BlackLeftCastlingValid;
             BlackRightCastlingValid = previous.BlackRightCastlingValid;
+            EnPassantPossibility = previous.EnPassantPossibility;
+            SkipOpeningChecks = previous.SkipOpeningChecks;
         }
 
 
@@ -71,6 +80,29 @@
             WhiteLeftCastlingValid = status.Contains('Q');
             BlackRightCastlingValid = status.Contains('k');
             BlackLeftCastlingValid = status.Contains('q');
+        }
+
+        /// <summary>
+        /// Update after each executed move
+        /// </summary>
+        public void UpdateEnPassantStatus(SingleMove move, PieceBase piece)
+        {
+            EnPassantPossibility = null;
+            if (piece.Identity != 'P') return;
+            if (piece.IsWhite)
+            {
+                if (move.PrevPos.row == 1 && move.NewPos.row == 3)
+                {
+                    EnPassantPossibility = (move.NewPos.column, 2);
+                }
+            }
+            else
+            {
+                if (move.PrevPos.row == 6 && move.NewPos.row == 4)
+                {
+                    EnPassantPossibility = (move.NewPos.column, 5);
+                }
+            }
         }
     }
 }

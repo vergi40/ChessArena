@@ -26,6 +26,7 @@ namespace vergiBlue
         /// </summary>
         public bool Check { get; set; }
         public bool CheckMate { get; set; }
+        public bool EnPassant { get; set; }
 
         public (int column, int row) PrevPos { get; }
         public (int column, int row) NewPos { get; }
@@ -37,6 +38,18 @@ namespace vergiBlue
             NewPos = newPosition;
             Capture = capture;
             PromotionType = promotionType;
+        }
+
+        /// <summary>
+        /// En passant constructor
+        /// </summary>
+        public SingleMove((int column, int row) previousPosition, (int column, int row) newPosition,
+            bool capture, bool enPassant)
+        {
+            PrevPos = previousPosition;
+            NewPos = newPosition;
+            Capture = capture;
+            EnPassant = enPassant;
         }
 
         public SingleMove(string previousPosition, string newPosition, bool capture = false, 
@@ -92,6 +105,7 @@ namespace vergiBlue
             if (!Castling.Equals(other.Castling)) return false;
             if (!Check.Equals(other.Check)) return false;
             if (!CheckMate.Equals(other.CheckMate)) return false;
+            if (!EnPassant.Equals(other.EnPassant)) return false;
 
             return false;
         }

@@ -124,7 +124,16 @@ namespace vergiBlue.Algorithms
             // Erase capture
             if (move.Capture)
             {
-                var captured = oldBoard.ValueAtDefinitely(move.NewPos);
+                PieceBase captured;
+                if (move.EnPassant)
+                {
+                    captured = oldBoard.ValueAtDefinitely((move.NewPos.column, move.PrevPos.row));
+                }
+                else
+                {
+                    captured = oldBoard.ValueAtDefinitely(move.NewPos);
+                }
+
                 var boardIndex = move.NewPos.ToArray();
                 var capturedPieceIndex = GetIndex(captured);
                 oldHash = oldHash ^ hashTable[boardIndex, capturedPieceIndex];

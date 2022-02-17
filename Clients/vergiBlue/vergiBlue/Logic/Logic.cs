@@ -187,21 +187,8 @@ namespace vergiBlue.Logic
                 throw new ArgumentException($"Opponent tried to move player piece");
             }
 
-            // TODO intelligent analyzing what actually happened
-
-            var targetPosition = Board.ValueAt(move.NewPos);
-            if (targetPosition != null)
-            {
-                if (targetPosition.IsWhite == IsPlayerWhite)
-                {
-                    // Opponent captures player targetpiece
-                    move.Capture = true;
-                }
-                else
-                {
-                    throw new ArgumentException("Opponent tried to capture own piece.");
-                }
-            }
+            // Interface misses properties like capture, enpassant
+            move = Board.CollectMoveProperties(move);
 
             Board.ExecuteMoveWithValidation(move);
             GameHistory.Add(opponentMove);

@@ -75,7 +75,11 @@ namespace vergiBlue.BoardModel
             isWhiteTurn = char.Parse(components[1]) == 'w';
 
             board.Strategic.SetCastlingStatus(components[2]);
-            var enPassantTarget = components[3];
+            var enPassantInput = components[3];
+            if (enPassantInput != "-")
+            {
+                board.Strategic.EnPassantPossibility = enPassantInput.ToTuple();
+            }
             //var halfMoveClock = int.Parse(components[4]);
             //var fullMoveNumber = int.Parse(components[5]);
 

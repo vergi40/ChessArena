@@ -138,7 +138,11 @@ namespace vergiBlue.BoardModel
             if (move.Capture)
             {
                 var isWhite = piece.IsWhite;
-                if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
+                if (move.EnPassant)
+                {
+                    RemovePiece((move.NewPos.column, move.NewPos.row - piece.Direction));
+                }
+                else if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
                     // Ensure validation ends if king is eaten
                     // TODO this should not happen
@@ -153,12 +157,15 @@ namespace vergiBlue.BoardModel
                 }
             }
 
+            Strategic.UpdateEnPassantStatus(move, piece);
+
             if (move.Castling)
             {
                 Strategic.UpdateCastlingStatusFromMove(move);
             }
 
             UpdateCastlingStatus(piece.IsWhite);
+
             
             UpdatePosition(piece, move);
             
@@ -615,10 +622,16 @@ namespace vergiBlue.BoardModel
             // TODO make two variants of function. 1. captures are known beforehand. 2. not known
             if (initialMove.Capture)
             {
+                // Known capture or en passant
                 move.Capture = true;
+                if (initialMove.EnPassant)
+                {
+                    move.EnPassant = true;
+                }
             }
             else
             {
+                // Unknown, check possibilities
                 var opponentPiece = ValueAt(to);
                 if (opponentPiece != null)
                 {
@@ -627,6 +640,11 @@ namespace vergiBlue.BoardModel
                         move.Capture = true;
                     }
                     else throw new ArgumentException($"Player with white={isWhite} tried to capture own piece. {ownPiece.IsWhite}: {initialMove.ToString()}");
+                }
+                else if(ownPiece.Identity == 'P' && to == Strategic.EnPassantPossibility)
+                {
+                    move.Capture = true;
+                    move.EnPassant = true;
                 }
             }
 

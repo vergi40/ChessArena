@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 
@@ -40,7 +36,7 @@ namespace vergiBlue.Pieces
         public override IEnumerable<SingleMove> Moves(IBoard board)
         {
             var (column, row) = CurrentPosition;
-            var (start, end) = GetSpecialRows();
+            var (start, end, enpassantRow) = GetSpecialRows();
 
             if (row == end)
             {
@@ -69,6 +65,23 @@ namespace vergiBlue.Pieces
                 if (ValidCapturePosition(column + 1, row + Direction, board))
                 {
                     yield return new SingleMove((column, row), (column + 1, row + Direction), true);
+                }
+
+                if (row == enpassantRow)
+                {
+                    // Means pawn current row is valid for en passant move start
+                    var enpassantPossibility = board.Strategic.EnPassantPossibility;
+                    if (enpassantPossibility != null)
+                    {
+                        if (column - 1 == enpassantPossibility.Value.column)
+                        {
+                            yield return new SingleMove((column, row), enpassantPossibility.Value, true, true);
+                        }
+                        else if (column + 1 == enpassantPossibility.Value.column)
+                        {
+                            yield return new SingleMove((column, row), enpassantPossibility.Value, true, true);
+                        }
+                    }
                 }
             }
         }
@@ -127,10 +140,10 @@ namespace vergiBlue.Pieces
             return false;
         }
 
-        private (int start, int end) GetSpecialRows()
+        private (int start, int end, int enpassantRow) GetSpecialRows()
         {
-            if (Direction == 1) return (1, 6);
-            return (6, 1);
+            if (Direction == 1) return (1, 6, 4);
+            return (6, 1, 3);
         }
 
         public override PieceBase CreateCopy()
