@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonNetStandard.Interface;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
@@ -184,21 +185,86 @@ namespace vergiBlueTests
             board1.BoardHash.ShouldBe(board2.BoardHash);
 
         }
-
+        
         [TestMethod]
-        public void PawnAllowedMoves()
+        public void PawnWhite_EnPassant()
         {
             var board = BoardFactory.Create();
-            var pawn1 = new Pawn(true, (0, 1));
+            var pieces = new List<PieceBase>
+            {
+                new Pawn(true, "b5"),
+                new Pawn(false, "c7"),
+            };
 
-            var pawn2 = new Pawn(false, (1, 2));
+            board.AddNew(pieces);
+            board.ExecuteMove(new SingleMove("c7", "c5"));
+            board.Strategic.EnPassantPossibility.ShouldBe("c6".ToTuple());
 
-            board.AddNew(pawn1);
-            board.AddNew(pawn2);
+            var boardMoves = board.Moves(true, false, false);
 
-            var moves = pawn1.Moves(board);
-            var coordinates = moves.Select(m => m.NewPos.ToAlgebraic());
+            var expected = new SingleMove("b5", "c6", true);
 
+            boardMoves.ShouldContain(m => m.EqualPositions(expected));
+        }
+
+        [TestMethod]
+        public void PawnBlack_EnPassant()
+        {
+            var board = BoardFactory.Create();
+            var pieces = new List<PieceBase>
+            {
+                new Pawn(true, "b2"),
+                new Pawn(false, "c4"),
+            };
+
+            board.AddNew(pieces);
+            board.ExecuteMove(new SingleMove("b2", "b4"));
+            board.Strategic.EnPassantPossibility.ShouldBe("b3".ToTuple());
+
+            var boardMoves = board.Moves(false, false, false);
+
+            var expected = new SingleMove("c4", "b3", true);
+
+            boardMoves.ShouldContain(m => m.EqualPositions(expected));
+        }
+
+        [TestMethod]
+        public void PawnWhite_Promotion()
+        {
+            var board = BoardFactory.CreateFromFen("n1n5/PPPk4/8/8/1Pp5/8/4Kppp/5N1N b - b3 0 1", out _);
+
+            var promotion = new SingleMove("b7", "a8", true, PromotionPieceType.Queen);
+            board.ExecuteMove(promotion);
+
+            board.PieceList.ShouldContain(p => p.Identity == 'Q');
+        }
+
+        [TestMethod]
+        public void PawnBlack_Promotion()
+        {
+            var board = BoardFactory.CreateFromFen("n1n5/PPPk4/8/8/1Pp5/8/4Kppp/5N1N b - b3 0 1", out _);
+
+            var promotion = new SingleMove("g2", "h1", true, PromotionPieceType.Queen);
+            board.ExecuteMove(promotion);
+
+            board.PieceList.ShouldContain(p => p.Identity == 'Q');
+        }
+
+        [TestMethod]
+        public void PawnBlack_Promotion_FromInterface()
+        {
+            var board = BoardFactory.CreateFromFen("n1n5/PPPk4/8/8/1Pp5/8/4Kppp/5N1N b - b3 0 1", out _);
+            var logic = new Logic(true, board, 2);
+
+
+            var promotion = new SingleMove("g2", "h1", true, PromotionPieceType.Queen);
+            logic.ReceiveMove(promotion.ToInterfaceMove());
+            logic.Board.PieceList.ShouldContain(p => p.Identity == 'Q');
+
+            Should.NotThrow(() =>
+            {
+                var move = logic.CreateMove();
+            });
         }
 
         [TestMethod]

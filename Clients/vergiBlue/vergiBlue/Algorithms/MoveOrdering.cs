@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
+using vergiBlue.Pieces;
 
 namespace vergiBlue.Algorithms
 {
@@ -34,8 +36,20 @@ namespace vergiBlue.Algorithms
                 var scoreGuess = 0.0;
                 if (singleMove.Capture)
                 {
+                    double relativeStrength;
+                    if (singleMove.EnPassant)
+                    {
+                        // This fails if pieces have been deleted externally (game ended or sandbox)
+                        var opponentPawn = board.ValueAtDefinitely(singleMove.EnPassantOpponentPosition);
+                        relativeStrength = opponentPawn.RelativeStrength;
+                    }
+                    else
+                    {
+                        relativeStrength = board.ValueAtDefinitely(singleMove.NewPos).RelativeStrength;
+                    }
+
                     // Give more value on capturing stronger opponent than player piece.
-                    var opponentWeight = Math.Abs(10 * board.ValueAtDefinitely(singleMove.NewPos).RelativeStrength);
+                    var opponentWeight = Math.Abs(10 * relativeStrength);
                     var ownWeight = Math.Abs(board.ValueAtDefinitely(singleMove.PrevPos).RelativeStrength);
 
                     if (isMaximizing) scoreGuess += opponentWeight - ownWeight;
@@ -44,9 +58,18 @@ namespace vergiBlue.Algorithms
 
                 if (singleMove.Promotion)
                 {
-                    // 
-                    if (isMaximizing) scoreGuess += PieceBaseStrength.Queen;
-                    else scoreGuess -= PieceBaseStrength.Queen;
+                    // TODO positional strength missing
+                    var typeScore = singleMove.PromotionType switch
+                    {
+                        PromotionPieceType.Queen => PieceBaseStrength.Queen,
+                        PromotionPieceType.Rook => PieceBaseStrength.Rook,
+                        PromotionPieceType.Knight => PieceBaseStrength.Knight,
+                        PromotionPieceType.Bishop => PieceBaseStrength.Bishop,
+                        _ => 0.0
+                    };
+
+                    if (isMaximizing) scoreGuess += typeScore;
+                    else scoreGuess -= typeScore;
                 }
                 
                 // Penalize moving to position where opponent pawn is attacking

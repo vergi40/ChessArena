@@ -34,11 +34,11 @@ namespace vergiBlue.Algorithms
         /// <returns></returns>
         public static double ToDepth(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
-            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, false, depth);
+            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, depth);
             var allMoves = newBoard.Moves(maximizingPlayer, false);
 
             // Checkmate or stalemate
-            if (!allMoves.Any()) return newBoard.Evaluate(maximizingPlayer, false, newBoard.IsCheck(!maximizingPlayer), depth);
+            if (!allMoves.Any()) return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
             if (maximizingPlayer)
             {
                 var value = -1000000.0;
@@ -110,7 +110,7 @@ namespace vergiBlue.Algorithms
         /// </summary>
         public static double ToDepthWithTranspositions(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
-            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, false, depth);
+            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, depth);
             
             // Check if solution already exists
             var transposition = newBoard.Shared.Transpositions.GetTranspositionForBoard(newBoard.BoardHash);
@@ -141,7 +141,11 @@ namespace vergiBlue.Algorithms
             }
 
             var allMoves = newBoard.Moves(maximizingPlayer, false);
-            if (!allMoves.Any()) return newBoard.Evaluate(maximizingPlayer, false, newBoard.IsCheck(!maximizingPlayer), depth);
+            if (!allMoves.Any())
+            {
+                // Checkmate or stalemate
+                return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
+            }
             
             if (maximizingPlayer)
             {

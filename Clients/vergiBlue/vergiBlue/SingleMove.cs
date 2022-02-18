@@ -17,7 +17,8 @@ namespace vergiBlue
     public sealed class SingleMove : IEquatable<SingleMove>
     {
         public bool Capture { get; set; }
-        public bool Promotion { get; set; }
+        public bool Promotion => PromotionType != PromotionPieceType.NoPromotion;
+        public PromotionPieceType PromotionType { get; set; }
         public bool Castling { get; set; }
         
         /// <summary>
@@ -26,27 +27,51 @@ namespace vergiBlue
         public bool Check { get; set; }
         public bool CheckMate { get; set; }
 
+        public bool EnPassant { get; set; }
+        public (int column, int row) EnPassantOpponentPosition
+        {
+            get
+            {
+                if (!EnPassant) return (-1, -1);
+                return (NewPos.column, PrevPos.row);
+            }
+        }
+
         public (int column, int row) PrevPos { get; }
         public (int column, int row) NewPos { get; }
 
-        public SingleMove((int column, int row) previousPosition, (int column, int row) newPosition, bool capture = false, bool promotion = false)
+        public SingleMove((int column, int row) previousPosition, (int column, int row) newPosition,
+            bool capture = false, PromotionPieceType promotionType = PromotionPieceType.NoPromotion)
         {
             PrevPos = previousPosition;
             NewPos = newPosition;
             Capture = capture;
-            Promotion = promotion;
+            PromotionType = promotionType;
         }
 
-        public SingleMove(string previousPosition, string newPosition, bool capture = false, bool promotion = false)
+        /// <summary>
+        /// En passant constructor
+        /// </summary>
+        public SingleMove((int column, int row) previousPosition, (int column, int row) newPosition,
+            bool capture, bool enPassant)
+        {
+            PrevPos = previousPosition;
+            NewPos = newPosition;
+            Capture = capture;
+            EnPassant = enPassant;
+        }
+
+        public SingleMove(string previousPosition, string newPosition, bool capture = false, 
+            PromotionPieceType promotionType = PromotionPieceType.NoPromotion)
         {
             PrevPos = previousPosition.ToTuple();
             NewPos = newPosition.ToTuple();
             Capture = capture;
-            Promotion = promotion;
+            PromotionType = promotionType;
         }
 
         /// <summary>
-        /// Constructor for interface move data
+        /// Constructor from interface move data
         /// </summary>
         /// <param name="interfaceMove"></param>
         /// <param name="capture"></param>
@@ -55,7 +80,7 @@ namespace vergiBlue
             PrevPos = interfaceMove.StartPosition.ToTuple();
             NewPos = interfaceMove.EndPosition.ToTuple();
             Capture = capture;
-            Promotion = interfaceMove.PromotionResult != PromotionPieceType.NoPromotion;
+            PromotionType = interfaceMove.PromotionResult;
             Castling = interfaceMove.Castling;
             Check = interfaceMove.Check;
             CheckMate = interfaceMove.CheckMate;
@@ -63,14 +88,11 @@ namespace vergiBlue
 
         public IMove ToInterfaceMove()
         {
-            var promotionType = PromotionPieceType.NoPromotion;
-            if (Promotion) promotionType = PromotionPieceType.Queen;
-
             var move = new MoveImplementation()
             {
                 StartPosition = PrevPos.ToAlgebraic(),
                 EndPosition = NewPos.ToAlgebraic(),
-                PromotionResult = promotionType,
+                PromotionResult = PromotionType,
                 Castling = Castling,
                 Check = Check,
                 CheckMate = CheckMate
@@ -78,16 +100,35 @@ namespace vergiBlue
             return move;
         }
 
-        // TODO should be separate comparer for only coordinates and also captures etc
         /// <summary>
-        /// Move is equal if previous and new positions match
+        /// Move is equal if positions and properties match
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
         public bool Equals(SingleMove? other)
         {
-            if(other == null) throw new NullReferenceException();
-            if (PrevPos.Equals(other.PrevPos) && NewPos.Equals(other.NewPos))
+            if (other == null) return false;
+            if (!PrevPos.Equals(other.PrevPos)) return false;
+            if (!NewPos.Equals(other.NewPos)) return false;
+            if (!Capture.Equals(other.Capture)) return false;
+            if (!Castling.Equals(other.Castling)) return false;
+            if (!Check.Equals(other.Check)) return false;
+            if (!CheckMate.Equals(other.CheckMate)) return false;
+            if (!EnPassant.Equals(other.EnPassant)) return false;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Previous and new positions are equal. Promotion equals. This is because same
+        /// movement can happen to multiple promotion variations.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public bool EqualPositions(SingleMove? other)
+        {
+            if (other == null) return false;
+            if (PrevPos.Equals(other.PrevPos) && NewPos.Equals(other.NewPos) && PromotionType == other.PromotionType)
             {
                 return true;
             }

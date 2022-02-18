@@ -9,10 +9,10 @@ namespace vergiBlue.BoardModel
 {
     internal class Evaluator
     {
-        public static double Evaluate(IBoard board, bool isMaximizing, bool simpleEvaluation, bool isInCheckForOther = false, int? currentSearchDepth = null)
+        public static double Evaluate(IBoard board, bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
         {
             if (simpleEvaluation) return EvaluateSimple(board, isMaximizing, currentSearchDepth);
-            return EvaluateIntelligent(board, isMaximizing, isInCheckForOther, currentSearchDepth);
+            return EvaluateIntelligent(board, isMaximizing, currentSearchDepth);
         }
 
 
@@ -24,7 +24,7 @@ namespace vergiBlue.BoardModel
             return evalScore;
         }
 
-        private static double EvaluateIntelligent(IBoard board, bool isMaximizing, bool isInCheckForOther, int? currentSearchDepth = null)
+        private static double EvaluateIntelligent(IBoard board, bool isMaximizing, int? currentSearchDepth = null)
         {
             Diagnostics.IncrementEvalCount();
             var evalScore = board.PieceList.Sum(p => p.GetEvaluationStrength(board.Strategic.EndGameWeight));

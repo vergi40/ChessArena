@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 
 
@@ -32,61 +29,121 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        protected override SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false)
-        {
-            if (validateBorders && Validator.IsOutside(target)) return null;
-
-            if (board.ValueAt(target) == null)
-            {
-                var promotion = target.Item2 == 0 || target.Item2 == 7;
-                return new SingleMove(CurrentPosition, target, false, promotion);
-            }
-            return null;
-        }
-
-        private SingleMove? CanCapture((int, int) target, IBoard board)
-        {
-            if(Validator.IsOutside(target)) return null;
-
-            // Normal
-            var diagonalPiece = board.ValueAt(target);
-            if (diagonalPiece != null && diagonalPiece.IsWhite != IsWhite)
-            {
-                var promotion = target.Item2 == 0 || target.Item2 == 7;
-                return new SingleMove(CurrentPosition, diagonalPiece.CurrentPosition, true, promotion);
-            }
-
-            // En passant - opponent on side
-            // Need to check that there is pawn next to and opponent has done double move from start to that pawn last round 
-            // TODO
-
-
-            return null;
-        }
-
         /// <summary>
-        /// List all allowed
+        /// List all valid moves. It is important to check least amount of positions
         /// </summary>
         /// <returns></returns>
         public override IEnumerable<SingleMove> Moves(IBoard board)
         {
             var (column, row) = CurrentPosition;
+            var (start, end, enpassantRow) = GetSpecialRows();
 
-            // Basic
-            var move = CanMoveTo((column, row + Direction), board, true);
-            if (move != null) yield return move;
-
-            // Start possibility
-            if (move != null && (row == 1 || row == 6))
+            if (row == end)
             {
-                move = CanMoveTo((column, row + (Direction * 2)), board, true);
-                if (move != null) yield return move;
+                foreach (var move in GetPromotionMoves(column, row, board))
+                {
+                    yield return move;
+                }
+            }
+            else
+            {
+                var normalMove = TryForward(column, row, board);
+                if (normalMove != null)
+                {
+                    yield return normalMove;
+                    if (row == start && board.ValueAt((column, row + Direction * 2)) == null)
+                    {
+                        // Free to do start move
+                        yield return new SingleMove((column, row), (column, row + Direction * 2));
+                    }
+                }
+
+                if (ValidCapturePosition(column - 1, row + Direction, board))
+                {
+                    yield return new SingleMove((column, row), (column - 1, row + Direction), true);
+                }
+                if (ValidCapturePosition(column + 1, row + Direction, board))
+                {
+                    yield return new SingleMove((column, row), (column + 1, row + Direction), true);
+                }
+
+                if (row == enpassantRow)
+                {
+                    // Means pawn current row is valid for en passant move start
+                    var enpassantPossibility = board.Strategic.EnPassantPossibility;
+                    if (enpassantPossibility != null)
+                    {
+                        if (column - 1 == enpassantPossibility.Value.column)
+                        {
+                            yield return new SingleMove((column, row), enpassantPossibility.Value, true, true);
+                        }
+                        else if (column + 1 == enpassantPossibility.Value.column)
+                        {
+                            yield return new SingleMove((column, row), enpassantPossibility.Value, true, true);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// If possible to move from current position, return move
+        /// </summary>
+        private SingleMove? TryForward(int column, int row, IBoard board)
+        {
+            if (board.ValueAt((column, row + Direction)) == null)
+            {
+                return new SingleMove((column, row), (column, row + Direction));
             }
 
-            move = CanCapture((column - 1, row + Direction), board);
-            if (move != null) yield return move;
-            move = CanCapture((column + 1, row + Direction), board);
-            if (move != null) yield return move;
+            return null;
+        }
+
+        private IEnumerable<SingleMove> GetPromotionMoves(int column, int row, IBoard board)
+        {
+            var nextRow = row + Direction;
+            if(board.ValueAt((column, nextRow)) == null)
+            {
+                yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Queen);
+                yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Rook);
+                yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Bishop);
+                yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Knight);
+            }
+            if (ValidCapturePosition(column - 1, nextRow, board))
+            {
+                yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Queen);
+                yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Rook);
+                yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Bishop);
+                yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Knight);
+            }
+            if (ValidCapturePosition(column + 1, nextRow, board))
+            {
+                yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Queen);
+                yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Rook);
+                yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Bishop);
+                yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Knight);
+            }
+        }
+
+        /// <summary>
+        /// Assumes row value is valid. Column can be outside.
+        /// </summary>
+        private bool ValidCapturePosition(int column, int row, IBoard board)
+        {
+            if (column < 0 || column > 7) return false;
+            var piece = board.ValueAt((column, row));
+            if (piece != null && piece.IsWhite != IsWhite)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private (int start, int end, int enpassantRow) GetSpecialRows()
+        {
+            if (Direction == 1) return (1, 6, 4);
+            return (6, 1, 3);
         }
 
         public override PieceBase CreateCopy()

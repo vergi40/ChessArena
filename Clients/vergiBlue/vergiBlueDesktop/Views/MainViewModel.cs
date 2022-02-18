@@ -35,6 +35,10 @@ namespace vergiBlueDesktop.Views
     /// * Substitute GameControllerWrapper with better design
     /// * Proper bindings and decoupling
     /// * Each piece it's own viewmodel
+    ///
+    /// FEN-strings for testing:
+    /// En passant + promotion cases
+    /// n1n5/PPPk4/8/8/1Pp5/8/4Kppp/5N1N b - b3 0 1
     /// </summary>
     public class MainViewModel : NotifyPropertyBase
     {
@@ -177,12 +181,23 @@ namespace vergiBlueDesktop.Views
             // Update view objects
             if (move.Capture)
             {
-                // If user move, there exists 2 viewobjects in same square
-                var pieceToDelete = ViewObjectList.First(o =>
-                    o.Column == move.NewPos.column 
-                    && o.Row == move.NewPos.row 
-                    && o.IsWhite != IsWhiteTurn);
-                ViewObjectList.Remove(pieceToDelete);
+                if (move.EnPassant)
+                {
+                    var pieceToDelete = ViewObjectList.First(o =>
+                        o.Column == move.NewPos.column
+                        && o.Row == move.PrevPos.row
+                        && o.IsWhite != IsWhiteTurn);
+                    ViewObjectList.Remove(pieceToDelete);
+                }
+                else
+                {
+                    // If user move, there exists 2 viewobjects in same square
+                    var pieceToDelete = ViewObjectList.First(o =>
+                        o.Column == move.NewPos.column
+                        && o.Row == move.NewPos.row
+                        && o.IsWhite != IsWhiteTurn);
+                    ViewObjectList.Remove(pieceToDelete);
+                }
             }
             
             if(pieceNotMovedInView)

@@ -31,7 +31,7 @@ namespace vergiBlue.BoardModel
             // Check that is really valid move for current player
             var piece = board.ValueAtDefinitely(move.PrevPos);
             var validMoves = board.Moves(piece.IsWhite, false, true);
-            if (!validMoves.Any(m => m.Equals(move)))
+            if (!validMoves.Any(m => m.EqualPositions(move)))
             {
                 throw new InvalidMoveException(
                     $"Invalid move. Cannot move {piece.Identity} from {move.PrevPos} to {move.NewPos}. " +
