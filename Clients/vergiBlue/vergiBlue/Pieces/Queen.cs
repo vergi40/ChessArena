@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using vergiBlue.BoardModel;
 
 namespace vergiBlue.Pieces
 {
@@ -30,7 +32,7 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board)
         {
             var moves = BishopMoves(board);
             return moves.Concat(RookMoves(board));
@@ -39,6 +41,12 @@ namespace vergiBlue.Pieces
         public override PieceBase CreateCopy()
         {
             return new Queen(IsWhite, CurrentPosition);
+        }
+
+        public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
+        {
+            var moves = BishopMoves(board, true);
+            return moves.Concat(RookMoves(board));
         }
     }
 }

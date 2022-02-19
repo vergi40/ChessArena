@@ -66,15 +66,38 @@ namespace vergiBlue.BoardModel
         {
             var prev = move.PrevPos;
             var next = move.NewPos;
-
+            
             var needUpdate = new List<AttackCache>();
-            foreach (var cache in Links[prev.column, prev.row].CacheList)
+            foreach (var cache in Links[prev.column, prev.row].PiecesLinkedToSquare.Keys)
             {
                 needUpdate.Add(cache);
             }
-            foreach (var cache in Links[next.column, next.row].CacheList)
+            foreach (var cache in Links[next.column, next.row].PiecesLinkedToSquare.Keys)
             {
                 needUpdate.Add(cache);
+            }
+
+            if (move.EnPassant)
+            {
+                var (col, row) = move.EnPassantOpponentPosition;
+                needUpdate.AddRange(Links[col, row].PiecesLinkedToSquare.Keys);
+            }
+            else if (move.Castling)
+            {
+                if (move.NewPos.column == 2)
+                {
+                    // Execute also rook move
+                    var row = move.NewPos.row;
+                    needUpdate.AddRange(Links[0, row].PiecesLinkedToSquare.Keys);
+                    needUpdate.AddRange(Links[3, row].PiecesLinkedToSquare.Keys);
+                }
+                else if (move.NewPos.column == 6)
+                {
+                    // Execute also rook move
+                    var row = move.NewPos.row;
+                    needUpdate.AddRange(Links[7, row].PiecesLinkedToSquare.Keys);
+                    needUpdate.AddRange(Links[5, row].PiecesLinkedToSquare.Keys);
+                }
             }
 
             // Note: maybe handle as enumerable?
@@ -105,7 +128,7 @@ namespace vergiBlue.BoardModel
             {
                 foreach (var cache in Whites)
                 {
-                    foreach (var position in cache.Squares)
+                    foreach (var position in cache.AttackSquares)
                     {
                         yield return position;
                     }
@@ -115,7 +138,7 @@ namespace vergiBlue.BoardModel
             {
                 foreach (var cache in Blacks)
                 {
-                    foreach (var position in cache.Squares)
+                    foreach (var position in cache.AttackSquares)
                     {
                         yield return position;
                     }
@@ -129,39 +152,55 @@ namespace vergiBlue.BoardModel
         }
     }
 
+    /// <summary>
+    /// Represents links for single square in board
+    /// </summary>
     class AttackLink
     {
-        public List<AttackCache> CacheList { get; set; } = new();
+        /// <summary>
+        /// [Cache item, soft target]
+        /// </summary>
+        public Dictionary<AttackCache, bool> PiecesLinkedToSquare { get; set; } = new();
 
-        public void AddLink(AttackCache cache)
+        public void AddLink(AttackCache cache, bool softTarget)
         {
-            CacheList.Add(cache);
+            PiecesLinkedToSquare.Add(cache, softTarget);
         }
 
         public void RemoveLink(AttackCache cache)
         {
-            CacheList.Remove(cache);
+            PiecesLinkedToSquare.Remove(cache);
         }
 
         public bool HasAttackToSquare(bool white)
         {
+            if (PiecesLinkedToSquare.Any(c => c.Key.IsWhite == white && !c.Value))
+            {
+                return true;
+            }
+
+            return false;
+
             // TODO substitute with static. would need to update on each add/remove
-            return CacheList.Any(c => c.IsWhite == white);
         }
 
         public override string ToString()
         {
-            if (!CacheList.Any()) return "-";
-            return string.Join(", ", CacheList.Select(c => c.Identity));
+            if (!PiecesLinkedToSquare.Any()) return "-";
+            return string.Join(", ", PiecesLinkedToSquare.Select(c => c.Key.Identity));
         }
     }
 
+    /// <summary>
+    /// Represents all attack and soft squares linked for piece
+    /// </summary>
     class AttackCache
     {
         public PieceBase Piece { get; }
         public char Identity => Piece.Identity;
         public bool IsWhite => Piece.IsWhite;
-        public HashSet<(int column, int row)> Squares { get; } = new();
+        public HashSet<(int column, int row)> AttackSquares { get; } = new();
+        public HashSet<(int column, int row)> SoftSquares { get; } = new();
 
         public AttackCache(PieceBase piece)
         {
@@ -172,23 +211,41 @@ namespace vergiBlue.BoardModel
         {
             ClearPreviousLinks(links);
 
-            foreach (var move in Piece.Moves(board))
+            foreach (var move in Piece.MovesWithSoftTargets(board))
             {
                 if (Identity == 'P' && !move.Capture) continue;
-
+                
                 var position = move.NewPos;
-                Squares.Add(position);
-                links[position.column, position.row].AddLink(this);
+                if (move.SoftTarget)
+                {
+                    SoftSquares.Add(position);
+                }
+                else
+                {
+                    // Only valid positions
+                    AttackSquares.Add(position);
+                }
+
+                // It is important to link also soft targets
+                links[position.column, position.row].AddLink(this, move.SoftTarget);
             }
         }
 
         private void ClearPreviousLinks(AttackLink[,] links)
         {
-            foreach (var (column, row) in Squares)
+            // Improvement: if really tight optimized, only remove squares that are not part of 
+            // updated
+            foreach (var (column, row) in AttackSquares.Concat(SoftSquares))
             {
                 links[column, row].RemoveLink(this);
             }
-            Squares.Clear();
+            AttackSquares.Clear();
+            SoftSquares.Clear();
+        }
+
+        public override string ToString()
+        {
+            return $"{Identity}: iswhite = {IsWhite}. {AttackSquares.Count} attack, {SoftSquares.Count} soft squares";
         }
     }
 }

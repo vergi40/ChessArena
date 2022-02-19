@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 
@@ -139,6 +140,18 @@ namespace vergiBlue.Pieces
             return false;
         }
 
+        private bool ValidSoftPosition(int column, int row, IBoard board)
+        {
+            if (column < 0 || column > 7) return false;
+            var piece = board.ValueAt((column, row));
+            if (piece != null && piece.IsWhite == IsWhite)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private (int start, int end, int enpassantRow) GetSpecialRows()
         {
             if (IsWhite) return (1, 6, 4);
@@ -149,6 +162,24 @@ namespace vergiBlue.Pieces
         {
             var piece = new Pawn(IsWhite, CurrentPosition);
             return piece;
+        }
+
+        public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
+        {
+            foreach (var move in Moves(board))
+            {
+                yield return move;
+            }
+
+            var (column, row) = CurrentPosition;
+            if (ValidCapturePosition(column - 1, row + Direction, board))
+            {
+                yield return new SingleMove((column, row), (column - 1, row + Direction), true);
+            }
+            if (ValidCapturePosition(column + 1, row + Direction, board))
+            {
+                yield return new SingleMove((column, row), (column + 1, row + Direction), true);
+            }
         }
     }
 }
