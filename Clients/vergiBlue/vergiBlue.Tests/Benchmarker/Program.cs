@@ -1,4 +1,5 @@
 ﻿using System;
+using BenchmarkDotNet.Running;
 
 namespace Benchmarker
 {
@@ -6,7 +7,9 @@ namespace Benchmarker
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var summary = BenchmarkRunner.Run<PerftBenchmark>();
+            
+            Console.ReadKey();
         }
     }
 }

@@ -1,7 +1,6 @@
 using System.Linq;
 using NUnit.Framework;
 using vergiBlue.BoardModel;
-using TestContext = NUnit.Framework.TestContext;
 
 namespace PerftTests
 {
@@ -23,11 +22,7 @@ namespace PerftTests
         //[TestCase(5, ExpectedResult = 4865609)]
         public long StartPosition(int depth)
         {
-            var board = BoardFactory.CreateDefault();
-
-            var result = PerftRec(board, depth, true);
-            TestContext.WriteLine($"{nameof(StartPosition)} with depth {depth}: node count {result}");
-            return result;
+            return Cases.StartPosition(depth);
         }
 
         /// <summary>
@@ -42,11 +37,7 @@ namespace PerftTests
         //[TestCase(5, ExpectedResult = 193690690)]
         public long GoodPositions_AndrewWagner(int depth)
         {
-            var fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
-            var board = BoardFactory.CreateFromFen(fen, out var whiteStart);
-
-            var result = PerftRec(board, depth, whiteStart);
-            return result;
+            return Cases.GoodPositions_AndrewWagner(depth);
         }
 
         /// <summary>
@@ -57,17 +48,13 @@ namespace PerftTests
         [TestCase(2, ExpectedResult = 496)]
         [TestCase(3, ExpectedResult = 9483)]
         [TestCase(4, ExpectedResult = 182838)]
-        //[TestCase(5, ExpectedResult = 3605103)]
+        [TestCase(5, ExpectedResult = 3605103)]
         public long Promotion_AndrewWagner(int depth)
         {
-            var fen = "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1";
-            var board = BoardFactory.CreateFromFen(fen, out var whiteStart);
-
-            var result = PerftRec(board, depth, whiteStart);
-            return result;
+            return Cases.Promotion_AndrewWagner(depth);
         }
 
-        private static long PerftRec(IBoard newBoard, int depth, bool forWhite)
+        public static long PerftRec(IBoard newBoard, int depth, bool forWhite)
         {
             if (depth == 0) return 1;
 
