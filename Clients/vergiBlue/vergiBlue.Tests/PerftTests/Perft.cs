@@ -1,12 +1,9 @@
-using System;
 using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NUnit.Framework;
 using vergiBlue.BoardModel;
-using Logger = Microsoft.VisualStudio.TestTools.UnitTesting.Logging.Logger;
 using TestContext = NUnit.Framework.TestContext;
 
-namespace Benchmarking
+namespace PerftTests
 {
     /// <summary>
     /// For a particular position and search depth a perft value is the number of nodes or positions resulting from legal moves.
