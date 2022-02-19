@@ -67,20 +67,19 @@ namespace vergiBlue.Pieces
                     yield return new SingleMove((column, row), (column + 1, row + Direction), true);
                 }
 
-                if (row == enpassantRow)
+                if (board.Strategic.EnPassantPossibility != null && row == enpassantRow)
                 {
-                    // Means pawn current row is valid for en passant move start
-                    var enpassantPossibility = board.Strategic.EnPassantPossibility;
-                    if (enpassantPossibility != null)
+                    // E.g. if possibility (2,2)
+                    // (3,3) -> (2,2)
+                    // (1,3) -> (2,2)
+                    var (eColumn, eRow) = board.Strategic.EnPassantPossibility.Value;
+                    if (column == eColumn + 1 && row == eRow - Direction)
                     {
-                        if (column - 1 == enpassantPossibility.Value.column)
-                        {
-                            yield return new SingleMove((column, row), enpassantPossibility.Value, true, true);
-                        }
-                        else if (column + 1 == enpassantPossibility.Value.column)
-                        {
-                            yield return new SingleMove((column, row), enpassantPossibility.Value, true, true);
-                        }
+                        yield return new SingleMove((column, row), (eColumn, eRow), true, true);
+                    }
+                    else if (column == eColumn - 1 && row == eRow - Direction)
+                    {
+                        yield return new SingleMove((column, row), (eColumn, eRow), true, true);
                     }
                 }
             }
@@ -142,7 +141,7 @@ namespace vergiBlue.Pieces
 
         private (int start, int end, int enpassantRow) GetSpecialRows()
         {
-            if (Direction == 1) return (1, 6, 4);
+            if (IsWhite) return (1, 6, 4);
             return (6, 1, 3);
         }
 

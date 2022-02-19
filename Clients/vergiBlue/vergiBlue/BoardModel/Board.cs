@@ -144,11 +144,12 @@ namespace vergiBlue.BoardModel
                 }
                 else if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
+                    // TODO continuing after this makes logic really unstable
                     // Ensure validation ends if king is eaten
-                    // TODO this should not happen
                     RemovePieces(!isWhite);
                     UpdatePosition(piece, move);
                     DebugPostCheckMate = true;
+                    Strategic.EnPassantPossibility = null;
                     return;
                 }
                 else
