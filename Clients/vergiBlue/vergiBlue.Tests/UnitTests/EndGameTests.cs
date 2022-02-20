@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
-using vergiBlue;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
-namespace vergiBlueTests
+namespace UnitTests
 {
     [TestClass]
     public class EndGameTests
