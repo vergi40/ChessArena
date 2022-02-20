@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using CommonNetStandard.Interface;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
@@ -11,7 +9,7 @@ using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
-namespace vergiBlueTests
+namespace UnitTests
 {
     [TestClass]
     public class GeneralTests

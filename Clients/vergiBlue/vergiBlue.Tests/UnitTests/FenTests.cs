@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using vergiBlue.BoardModel;
 
-namespace vergiBlueTests
+namespace UnitTests
 {
     [TestClass]
     public class FenTests

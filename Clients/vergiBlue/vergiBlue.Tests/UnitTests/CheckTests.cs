@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Common;
-using CommonNetStandard.LocalImplementation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Shouldly;
@@ -11,7 +10,7 @@ using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
-namespace vergiBlueTests
+namespace UnitTests
 {
     [TestClass]
     public class CheckTests

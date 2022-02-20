@@ -1,11 +1,10 @@
-﻿using System;
-using CommonNetStandard.Common;
+﻿using CommonNetStandard.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using vergiBlue;
 using vergiBlue.BoardModel;
 
-namespace vergiBlueTests
+namespace UnitTests
 {
     [TestClass]
     public class InvalidMoveTests

@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Configuration;
-using System.Text.Json.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using vergiBlue;
@@ -8,7 +6,7 @@ using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 
-namespace vergiBlueTests
+namespace UnitTests
 {
     /// <summary>
     /// Test how much time and evaluations are needed for various situations. Take notes and compare later when
