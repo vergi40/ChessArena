@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
+using UnitTests;
 using vergiBlue.BoardModel;
 
 namespace vergiBlueTests
