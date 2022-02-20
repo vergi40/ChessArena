@@ -154,7 +154,11 @@ namespace vergiBlue.BoardModel
         /// Return all valid moves the chosen color can do at current board
         /// </summary>
         IEnumerable<SingleMove> FilterOutIllegalMoves(IEnumerable<SingleMove> moves, bool isWhite);
-        IList<(int column, int row)> GetAttackSquares(bool attackerColor);
+
+        /// <summary>
+        /// WARNING: Performance-heavy
+        /// </summary>
+        IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker);
         bool CanCastleToLeft(bool white);
         bool CanCastleToRight(bool white);
     }

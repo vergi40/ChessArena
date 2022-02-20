@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using CommonNetStandard.Client;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
@@ -51,6 +52,8 @@ namespace vergiBlueDesktop
 
             _viewModel.SandboxCommand = new RelayCommand<object>(SandboxGame);
             _viewModel.FenCommand = new RelayCommand<object>(LoadFenGame);
+            _viewModel.ToggleWhiteAttackCommand = new RelayCommand<object>(ToggleWhiteAttackVisuals);
+            _viewModel.ToggleBlackAttackCommand = new RelayCommand<object>(ToggleBlackAttackVisuals);
         }
         
         private void StartWhite(object parameter)
@@ -239,6 +242,10 @@ namespace vergiBlueDesktop
 
             };
             board.AddNew(pieces);
+            board.Strategic.WhiteRightCastlingValid = true;
+            board.Strategic.WhiteLeftCastlingValid = false;
+            board.Strategic.BlackRightCastlingValid = true;
+            board.Strategic.BlackLeftCastlingValid = false;
 
             _viewModel.ViewUpdateGameStart();
             InitializeEnvironment(true, true, board);
@@ -294,6 +301,50 @@ namespace vergiBlueDesktop
                 var move = new SingleMove(interfaceMoveData.Move);
 
                 TurnFinished(move, true);
+            }
+        }
+
+        // Quick and dirty
+        private bool _showWhite = false;
+        private bool _showBlack = false;
+
+        private void ToggleWhiteAttackVisuals(object obj)
+        {
+            if (!_viewModel.GameStarted) return;
+
+            _showWhite = !_showWhite;
+            if (_showWhite)
+            {
+                var tiles = Session.Board.GetAttackSquares(true).Distinct().ToList();
+                foreach (var (column, row) in tiles)
+                {
+                    var position = new Position(row, column, Brushes.Crimson);
+                    _viewModel.VisualizationTiles.Add(position);
+                }
+            }
+            else
+            {
+                _viewModel.VisualizationTiles.Clear();
+            }
+        }
+
+        private void ToggleBlackAttackVisuals(object obj)
+        {
+            if (!_viewModel.GameStarted) return;
+
+            _showBlack = !_showBlack;
+            if (_showBlack)
+            {
+                var tiles = Session.Board.GetAttackSquares(false).Distinct().ToList();
+                foreach (var (column, row) in tiles)
+                {
+                    var position = new Position(row, column, Brushes.Crimson);
+                    _viewModel.VisualizationTiles.Add(position);
+                }
+            }
+            else
+            {
+                _viewModel.VisualizationTiles.Clear();
             }
         }
     }

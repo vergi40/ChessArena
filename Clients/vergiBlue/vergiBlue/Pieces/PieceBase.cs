@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 
@@ -76,6 +77,14 @@ namespace vergiBlue.Pieces
                 return new SingleMove(CurrentPosition, target, true);
             }
             return null;
+        }
+
+        /// <summary>
+        /// Stub
+        /// </summary>
+        public virtual IEnumerable<SingleMove> CastlingMoves(IBoard board)
+        {
+            return Enumerable.Empty<SingleMove>();
         }
 
         /// <summary>

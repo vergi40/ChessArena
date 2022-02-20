@@ -66,6 +66,9 @@ namespace vergiBlueDesktop
         public double UiY => Row * 60;
         public Brush BorderColor { get; set; }
 
+        /// <summary>
+        /// TODO because legacy, row and column are crossed
+        /// </summary>
         public Position(int row, int column, Brush borderColor = null)
         {
             Row = row;

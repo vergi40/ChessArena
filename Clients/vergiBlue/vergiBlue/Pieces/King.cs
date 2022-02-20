@@ -72,31 +72,45 @@ namespace vergiBlue.Pieces
 
             move = CanMoveTo((cur.column + 1, cur.row - 1), board, true);
             if (move != null) yield return move;
+        }
 
-            // Castling
+        public override IEnumerable<SingleMove> CastlingMoves(IBoard board)
+        {
             // Only check if not done yet
             if (IsWhite)
             {
                 if (board.Strategic.WhiteLeftCastlingValid && board.CanCastleToLeft(true))
                 {
-                    yield return new SingleMove(CurrentPosition, (2, 0));
+                    yield return new SingleMove(CurrentPosition, (2, 0))
+                    {
+                        Castling = true
+                    };
                 }
 
                 if (board.Strategic.WhiteRightCastlingValid && board.CanCastleToRight(true))
                 {
-                    yield return new SingleMove(CurrentPosition, (6, 0));
+                    yield return new SingleMove(CurrentPosition, (6, 0))
+                    {
+                        Castling = true
+                    };
                 }
             }
             else
             {
                 if (board.Strategic.BlackLeftCastlingValid && board.CanCastleToLeft(false))
                 {
-                    yield return new SingleMove(CurrentPosition, (2, 7));
+                    yield return new SingleMove(CurrentPosition, (2, 7))
+                    {
+                        Castling = true
+                    };
                 }
 
                 if (board.Strategic.BlackRightCastlingValid && board.CanCastleToRight(false))
                 {
-                    yield return new SingleMove(CurrentPosition, (6, 7));
+                    yield return new SingleMove(CurrentPosition, (6, 7))
+                    {
+                        Castling = true
+                    };
                 }
             }
         }

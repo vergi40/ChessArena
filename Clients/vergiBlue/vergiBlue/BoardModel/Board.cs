@@ -420,6 +420,17 @@ namespace vergiBlue.BoardModel
         public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false)
         {
             IList<SingleMove> list = new List<SingleMove>();
+            
+            // In tests king might not exist
+            var king = KingLocation(forWhite);
+            if (king != null)
+            {
+                foreach (var castling in king.CastlingMoves(this))
+                {
+                    list.Add(castling);
+                }
+            }
+            
             foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(this))
@@ -435,8 +446,30 @@ namespace vergiBlue.BoardModel
                 }
             }
 
+            // TODO modify to enumerable and do these higher
             if (orderMoves) return MoveOrdering.SortMovesByEvaluation(list, this, forWhite);
             else return MoveOrdering.SortMovesByGuessWeight(list, this, forWhite);
+        }
+
+        /// <summary>
+        /// No sorting
+        /// </summary>
+        private IEnumerable<SingleMove> MovesWithoutCastling(bool forWhite, bool kingInDanger = false)
+        {
+            foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves(this))
+                {
+                    if (kingInDanger)
+                    {
+                        // Only allow moves that don't result in check
+                        var newBoard = BoardFactory.CreateFromMove(this, singleMove);
+                        if (newBoard.IsCheck(!forWhite)) continue;
+                    }
+
+                    yield return singleMove;
+                }
+            }
         }
 
         public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false)
@@ -665,14 +698,21 @@ namespace vergiBlue.BoardModel
             }
 
             // Castling
-            var castlingRow = 0;
-            if (!isWhite) castlingRow = 7;
-            if (ownPiece.Identity == 'K')
+            if (initialMove.Castling)
             {
-                if (move.PrevPos == (4, castlingRow) &&
-                    (move.NewPos == (2, castlingRow) || move.NewPos == (6, castlingRow)))
+                move.Castling = true;
+            }
+            else
+            {
+                var castlingRow = 0;
+                if (!isWhite) castlingRow = 7;
+                if (ownPiece.Identity == 'K')
                 {
-                    move.Castling = true;
+                    if (move.PrevPos == (4, castlingRow) &&
+                        (move.NewPos == (2, castlingRow) || move.NewPos == (6, castlingRow)))
+                    {
+                        move.Castling = true;
+                    }
                 }
             }
 
@@ -699,11 +739,12 @@ namespace vergiBlue.BoardModel
             }
         }
         
-        // Slow
-        public IList<(int column, int row)> GetAttackSquares(bool attackerColor)
+        public IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker)
         {
-            // TODO
-            return new List<(int column, int row)>();
+            foreach (var move in MovesWithoutCastling(forWhiteAttacker, false))
+            {
+                yield return move.NewPos;
+            }
         }
 
         /// <summary>
@@ -733,12 +774,13 @@ namespace vergiBlue.BoardModel
             if (ValueAt((3, row)) != null) return false;
 
             // Check that no position is under attack currently.
+            // NOTE: heavy on performance, done as last resort
             var neededSquares = new List<(int, int)> {(1, row), (2, row), (3, row), (4, row)};
             var attackSquares = GetAttackSquares(!white);
 
-            foreach (var position in neededSquares)
+            foreach (var target in attackSquares)
             {
-                if (attackSquares.Contains(position)) return false;
+                if (neededSquares.Contains(target)) return false;
             }
 
             return true;
@@ -752,11 +794,11 @@ namespace vergiBlue.BoardModel
             var row = 0;
             if (white)
             {
-                if (!Strategic.WhiteLeftCastlingValid) return false;
+                if (!Strategic.WhiteRightCastlingValid) return false;
             }
             else
             {
-                if (!Strategic.BlackLeftCastlingValid) return false;
+                if (!Strategic.BlackRightCastlingValid) return false;
                 row = 7;
             }
 
@@ -770,12 +812,13 @@ namespace vergiBlue.BoardModel
             if (ValueAt((6, row)) != null) return false;
 
             // Check that no position is under attack currently.
+            // NOTE: heavy on performance, done as last resort
             var neededSquares = new List<(int, int)> { (4, row), (5, row), (6, row)};
             var attackSquares = GetAttackSquares(!white);
 
-            foreach (var position in neededSquares)
+            foreach (var target in attackSquares)
             {
-                if (attackSquares.Contains(position)) return false;
+                if (neededSquares.Contains(target)) return false;
             }
 
             return true;

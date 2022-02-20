@@ -30,7 +30,10 @@ namespace vergiBlueDesktop.Views
         
         public void VisualizePossibleTiles()
         {
-            var moves = PieceModel.Moves(_gameModel.Model.Session.Board);
+            ClearPossibleTiles();
+
+            var moves = PieceModel.Moves(_gameModel.Model.Session.Board)
+                .Concat(PieceModel.CastlingMoves(_gameModel.Model.Session.Board));
             moves = _gameModel.Model.Session.Board.FilterOutIllegalMoves(moves, IsWhite);// TODO how to fix awkward referencing?
             var detailedMoves = _gameModel.Model.Session.Board.CollectMoveProperties(moves);
 

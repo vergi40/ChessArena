@@ -71,6 +71,12 @@ namespace vergiBlue.Algorithms
                     if (isMaximizing) scoreGuess += typeScore;
                     else scoreGuess -= typeScore;
                 }
+
+                if (singleMove.Castling)
+                {
+                    if (isMaximizing) scoreGuess += PieceBaseStrength.Pawn;
+                    else scoreGuess -= PieceBaseStrength.Pawn;
+                }
                 
                 // Penalize moving to position where opponent pawn is attacking
                 // TODO
