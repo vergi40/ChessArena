@@ -565,7 +565,7 @@ namespace vergiBlue.BoardModel
 
             Shared.Transpositions.Initialize();
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
-            Logger.LogWithConsole("Board initialized.", _localLogger);
+            //Logger.LogWithConsole("Board initialized.", _localLogger);
         }
 
         /// <summary>
@@ -775,7 +775,7 @@ namespace vergiBlue.BoardModel
 
             // Check that no position is under attack currently.
             // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> {(1, row), (2, row), (3, row), (4, row)};
+            var neededSquares = new List<(int, int)> {(2, row), (3, row), (4, row)};
             var attackSquares = GetAttackSquares(!white);
 
             foreach (var target in attackSquares)
