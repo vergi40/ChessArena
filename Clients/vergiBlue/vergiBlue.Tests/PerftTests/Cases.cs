@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using vergiBlue.BoardModel;
 
 namespace PerftTests
 {
+    /// <summary>
+    /// For a particular position and search depth a perft value is the number of nodes or positions resulting from legal moves.
+    /// So for example perft(depth = 1) from the initial board position is 20, representing the total number of legal moves available for white.
+    /// https://www.chessprogramming.org/Perft_Results
+    /// https://sites.google.com/site/numptychess/perft
+    /// </summary>
     public static class Cases
     {
         public static long StartPosition(int depth)
