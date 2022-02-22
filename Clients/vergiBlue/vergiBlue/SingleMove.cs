@@ -116,7 +116,7 @@ namespace vergiBlue
             if (!CheckMate.Equals(other.CheckMate)) return false;
             if (!EnPassant.Equals(other.EnPassant)) return false;
 
-            return false;
+            return true;
         }
 
         /// <summary>
