@@ -26,7 +26,7 @@ namespace vergiBlue.Algorithms.PreMove
         public double GetDepthEstimate(IReadOnlyList<SingleMove> allMoves, IBoard board, TurnStartInfo turnInfo, int maxDepth)
         {
             CleanHistory();
-            var timeLimit = turnInfo.settings.TranspositionTimeLimitInMs;
+            var timeLimit = turnInfo.settings.TimeLimitInMs;
 
             var previousEstimate = 0;
             var resultDepth = 0.0;

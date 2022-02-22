@@ -7,7 +7,7 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue.Algorithms
 {
-    class MoveOrdering
+    static class MoveOrdering
     {
         // ------------
         // Order by light score guessing

@@ -19,7 +19,7 @@ namespace vergiBlue.Algorithms
     /// * If beta <= alpha, we know that previous level maximizing will skip this.
     /// * Prune
     /// </summary>
-    public class MiniMax
+    public static class MiniMax
     {
         /// <summary>
         /// Main game decision feature. Calculate player and opponent moves to certain depth. When

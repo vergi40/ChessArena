@@ -1,19 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using CommonNetStandard.LocalImplementation;
 
 namespace vergiBlue
 {
-    // TODO separate move without additional data
-    // public class SingleMoveBase
-    
-    // public class SingleMoveWithData
-    
     public sealed class SingleMove : IEquatable<SingleMove>
     {
         public bool Capture { get; set; }

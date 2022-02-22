@@ -135,7 +135,7 @@ namespace vergiBlue.Logic
                 CurrentBoard = board,
                 ValidMoves = validMoves,
                 NominalSearchDepth = depthResult.depth,
-                MaxTimeMs = _turnInfo.settings.TranspositionTimeLimitInMs
+                MaxTimeMs = _turnInfo.settings.TimeLimitInMs
             };
 
             // Next should check it there is easy check mate in horizon
@@ -182,7 +182,6 @@ namespace vergiBlue.Logic
         {
             var validMoves = context.ValidMoves;
             var board = context.CurrentBoard;
-            var searchDepth = context.NominalSearchDepth;
 
             // TODO BoardContext parameter
             if (gamePhase == GamePhase.MidEndGame || gamePhase == GamePhase.EndGame)
@@ -196,8 +195,6 @@ namespace vergiBlue.Logic
                 {
                     var newContext = context with { ValidMoves = twoTurnCheckMates.ToList() };
                     return _algorithm.CalculateBestMove(newContext);
-                    //var evaluatedCheckMates = ParallelBasic.GetMoveScoreListParallel(twoTurnCheckMates.ToList(), searchDepth, board, isMaximizing);
-                    //return MoveResearch.SelectBestMove(evaluatedCheckMates, isMaximizing, true);
                 }
                 else if (twoTurnCheckMates.Count > 0)
                 {
@@ -233,10 +230,5 @@ namespace vergiBlue.Logic
 
         public int MaxTimeMs { get; init; } = 5000;
         public int NominalSearchDepth { get; init; } = 5;
-
-        // TODO
-        public int MaxSearchDepth { get; init; } = 7;
-        // TODO
-        public int MinSearchDepth { get; init; } = 2;
     }
 }

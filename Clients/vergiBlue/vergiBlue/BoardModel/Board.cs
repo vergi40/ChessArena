@@ -573,7 +573,6 @@ namespace vergiBlue.BoardModel
             _isCheckForOffensivePrecalculated = null;
             var move = new SingleMove(from, to);
             
-            // TODO make two variants of function. 1. captures are known beforehand. 2. not known
             if (initialMove.Capture)
             {
                 // Known capture or en passant
@@ -631,7 +630,6 @@ namespace vergiBlue.BoardModel
             }
 
             // Check and checkmate
-            // TODO heavy calculations. Make check variant of function 
             var nextBoard = BoardFactory.CreateFromMove(this, move);
             move.Check = nextBoard.IsCheck(isWhite);
             move.CheckMate = nextBoard.IsCheckMate(isWhite, move.Check);
