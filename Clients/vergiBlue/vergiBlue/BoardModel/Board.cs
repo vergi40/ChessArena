@@ -77,6 +77,8 @@ namespace vergiBlue.BoardModel
         /// </summary>
         public bool DebugPostCheckMate { get; set; }
 
+        public MoveGenerator MoveGenerator { get; }
+
         /// <summary>
         /// Start game initialization
         /// </summary>
@@ -84,6 +86,7 @@ namespace vergiBlue.BoardModel
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
+            MoveGenerator = new MoveGenerator(this);
 
             Shared = new SharedData();
             Strategic = new StrategicData();
@@ -96,7 +99,9 @@ namespace vergiBlue.BoardModel
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
-            
+            MoveGenerator = new MoveGenerator(this);
+
+
             InitializeFromReference(other);
 
             Shared = other.Shared;
@@ -114,7 +119,8 @@ namespace vergiBlue.BoardModel
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
-            
+            MoveGenerator = new MoveGenerator(this);
+
             InitializeFromReference(other);
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
@@ -122,6 +128,14 @@ namespace vergiBlue.BoardModel
 
             ExecuteMove(move);
         }
+
+        [Obsolete("Call through MoveGenerator")]
+        public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false) =>
+            MoveGenerator.Moves(forWhite, orderMoves, kingInDanger);
+
+        [Obsolete("Call through MoveGenerator")]
+        public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false) =>
+            MoveGenerator.MovesWithTranspositionOrder(forWhite, kingInDanger);
 
         public void ExecuteMoveWithValidation(SingleMove move)
         {
@@ -414,101 +428,7 @@ namespace vergiBlue.BoardModel
             return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
         }
 
-        /// <summary>
-        /// Find every possible move for every piece for given color.
-        /// </summary>
-        public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false)
-        {
-            IList<SingleMove> list = new List<SingleMove>();
-            
-            // In tests king might not exist
-            var king = KingLocation(forWhite);
-            if (king != null)
-            {
-                foreach (var castling in king.CastlingMoves(this))
-                {
-                    list.Add(castling);
-                }
-            }
-            
-            foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
-            {
-                foreach (var singleMove in piece.Moves(this))
-                {
-                    if (kingInDanger)
-                    {
-                        // Only allow moves that don't result in check
-                        var newBoard = BoardFactory.CreateFromMove(this, singleMove);
-                        if (newBoard.IsCheck(!forWhite)) continue;
-                    }
-
-                    list.Add(singleMove);
-                }
-            }
-
-            // TODO modify to enumerable and do these higher
-            if (orderMoves) return MoveOrdering.SortMovesByEvaluation(list, this, forWhite);
-            else return MoveOrdering.SortMovesByGuessWeight(list, this, forWhite);
-        }
-
-        /// <summary>
-        /// No sorting
-        /// </summary>
-        private IEnumerable<SingleMove> MovesWithoutCastling(bool forWhite, bool kingInDanger = false)
-        {
-            foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
-            {
-                foreach (var singleMove in piece.Moves(this))
-                {
-                    if (kingInDanger)
-                    {
-                        // Only allow moves that don't result in check
-                        var newBoard = BoardFactory.CreateFromMove(this, singleMove);
-                        if (newBoard.IsCheck(!forWhite)) continue;
-                    }
-
-                    yield return singleMove;
-                }
-            }
-        }
-
-        public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false)
-        {
-            // Priority moves like known cutoffs
-            var priorityList = new List<SingleMove>();
-            var otherList = new List<SingleMove>();
-            foreach (var piece in PieceList.Where(p => p.IsWhite == forWhite))
-            {
-                foreach (var singleMove in piece.Moves(this))
-                {
-                    if (kingInDanger)
-                    {
-                        // Only allow moves that don't result in check
-                        var newBoard = BoardFactory.CreateFromMove(this, singleMove);
-                        if (newBoard.IsCheck(!forWhite)) continue;
-                    }
-
-                    // Check if move has transposition data
-                    // Maximizing player needs lower bound moves
-                    // Minimizing player needs upper bound moves
-                    var transposition = Shared.Transpositions.GetTranspositionForMove(this, singleMove);
-                    if (transposition != null)
-                    {
-                        if((forWhite && transposition.Type == NodeType.LowerBound) ||
-                            (!forWhite && transposition.Type == NodeType.UpperBound))
-                        {
-                            Diagnostics.IncrementPriorityMoves();
-                            priorityList.Add(singleMove);
-                            continue;
-                        }
-                    }
-                    otherList.Add(singleMove);
-                }
-            }
-
-            priorityList.AddRange(MoveOrdering.SortMovesByGuessWeight(otherList, this, forWhite));
-            return priorityList;
-        }
+        
 
         public void InitializeDefaultBoard()
         {
@@ -741,7 +661,7 @@ namespace vergiBlue.BoardModel
         
         public IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker)
         {
-            foreach (var move in MovesWithoutCastling(forWhiteAttacker, false))
+            foreach (var move in MoveGenerator.MovesWithoutCastling(forWhiteAttacker, false))
             {
                 yield return move.NewPos;
             }
