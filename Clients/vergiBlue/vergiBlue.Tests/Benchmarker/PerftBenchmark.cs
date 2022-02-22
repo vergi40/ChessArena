@@ -5,14 +5,10 @@ using PerftTests;
 namespace Benchmarker
 {
     [SimpleJob(RunStrategy.Monitoring)]
+    [MeanColumn, MedianColumn, MinColumn, MaxColumn]
     public class PerftBenchmark
     {
-        //[Params(4,5)]
-        //[Params(4)]
-        //public int Depth { get; set; }
-
         [Benchmark]
-        //[Arguments(3)]
         [Arguments(4)]
         public void StartPosition(int depth)
         {
@@ -27,7 +23,6 @@ namespace Benchmarker
         }
 
         [Benchmark]
-        //[Arguments(3)]
         [Arguments(4)]
         public void PromomotionPosition(int depth)
         {

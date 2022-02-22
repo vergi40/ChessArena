@@ -18,6 +18,7 @@ namespace vergiBlue.Logic
 
         /// <summary>
         /// For tests. Start board known. Test environment handles initializations.
+        /// If default board, remember to set Strategic.SkipOpeningChecks = true
         /// </summary>
         public static Logic CreateForTest(bool isPlayerWhite, BoardModel.IBoard board, int? overrideMaxDepth = null)
         {
