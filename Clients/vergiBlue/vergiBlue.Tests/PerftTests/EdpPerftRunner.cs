@@ -25,10 +25,8 @@ namespace PerftTests
 
 
         [Test]
-        public void RunTestSuite([Range(0, 125)] int index)
+        public void RunTestSuite([Range(0, 125)] int index, [Range(1,2)] int depth)
         {
-            var depth = 1;
-
             var testCase = ReadTestCase(index);
             var result = Perft.PerftRec(testCase.Board, depth, testCase.WhiteStarts);
             Assert.AreEqual(testCase.ResultForDepth(depth), result, 0.0, $"Perft failed for [{testCase.Fen}] depth {depth}");

@@ -9,7 +9,7 @@ namespace PerftTests
         {
             if (depth == 0) return 1;
 
-            var moves = newBoard.Moves(forWhite, false, true);
+            var moves = newBoard.MoveGenerator.MovesQuick(forWhite, true).ToList();
             if (!moves.Any())
             {
                 return 0;

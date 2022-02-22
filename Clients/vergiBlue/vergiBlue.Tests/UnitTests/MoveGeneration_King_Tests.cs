@@ -86,7 +86,7 @@ namespace UnitTests
 
             board.AddNew(pieces);
 
-            var moves = board.Moves(true, false, true);
+            var moves = board.MoveGenerator.MovesQuick(true, true);
             var kingMoves = moves.Where(m => m.PrevPos == sut.CurrentPosition).ToList();
             kingMoves.Count.ShouldBe(1);
 
@@ -119,7 +119,7 @@ namespace UnitTests
 
             board.AddNew(pieces);
 
-            var moves = board.Moves(true, false, true);
+            var moves = board.MoveGenerator.MovesQuick(true, true);
             var kingMoves = moves.Where(m => m.PrevPos == sut.CurrentPosition).ToList();
             kingMoves.Count.ShouldBe(1);
 
@@ -158,7 +158,7 @@ namespace UnitTests
 
             board.AddNew(pieces);
 
-            var moves = board.Moves(true, false, true);
+            var moves = board.MoveGenerator.MovesQuick(true, true).ToList();
             var p1Moves = moves.Where(m => m.PrevPos == (2,1)).ToList();
             var p2Moves = moves.Where(m => m.PrevPos == (4,1)).ToList();
             

@@ -198,7 +198,7 @@ namespace UnitTests
             board.ExecuteMove(new SingleMove("c7", "c5"));
             board.Strategic.EnPassantPossibility.ShouldBe("c6".ToTuple());
 
-            var boardMoves = board.Moves(true, false, false);
+            var boardMoves = board.MoveGenerator.MovesQuick(true, false);
 
             var expected = new SingleMove("b5", "c6", true);
 
@@ -219,7 +219,7 @@ namespace UnitTests
             board.ExecuteMove(new SingleMove("b2", "b4"));
             board.Strategic.EnPassantPossibility.ShouldBe("b3".ToTuple());
 
-            var boardMoves = board.Moves(false, false, false);
+            var boardMoves = board.MoveGenerator.MovesQuick(false, false);
 
             var expected = new SingleMove("c4", "b3", true);
 

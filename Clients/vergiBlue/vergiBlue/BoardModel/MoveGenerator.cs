@@ -17,9 +17,48 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// Find every possible move for every piece for given color.
+        /// Find every possible move for every piece for given color. IEnumerable should be utilized when there are cutoff etc changes.
         /// </summary>
-        public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false)
+        /// <param name="forWhite"></param>
+        /// <param name="kingInDanger">Validate check for each move</param>
+        /// <returns></returns>
+        public IEnumerable<SingleMove> MovesQuick(bool forWhite, bool kingInDanger = false)
+        {
+            // In tests king might not exist
+            var king = _board.KingLocation(forWhite);
+            if (king != null)
+            {
+                foreach (var castling in king.CastlingMoves(_board))
+                {
+                    yield return castling;
+                }
+            }
+
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves(_board))
+                {
+                    if (kingInDanger)
+                    {
+                        // Only allow moves that don't result in check
+                        var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
+                        if (newBoard.IsCheck(!forWhite)) continue;
+                    }
+
+                    yield return singleMove;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Find every possible move for every piece for given color.
+        /// Because sorting, full list returned.
+        /// </summary>
+        /// <param name="forWhite"></param>
+        /// <param name="heavyOrdering">Sort by light guess weight vs evaluate each new position.</param>
+        /// <param name="kingInDanger">Validate check for each move</param>
+        /// <returns></returns>
+        public IList<SingleMove> MovesWithOrdering(bool forWhite, bool heavyOrdering, bool kingInDanger = false)
         {
             IList<SingleMove> list = new List<SingleMove>();
 
@@ -48,15 +87,17 @@ namespace vergiBlue.BoardModel
                 }
             }
 
-            // TODO modify to enumerable and do these higher
-            if (orderMoves) return MoveOrdering.SortMovesByEvaluation(list, _board, forWhite);
-            else return MoveOrdering.SortMovesByGuessWeight(list, _board, forWhite);
+            if (heavyOrdering) return MoveOrdering.SortMovesByEvaluation(list, _board, forWhite);
+            return MoveOrdering.SortMovesByGuessWeight(list, _board, forWhite);
         }
 
         /// <summary>
-        /// No sorting
+        /// Find every possible move for every piece for given color. IEnumerable should be utilized when there are cutoff etc changes.
         /// </summary>
-        public IEnumerable<SingleMove> MovesWithoutCastling(bool forWhite, bool kingInDanger = false)
+        /// <param name="forWhite"></param>
+        /// <param name="kingInDanger">Validate check for each move</param>
+        /// <returns></returns>
+        public IEnumerable<SingleMove> MovesQuickWithoutCastling(bool forWhite, bool kingInDanger = false)
         {
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {

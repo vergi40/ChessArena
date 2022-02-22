@@ -74,6 +74,9 @@ namespace vergiBlue.Pieces
             if (move != null) yield return move;
         }
 
+        /// <summary>
+        /// Check validated inside
+        /// </summary>
         public override IEnumerable<SingleMove> CastlingMoves(IBoard board)
         {
             // Only check if not done yet

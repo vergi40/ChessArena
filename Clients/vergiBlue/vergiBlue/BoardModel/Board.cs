@@ -129,14 +129,6 @@ namespace vergiBlue.BoardModel
             ExecuteMove(move);
         }
 
-        [Obsolete("Call through MoveGenerator")]
-        public IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false) =>
-            MoveGenerator.Moves(forWhite, orderMoves, kingInDanger);
-
-        [Obsolete("Call through MoveGenerator")]
-        public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false) =>
-            MoveGenerator.MovesWithTranspositionOrder(forWhite, kingInDanger);
-
         public void ExecuteMoveWithValidation(SingleMove move)
         {
             Validator.ValidateMove(this, move);
@@ -428,8 +420,6 @@ namespace vergiBlue.BoardModel
             return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
         }
 
-        
-
         public void InitializeDefaultBoard()
         {
             // Pawns
@@ -514,7 +504,8 @@ namespace vergiBlue.BoardModel
             }
 
             // Iterate all opponent moves and check is there any that doesn't have check when next player moves
-            var opponentMoves = Moves(!isWhiteOffensive, false);
+            // TODO double-check that castling moves not needed to validate
+            var opponentMoves = MoveGenerator.MovesQuickWithoutCastling(!isWhiteOffensive, false);
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = BoardFactory.CreateFromMove(this, singleMove);
@@ -543,19 +534,22 @@ namespace vergiBlue.BoardModel
             }
             
             var opponentKing = KingLocation(!isWhiteOffensive);
-            if (opponentKing == null) return false; // Test override, don't always have kings on board
+            if (opponentKing == null)
+            {
+                DebugPostCheckMate = true;
+                return false; // Test override, don't always have kings on board
+            }
 
-            var playerMoves = Moves(isWhiteOffensive, false, false);
-            foreach (var singleMove in playerMoves)
+            foreach (var attackMove in GetAttackSquares(isWhiteOffensive))
             {
                 Diagnostics.IncrementCheckCount();
-                if (singleMove.NewPos == opponentKing.CurrentPosition)
+                if (attackMove == opponentKing.CurrentPosition)
                 {
                     _isCheckForOffensivePrecalculated = true;
                     return true;
                 }
             }
-
+            
             return false;
         }
 
@@ -646,7 +640,7 @@ namespace vergiBlue.BoardModel
 
         public IEnumerable<SingleMove> FilterOutIllegalMoves(IEnumerable<SingleMove> moves, bool isWhite)
         {
-            var legalMoves = Moves(isWhite, false, true);
+            var legalMoves = MoveGenerator.MovesQuick(isWhite, true).ToList();
             foreach (var singleMove in moves)
             {
                 var isLegal =
@@ -661,7 +655,8 @@ namespace vergiBlue.BoardModel
         
         public IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker)
         {
-            foreach (var move in MoveGenerator.MovesWithoutCastling(forWhiteAttacker, false))
+            // TODO separate method for capture moves and all moves
+            foreach (var move in MoveGenerator.MovesQuickWithoutCastling(forWhiteAttacker, false))
             {
                 yield return move.NewPos;
             }
