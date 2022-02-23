@@ -173,7 +173,6 @@ namespace vergiBlueDesktop
             // 2    K
             // 1
             //  ABCDEFGH
-            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Rook(false, "d5"),
@@ -181,7 +180,7 @@ namespace vergiBlueDesktop
                 new King(true, "e2"),
                 new King(false, "d8")
             };
-            board.AddNew(pieces);
+            var board = BoardFactory.CreateFromPieces(pieces);
 
             _viewModel.ViewUpdateGameStart();
             InitializeEnvironment(true, true, board);
@@ -198,7 +197,6 @@ namespace vergiBlueDesktop
             // 2  P  
             // 1  
             //  ABCDEFGH
-            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new King(true, "f6"),
@@ -206,7 +204,7 @@ namespace vergiBlueDesktop
                 new Pawn(true, "b7"),
                 new Pawn(false, "c2"),
             };
-            board.AddNew(pieces);
+            var board = BoardFactory.CreateFromPieces(pieces);
 
             _viewModel.ViewUpdateGameStart();
             InitializeEnvironment(true, true, board);
@@ -224,7 +222,6 @@ namespace vergiBlueDesktop
             // 2     PPP
             // 1    K  R
             //  ABCDEFGH
-            var board = BoardFactory.Create();
             var pieces = new List<PieceBase>
             {
                 new Rook(true, "h1"),
@@ -241,7 +238,8 @@ namespace vergiBlueDesktop
                 new Pawn(false, "b6")
 
             };
-            board.AddNew(pieces);
+            var board = BoardFactory.CreateFromPieces(pieces);
+            
             board.Strategic.WhiteRightCastlingValid = true;
             board.Strategic.WhiteLeftCastlingValid = false;
             board.Strategic.BlackRightCastlingValid = true;

@@ -22,14 +22,17 @@ namespace Benchmarker
         [Params(false, true)]
         public bool UseID { get; set; }
 
+        [Params(false, true)]
+        public bool UseTT { get; set; }
+
         [Benchmark]
         public void StartPosition()
         {
             var board = BoardFactory.CreateDefault();
 
             var logic = LogicFactory.CreateForTest(true, board);
-            logic.Settings.UseTranspositionTables = UseID;
-            logic.Settings.UseIterativeDeepening = false;
+            logic.Settings.UseTranspositionTables = UseTT;
+            logic.Settings.UseIterativeDeepening = UseID;
             logic.Settings.UseParallelComputation = false;
 
             var move = logic.CreateMoveWithDepth(Depth);
@@ -41,8 +44,8 @@ namespace Benchmarker
             var (board, whiteStarts) = CaseBoards.GetGoodPositions();
 
             var logic = LogicFactory.CreateForTest(whiteStarts, board);
-            logic.Settings.UseTranspositionTables = UseID;
-            logic.Settings.UseIterativeDeepening = false;
+            logic.Settings.UseTranspositionTables = UseTT;
+            logic.Settings.UseIterativeDeepening = UseID;
             logic.Settings.UseParallelComputation = false;
 
             var move = logic.CreateMoveWithDepth(Depth);
@@ -54,8 +57,8 @@ namespace Benchmarker
             var (board, whiteStarts) = CaseBoards.GetPromotion();
 
             var logic = LogicFactory.CreateForTest(whiteStarts, board);
-            logic.Settings.UseTranspositionTables = UseID;
-            logic.Settings.UseIterativeDeepening = false;
+            logic.Settings.UseTranspositionTables = UseTT;
+            logic.Settings.UseIterativeDeepening = UseID;
             logic.Settings.UseParallelComputation = false;
 
             var move = logic.CreateMoveWithDepth(Depth);

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 using vergiBlue.Pieces;
 
@@ -32,6 +34,13 @@ namespace vergiBlue.Algorithms
     /// </summary>
     public class Transposition
     {
+        /// <summary>
+        /// One-direction hash value for each possibly board situation. If two hashes are same, they have
+        /// * Identical piece setup
+        /// * Same player turn
+        /// * Same castling rights
+        /// * Same en passant situation
+        /// </summary>
         public ulong Hash { get; set; }
         public int Depth { get; set; }
         public double Evaluation { get; set; }
@@ -67,8 +76,13 @@ namespace vergiBlue.Algorithms
         public Dictionary<ulong, Transposition> Tables { get; set; } = new ();
         
         private bool _isInitialized { get; set; }
-        
-        private ulong[,] hashTable = new ulong[0, 0];
+
+        /// <summary>
+        /// Stores 12 different random numbers for each board square.
+        /// Indexes 0-5 are used for each white piece
+        /// Indexes 6-11 are used for each black piece
+        /// </summary>
+        private ulong[,] _hashTable { get; } = new ulong[64, 12];
         
         /// <summary>
         /// Clear old transpositions and initialize hash table
@@ -86,31 +100,28 @@ namespace vergiBlue.Algorithms
             // https://en.wikipedia.org/wiki/Zobrist_hashing
             // https://www.chessprogramming.org/Zobrist_Hashing
             var random = new Random(666);
-            var table = new ulong[64, 12];
             for (int i = 0; i < 64; i++)
             {
                 for (int j = 0; j < 12; j++)
                 {
-                    table[i, j] = GetRandom(random);
+                    _hashTable[i, j] = GetRandom(random);
                 }
             }
 
-            hashTable = table;
             _isInitialized = true;
         }
 
         /// <summary>
-        /// Use at start initialization
+        /// Create startup hash based on all current pieces
         /// </summary>
         public ulong CreateBoardHash(IBoard board)
         {
+            // TODO castling rights
             ulong hash = 0;
             for (int i = 0; i < board.PieceList.Count; i++)
             {
                 var piece = board.PieceList[i];
-                var index = piece.CurrentPosition.ToArray();
-                var j = GetIndex(piece);
-                hash = hash ^ hashTable[index, j];
+                hash = hash ^ GetPieceHash(piece, piece.CurrentPosition);
             }
 
             return hash;
@@ -119,54 +130,118 @@ namespace vergiBlue.Algorithms
         /// <summary>
         /// Get board hash for given move (with pre-move board reference and it's hash)
         /// </summary>
-        public ulong GetNewBoardHash(SingleMove move, IBoard oldBoard, ulong oldHash)
+        public ulong GetNewBoardHash(SingleMove move, IBoard oldBoard, ulong hash)
         {
-            // Erase capture
+            if (move.Castling)
+            {
+                var king = oldBoard.ValueAtDefinitely(move.PrevPos);
+                var row = 0;
+                if (!king.IsWhite) row = 7;
+
+                if (move.NewPos == (2, row))
+                {
+                    // TODO update castling rights
+                    var rook = oldBoard.ValueAtDefinitely((0, row));
+                    hash = ExecuteMoveHash(hash, rook, (0, row), (3, row));
+                    hash = ExecuteMoveHash(hash, king, (4, row), (2, row));
+                }
+                else if (move.NewPos == (6, row))
+                {
+                    // TODO update castling rights
+                    var rook = oldBoard.ValueAtDefinitely((7, row));
+                    hash = ExecuteMoveHash(hash, rook, (7, row), (5, row));
+                    hash = ExecuteMoveHash(hash, king, (4, row), (6, row));
+                }
+                else
+                {
+                    throw new ArgumentException(
+                        $"Castling logical error: invalid king new position {move.NewPos.ToAlgebraic()}");
+                }
+
+                return hash;
+            }
+
             if (move.Capture)
             {
                 PieceBase captured;
+                (int column, int row) targetPosition;
                 if (move.EnPassant)
                 {
-                    captured = oldBoard.ValueAtDefinitely((move.NewPos.column, move.PrevPos.row));
+                    captured = oldBoard.ValueAtDefinitely(move.EnPassantOpponentPosition);
+                    targetPosition = move.EnPassantOpponentPosition;
                 }
                 else
                 {
                     captured = oldBoard.ValueAtDefinitely(move.NewPos);
+                    targetPosition = move.NewPos;
                 }
 
-                var boardIndex = move.NewPos.ToArray();
-                var capturedPieceIndex = GetIndex(captured);
-                oldHash = oldHash ^ hashTable[boardIndex, capturedPieceIndex];
+                // Erase capture
+                hash = hash ^ GetPieceHash(captured, targetPosition);
             }
-            // TODO castling
-            // TODO promotion
             
-            // Update player position
+            // Updating player position
             var piece = oldBoard.ValueAtDefinitely(move.PrevPos);
-            var from = move.PrevPos.ToArray();
-            var to = move.NewPos.ToArray();
-            var pieceIndex = GetIndex(piece);
             
             // Remove old position
-            oldHash = oldHash ^ hashTable[from, pieceIndex];
-            
+            hash = hash ^ GetPieceHash(piece, move.PrevPos);
+
             // Add new position
-            oldHash = oldHash ^ hashTable[to, pieceIndex];
-            return oldHash;
+            if (move.Promotion)
+            {
+                var identity = move.PromotionType switch
+                {
+                    PromotionPieceType.Queen => 'Q',
+                    PromotionPieceType.Rook => 'R',
+                    PromotionPieceType.Knight => 'N',
+                    PromotionPieceType.Bishop => 'B',
+                    _ => throw new ArgumentException($"Unknown promotion: {move.PromotionType}")
+                };
+                hash = hash ^ GetPieceHash(piece.IsWhite, identity, move.NewPos);
+            }
+            else
+            {
+                hash = hash ^ GetPieceHash(piece, move.NewPos);
+            }
+            return hash;
         }
-        
-        
-        private int GetIndex(PieceBase piece)
+
+        /// <summary>
+        /// Hash that results from simple piece move
+        /// </summary>
+        private ulong ExecuteMoveHash(ulong hash, PieceBase piece, (int column, int row) prev, (int column, int row) next)
+        {
+            // Remove old
+            hash = hash ^ GetPieceHash(piece, prev);
+
+            // Add new
+            hash = hash ^ GetPieceHash(piece, next);
+            return hash;
+        }
+
+        private ulong GetPieceHash(PieceBase piece, (int column, int row) position)
+        {
+            var pieceIndex = GetPieceCustomIndex(piece.IsWhite, piece.Identity);
+            return _hashTable[position.To1DimensionArray(), pieceIndex];
+        }
+
+        private ulong GetPieceHash(bool isWhite, char identity, (int column, int row) position)
+        {
+            var pieceIndex = GetPieceCustomIndex(isWhite, identity);
+            return _hashTable[position.To1DimensionArray(), pieceIndex];
+        }
+
+        private int GetPieceCustomIndex(bool isWhite, char identity)
         {
             var color = 0;
-            if (!piece.IsWhite) color = 6;
+            if (!isWhite) color = 6;
 
-            if (piece.Identity == 'P') return 0 + color;
-            if (piece.Identity == 'B') return 1 + color;
-            if (piece.Identity == 'N') return 2 + color;
-            if (piece.Identity == 'R') return 3 + color;
-            if (piece.Identity == 'Q') return 4 + color;
-            if (piece.Identity == 'K') return 5 + color;
+            if (identity == 'P') return 0 + color;
+            if (identity == 'B') return 1 + color;
+            if (identity == 'N') return 2 + color;
+            if (identity == 'R') return 3 + color;
+            if (identity == 'Q') return 4 + color;
+            if (identity == 'K') return 5 + color;
 
             throw new ArgumentException();
         }

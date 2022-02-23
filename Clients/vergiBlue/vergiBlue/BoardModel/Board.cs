@@ -95,20 +95,26 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Create board clone for testing purposes. Set kings explicitly
         /// </summary>
-        public Board(IBoard other)
+        public Board(IBoard other, bool cloneBoardHash)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
-
-
+            
             InitializeFromReference(other);
 
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
+
+            if (cloneBoardHash)
+            {
+                BoardHash = other.BoardHash;
+            }
+            else
+            {
+                InitializeHashing();
+            }
             
-            // Create new hash as tests might not initialize board properly
-            BoardHash = Shared.Transpositions.CreateBoardHash(this);
             UpdateEndGameWeight();
         }
 
@@ -127,6 +133,85 @@ namespace vergiBlue.BoardModel
             BoardHash = other.BoardHash;
 
             ExecuteMove(move);
+        }
+        
+        /// <summary>
+        /// Prerequisite: Pieces are set. Castling rights and en passant set.
+        /// </summary>
+        public void InitializeHashing()
+        {
+            Shared.Transpositions.Initialize();
+            BoardHash = Shared.Transpositions.CreateBoardHash(this);
+        }
+
+        private void InitializeFromReference(IBoard previous)
+        {
+            foreach (var piece in previous.PieceList)
+            {
+                var newPiece = piece.CreateCopy();
+                AddNew(newPiece);
+
+                if (newPiece.Identity == 'K')
+                {
+                    UpdateKingReference(newPiece);
+                }
+            }
+        }
+
+        public void InitializeDefaultBoard()
+        {
+            // Pawns
+            for (int i = 0; i < 8; i++)
+            {
+                var whitePawn = new Pawn(true, (i, 1));
+                AddNew(whitePawn);
+
+                var blackPawn = new Pawn(false, (i, 6));
+                AddNew(blackPawn);
+            }
+
+            var rooks = new List<Rook>
+            {
+                new Rook(true, "a1"),
+                new Rook(true, "h1"),
+                new Rook(false, "a8"),
+                new Rook(false, "h8")
+            };
+            AddNew(rooks);
+
+            var knights = new List<Knight>
+            {
+                new Knight(true, "b1"),
+                new Knight(true, "g1"),
+                new Knight(false, "b8"),
+                new Knight(false, "g8")
+            };
+            AddNew(knights);
+
+            var bishops = new List<Bishop>
+            {
+                new Bishop(true, "c1"),
+                new Bishop(true, "f1"),
+                new Bishop(false, "c8"),
+                new Bishop(false, "f8")
+            };
+            AddNew(bishops);
+
+            var queens = new List<Queen>
+            {
+                new Queen(true, "d1"),
+                new Queen(false, "d8")
+            };
+            AddNew(queens);
+
+            var whiteKing = new King(true, "e1");
+            AddNew(whiteKing);
+
+            var blackKing = new King(false, "e8");
+            AddNew(blackKing);
+            Kings = (whiteKing, blackKing);
+
+            InitializeHashing();
         }
 
         public void ExecuteMoveWithValidation(SingleMove move)
@@ -332,22 +417,7 @@ namespace vergiBlue.BoardModel
                 RemovePiece(piece.CurrentPosition);
             }
         }
-
-        private void InitializeFromReference(IBoard previous)
-        {
-            foreach (var piece in previous.PieceList)
-            {
-                var newPiece = piece.CreateCopy();
-                AddNew(newPiece);
-                
-                if (newPiece.Identity == 'K')
-                {
-                    UpdateKingReference(newPiece);
-                }
-
-            }
-        }
-
+        
         private void UpdateKingReference(PieceBase king)
         {
             if (king.IsWhite)
@@ -419,65 +489,7 @@ namespace vergiBlue.BoardModel
             // TODO more logic
             return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
         }
-
-        public void InitializeDefaultBoard()
-        {
-            // Pawns
-            for (int i = 0; i < 8; i++)
-            {
-                var whitePawn = new Pawn(true, (i, 1));
-                AddNew(whitePawn);
-
-                var blackPawn = new Pawn(false, (i, 6));
-                AddNew(blackPawn);
-            }
-
-            var rooks = new List<Rook>
-            {
-                new Rook(true, "a1"),
-                new Rook(true, "h1"),
-                new Rook(false, "a8"),
-                new Rook(false, "h8")
-            };
-            AddNew(rooks);
-
-            var knights = new List<Knight>
-            {
-                new Knight(true, "b1"),
-                new Knight(true, "g1"),
-                new Knight(false, "b8"),
-                new Knight(false, "g8")
-            };
-            AddNew(knights);
-
-            var bishops = new List<Bishop>
-            {
-                new Bishop(true, "c1"),
-                new Bishop(true, "f1"),
-                new Bishop(false, "c8"),
-                new Bishop(false, "f8")
-            };
-            AddNew(bishops);
-
-            var queens = new List<Queen>
-            {
-                new Queen(true, "d1"),
-                new Queen(false, "d8")
-            };
-            AddNew(queens);
-
-            var whiteKing = new King(true, "e1");
-            AddNew(whiteKing);
-
-            var blackKing = new King(false, "e8");
-            AddNew(blackKing);
-            Kings = (whiteKing, blackKing);
-
-            Shared.Transpositions.Initialize();
-            BoardHash = Shared.Transpositions.CreateBoardHash(this);
-            //Logger.LogWithConsole("Board initialized.", _localLogger);
-        }
-
+        
         /// <summary>
         /// King location should be known at all times
         /// </summary>
@@ -736,5 +748,6 @@ namespace vergiBlue.BoardModel
 
             return true;
         }
+
     }
 }

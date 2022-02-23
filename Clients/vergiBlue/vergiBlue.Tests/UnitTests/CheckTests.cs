@@ -101,6 +101,7 @@ namespace UnitTests
             board.AddNew(whiteKing);
 
             board.Kings = (whiteKing, blackKing);
+            board.InitializeHashing();
 
             var player = LogicFactory.CreateForTest(true, board);
             var playerMove = player.CreateMoveWithDepth(4);
@@ -141,6 +142,7 @@ namespace UnitTests
             board.AddNew(whiteKing);
 
             board.Kings = (whiteKing, blackKing);
+            board.InitializeHashing();
 
             player.Board = BoardFactory.CreateClone(board);
             opponent.Board = BoardFactory.CreateClone(board);

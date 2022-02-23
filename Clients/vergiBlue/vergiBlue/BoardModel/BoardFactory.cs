@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
@@ -6,19 +7,33 @@ namespace vergiBlue.BoardModel
     public static class BoardFactory
     {
         /// <summary>
-        /// Create empty board. Add pieces with <see cref="Board.AddNew(vergiBlue.Pieces.PieceBase)"/>
+        /// Create empty board.
+        /// Add pieces with <see cref="IBoard.AddNew(PieceBase)"/>
+        /// Initialize hashing with <see cref="IBoard.InitializeHashing"/>
         /// </summary>
         public static IBoard Create()
         {
+            // TODO rename to "CreateEmptyBoard"
             return new Board();
         }
 
         /// <summary>
-        /// Create board clone for testing purposes. Set kings explicitly
+        /// Preferred way to create board from pieces. Does initializations and hashing.
         /// </summary>
-        public static IBoard CreateClone(IBoard previous)
+        public static IBoard CreateFromPieces(IEnumerable<PieceBase> pieces)
         {
-            return new Board(previous);
+            var board = Create();
+            board.AddNew(pieces);
+            board.InitializeHashing();
+            return board;
+        }
+
+        /// <summary>
+        /// Create board clone for testing purposes
+        /// </summary>
+        public static IBoard CreateClone(IBoard previous, bool cloneBoardHash = true)
+        {
+            return new Board(previous, cloneBoardHash);
         }
         
         /// <summary>
@@ -83,6 +98,7 @@ namespace vergiBlue.BoardModel
             //var halfMoveClock = int.Parse(components[4]);
             //var fullMoveNumber = int.Parse(components[5]);
 
+            board.InitializeHashing();
             return board;
         }
     }

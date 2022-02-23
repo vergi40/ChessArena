@@ -52,6 +52,17 @@ namespace vergiBlue.BoardModel
 
         MoveGenerator MoveGenerator { get; }
 
+
+
+        // Functionality
+
+        void InitializeDefaultBoard();
+
+        /// <summary>
+        /// Prerequisite: Pieces are set. Castling rights and en passant set.
+        /// </summary>
+        void InitializeHashing();
+
         /// <summary>
         /// Apply single move to board.
         /// Before executing, following should be applied:
@@ -114,7 +125,6 @@ namespace vergiBlue.BoardModel
         /// </summary>
         double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null);
 
-        void InitializeDefaultBoard();
 
         /// <summary>
         /// If there is a player move that can eat other player king, and opponent has zero
