@@ -261,8 +261,8 @@ namespace vergiBlue.BoardModel
                 {
                     PromotionPieceType.Queen => new Queen(piece.IsWhite, move.NewPos),
                     PromotionPieceType.Rook => new Rook(piece.IsWhite, move.NewPos),
-                    PromotionPieceType.Bishop => new Queen(piece.IsWhite, move.NewPos),
-                    PromotionPieceType.Knight => new Queen(piece.IsWhite, move.NewPos),
+                    PromotionPieceType.Bishop => new Bishop(piece.IsWhite, move.NewPos),
+                    PromotionPieceType.Knight => new Knight(piece.IsWhite, move.NewPos),
                     _ => throw new ArgumentException($"Unknown promotion: {move.PromotionType}")
                 };
                 PieceList.Add(piece);

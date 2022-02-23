@@ -105,22 +105,22 @@ namespace vergiBlue.Pieces
             {
                 yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Queen);
                 yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Rook);
-                yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Bishop);
                 yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Knight);
+                yield return new SingleMove((column, row), (column, nextRow), false, PromotionPieceType.Bishop);
             }
             if (ValidCapturePosition(column - 1, nextRow, board))
             {
                 yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Queen);
                 yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Rook);
-                yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Bishop);
                 yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Knight);
+                yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Bishop);
             }
             if (ValidCapturePosition(column + 1, nextRow, board))
             {
                 yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Queen);
                 yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Rook);
-                yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Bishop);
                 yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Knight);
+                yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Bishop);
             }
         }
 
