@@ -136,15 +136,7 @@ namespace vergiBlue.Logic
                 NominalSearchDepth = depthResult.depth,
                 MaxTimeMs = _turnInfo.settings.TimeLimitInMs
             };
-
-            // Next should check it there is easy check mate in horizon
-            var checkMateMove = FindCheckMate(depthResult.phase, context);
-            if (checkMateMove != null)
-            {
-                Diagnostics.AddMessage($"Checkmate possibility found in two moves.");
-                return checkMateMove;
-            }
-
+            
             Diagnostics.AddMessage($"Algo: {_algorithm.GetType().Name}");
             return _algorithm.CalculateBestMove(context);
         }
