@@ -112,6 +112,19 @@ namespace vergiBlue.Algorithms
         }
 
         /// <summary>
+        /// Changes which side turn it is (applied in <see cref="GetNewBoardHash"/>)
+        /// Use externally only in tests, if moving same color multiple times in sequence
+        /// </summary>
+        /// <param name="hash"></param>
+        /// <returns></returns>
+        public ulong ChangeSideToMove(ulong hash)
+        {
+            // Pawns are never aligned in 1. or 8. row
+            var changeSideHash = _hashTable[(7, 7).To1DimensionArray(),0];
+            return hash ^ changeSideHash;
+        }
+
+        /// <summary>
         /// Create startup hash based on all current pieces
         /// </summary>
         public ulong CreateBoardHash(IBoard board)
@@ -132,6 +145,9 @@ namespace vergiBlue.Algorithms
         /// </summary>
         public ulong GetNewBoardHash(SingleMove move, IBoard oldBoard, ulong hash)
         {
+            // Change side to move
+            hash = ChangeSideToMove(hash);
+
             if (move.Castling)
             {
                 var king = oldBoard.ValueAtDefinitely(move.PrevPos);

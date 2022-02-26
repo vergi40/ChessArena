@@ -131,6 +131,7 @@ namespace UnitTests
                 new King(false, "c6")
             };
             var expectedBoard = BoardFactory.CreateFromPieces(expectedPieces);
+            expectedBoard.BoardHash = expectedBoard.Shared.Transpositions.ChangeSideToMove(expectedBoard.BoardHash);
 
             // Refresh hash
             //expectedBoard = BoardFactory.CreateClone(expectedBoard);
@@ -302,6 +303,7 @@ namespace UnitTests
                 new Pawn(true, "b7"),
             };
             var result = BoardFactory.CreateFromPieces(pieces2);
+            result.BoardHash = result.Shared.Transpositions.ChangeSideToMove(result.BoardHash);
 
             baseline.ExecuteMove(new SingleMove("a6", "b7", true) { EnPassant = true });
 
