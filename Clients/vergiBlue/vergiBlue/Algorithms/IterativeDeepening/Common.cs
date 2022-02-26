@@ -22,12 +22,12 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             Diagnostics.AddMessage($" Move evaluation: {evaluation}.");
 
             // DEBUG
-            if (move != null && board != null && board.Strategic.EndGameWeight > 0.50)
-            {
-                var newBoard = BoardFactory.CreateFromMove(board, move);
-                var isWhite = newBoard.ValueAtDefinitely(move.NewPos).IsWhite;
-                Diagnostics.AddMessage(" EndGameKingToCornerEvaluation: " + Evaluator.EndGameKingToCornerEvaluation(newBoard, isWhite));
-            }
+            //if (move != null && board != null && board.Strategic.EndGameWeight > 0.50)
+            //{
+            //    var newBoard = BoardFactory.CreateFromMove(board, move);
+            //    var isWhite = newBoard.ValueAtDefinitely(move.NewPos).IsWhite;
+            //    Diagnostics.AddMessage(" EndGameKingToCornerEvaluation: " + Evaluator.EndGameKingToCornerEvaluation(newBoard, isWhite));
+            //}
         }
     }
 }

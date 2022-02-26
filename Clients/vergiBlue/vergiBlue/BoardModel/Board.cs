@@ -407,6 +407,17 @@ namespace vergiBlue.BoardModel
             BoardArray[position.column, position.row] = null;
 
             PieceList.Remove(piece);
+            if (piece.Identity == 'K')
+            {
+                if (piece.IsWhite)
+                {
+                    Kings = (null, Kings.black);
+                }
+                else
+                {
+                    Kings = (Kings.white, null);
+                }
+            }
         }
         
         private void RemovePieces(bool isWhite)
