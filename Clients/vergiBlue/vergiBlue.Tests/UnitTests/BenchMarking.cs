@@ -18,7 +18,7 @@ namespace UnitTests
     public class BenchMarking
     {
         // Separated different config runs 22.1.2021 
-
+        [Ignore("Long-running tests moved to PerftTests and Benchmarker. Should edit this there")]
         [TestMethod]
         public void RunAll_IterativeDeepening()
         {
@@ -103,6 +103,7 @@ namespace UnitTests
             // Time elapsed: 288 ms. Available moves found: 24. Iterative deepening search depth was 9 (24/24). Move evaluation: -200007. EndGameKingToCornerEvaluation: -272,5.
         }
 
+        [Ignore("Long-running tests moved to PerftTests and Benchmarker. Should edit this there")]
         [TestMethod]
         public void RunAll_IterativeDeepening_NoTranspositions()
         {
@@ -159,6 +160,7 @@ namespace UnitTests
             // Iterative deepening search depth was 6 [partial 7: (1/24)]. Move evaluation: -754,75. EndGameKingToCornerEvaluation: -245,25.
         }
 
+        [Ignore("Long-running tests moved to PerftTests and Benchmarker. Should edit this there")]
         [TestMethod]
         public void RunAll_Parallel_NoTranspositions()
         {
@@ -178,6 +180,7 @@ namespace UnitTests
             // Board evaluations: 2765487. Check evaluations: 1472. Time elapsed: 3004 ms. Available moves found: 40.
         }
 
+        [Ignore("Long-running tests moved to PerftTests and Benchmarker. Should edit this there")]
         [TestMethod]
         public void RunAll_NoParallel_NoTranspositions()
         {
@@ -203,6 +206,7 @@ namespace UnitTests
             // Board evaluations: 239509. Check evaluations: 1471. Alpha cutoffs: 3275. Beta cutoffs: 100822. Time elapsed: 1482 ms. Available moves found: 40.
         }
 
+        [Ignore("Long-running tests moved to PerftTests and Benchmarker. Should edit this there")]
         [TestMethod]
         public void RunAll_NoParallel_Transpositions()
         {

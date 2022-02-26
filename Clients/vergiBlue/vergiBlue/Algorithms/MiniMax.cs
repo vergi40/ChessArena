@@ -19,7 +19,7 @@ namespace vergiBlue.Algorithms
     /// * If beta <= alpha, we know that previous level maximizing will skip this.
     /// * Prune
     /// </summary>
-    public class MiniMax
+    public static class MiniMax
     {
         /// <summary>
         /// Main game decision feature. Calculate player and opponent moves to certain depth. When
@@ -35,7 +35,7 @@ namespace vergiBlue.Algorithms
         public static double ToDepth(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
             if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, depth);
-            var allMoves = newBoard.Moves(maximizingPlayer, false);
+            var allMoves = newBoard.MoveGenerator.MovesWithOrdering(maximizingPlayer, false);
 
             // Checkmate or stalemate
             if (!allMoves.Any()) return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
@@ -140,7 +140,7 @@ namespace vergiBlue.Algorithms
                 //}
             }
 
-            var allMoves = newBoard.Moves(maximizingPlayer, false);
+            var allMoves = newBoard.MoveGenerator.MovesWithOrdering(maximizingPlayer, false);
             if (!allMoves.Any())
             {
                 // Checkmate or stalemate

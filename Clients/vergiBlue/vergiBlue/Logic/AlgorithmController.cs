@@ -125,7 +125,6 @@ namespace vergiBlue.Logic
             var depthResult = _contextAnalyzer.DecideSearchDepth(validMoves, board);
 
             SetAlgorithm(depthResult.depth, depthResult.phase);
-            Diagnostics.AddMessage($"Algo: {_algorithm.GetType().Name}");
 
             var context = new BoardContext()
             {
@@ -135,13 +134,18 @@ namespace vergiBlue.Logic
                 CurrentBoard = board,
                 ValidMoves = validMoves,
                 NominalSearchDepth = depthResult.depth,
-                MaxTimeMs = _turnInfo.settings.TranspositionTimeLimitInMs
+                MaxTimeMs = _turnInfo.settings.TimeLimitInMs
             };
 
             // Next should check it there is easy check mate in horizon
             var checkMateMove = FindCheckMate(depthResult.phase, context);
-            if (checkMateMove != null) return checkMateMove;
+            if (checkMateMove != null)
+            {
+                Diagnostics.AddMessage($"Checkmate possibility found in two moves.");
+                return checkMateMove;
+            }
 
+            Diagnostics.AddMessage($"Algo: {_algorithm.GetType().Name}");
             return _algorithm.CalculateBestMove(context);
         }
 
@@ -152,7 +156,7 @@ namespace vergiBlue.Logic
                 // At the moment overrides all else
                 _algorithm = new ParallelBasic();
             }
-            else if (_turnInfo.settings.UseTranspositionTables && gamePhase != GamePhase.EndGame)
+            else if (_turnInfo.settings.UseTranspositionTables)
             {
                 // Transpositions is still the most WIP of algorithms.
                 // Seems like messes up particularly endgame calculations
@@ -182,7 +186,6 @@ namespace vergiBlue.Logic
         {
             var validMoves = context.ValidMoves;
             var board = context.CurrentBoard;
-            var searchDepth = context.NominalSearchDepth;
 
             // TODO BoardContext parameter
             if (gamePhase == GamePhase.MidEndGame || gamePhase == GamePhase.EndGame)
@@ -196,8 +199,6 @@ namespace vergiBlue.Logic
                 {
                     var newContext = context with { ValidMoves = twoTurnCheckMates.ToList() };
                     return _algorithm.CalculateBestMove(newContext);
-                    //var evaluatedCheckMates = ParallelBasic.GetMoveScoreListParallel(twoTurnCheckMates.ToList(), searchDepth, board, isMaximizing);
-                    //return MoveResearch.SelectBestMove(evaluatedCheckMates, isMaximizing, true);
                 }
                 else if (twoTurnCheckMates.Count > 0)
                 {
@@ -233,10 +234,5 @@ namespace vergiBlue.Logic
 
         public int MaxTimeMs { get; init; } = 5000;
         public int NominalSearchDepth { get; init; } = 5;
-
-        // TODO
-        public int MaxSearchDepth { get; init; } = 7;
-        // TODO
-        public int MinSearchDepth { get; init; } = 2;
     }
 }

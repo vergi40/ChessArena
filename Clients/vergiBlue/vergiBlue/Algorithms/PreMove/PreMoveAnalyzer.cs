@@ -50,14 +50,6 @@ namespace vergiBlue.Algorithms.PreMove
                 _previousDepth = _turnInfo.SearchDepthFixed;
                 return (_turnInfo.SearchDepthFixed, gamePhase);
             }
-            // Previous was opening move from database
-            //if (_turnInfo.previousMoveData.EvaluationCount == 0 && _turnInfo.previousMoveData.CheckCount == 0)
-            //{
-
-            //    return SearchDepth;
-            //}
-
-            // TODO do multiple checks
             // Track previous depth and time. Only +1 or -1 if enough points tick the box
             // 
             // Decide game phase
@@ -109,7 +101,7 @@ namespace vergiBlue.Algorithms.PreMove
                 var tempOffset = -1;
                 
                 // Cool new switch structure
-                var powerPieceCount = board.PieceList.Count(p => Math.Abs((double)p.RelativeStrength) > PieceBaseStrength.Pawn);
+                var powerPieceCount = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
                 var max = powerPieceCount switch
                 {
                     > 7 => 7 + tempOffset,

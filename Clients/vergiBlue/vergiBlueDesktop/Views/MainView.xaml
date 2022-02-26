@@ -48,7 +48,7 @@
                         <TextBox
                             MinWidth="40"
                             VerticalContentAlignment="Center"
-                            Text="{Binding AiLogicSettings.TranspositionTimeLimitInMs}" />
+                            Text="{Binding AiLogicSettings.TimeLimitInMs}" />
                     </StackPanel>
 
                     <CheckBox

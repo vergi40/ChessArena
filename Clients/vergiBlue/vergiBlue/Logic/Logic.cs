@@ -123,10 +123,8 @@ namespace vergiBlue.Logic
             // Opening -- done
 
             // Get all available moves and do necessary filtering
-            List<SingleMove> validMoves = Board.Moves(isMaximizing, true, true).ToList();
+            List<SingleMove> validMoves = Board.MoveGenerator.MovesWithOrdering(isMaximizing, true, true).ToList();
             
-            // TODO do more testing with the promotions
-
             if (MoveHistory.IsLeaningToDraw(GameHistory))
             {
                 // Repetition

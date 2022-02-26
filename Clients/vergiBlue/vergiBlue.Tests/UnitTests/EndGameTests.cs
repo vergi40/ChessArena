@@ -71,8 +71,7 @@ namespace UnitTests
                 new King(true, "f6"),
                 new King(false, "f3"),
             };
-            var board = BoardFactory.Create();
-            board.AddNew(pieces);
+            var board = BoardFactory.CreateFromPieces(pieces);
             return board;
         }
 

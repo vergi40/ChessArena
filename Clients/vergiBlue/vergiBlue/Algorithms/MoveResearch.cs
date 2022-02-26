@@ -7,7 +7,7 @@ using vergiBlue.BoardModel;
 
 namespace vergiBlue.Algorithms
 {
-    public class MoveResearch
+    public static class MoveResearch
     {
         public static SingleMove SelectBestMove(EvaluationResult evaluated, bool isMaximizing, bool prioritizeCaptures)
         {

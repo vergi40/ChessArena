@@ -50,6 +50,19 @@ namespace vergiBlue.BoardModel
         /// </summary>
         IList<IPiece> InterfacePieces { get; }
 
+        MoveGenerator MoveGenerator { get; }
+
+
+
+        // Functionality
+
+        void InitializeDefaultBoard();
+
+        /// <summary>
+        /// Prerequisite: Pieces are set. Castling rights and en passant set.
+        /// </summary>
+        void InitializeHashing();
+
         /// <summary>
         /// Apply single move to board.
         /// Before executing, following should be applied:
@@ -112,13 +125,6 @@ namespace vergiBlue.BoardModel
         /// </summary>
         double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null);
 
-        /// <summary>
-        /// Find every possible move for every piece for given color.
-        /// </summary>
-        IList<SingleMove> Moves(bool forWhite, bool orderMoves, bool kingInDanger = false);
-
-        IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false);
-        void InitializeDefaultBoard();
 
         /// <summary>
         /// If there is a player move that can eat other player king, and opponent has zero

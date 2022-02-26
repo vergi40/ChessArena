@@ -35,7 +35,18 @@ namespace vergiBlue
             return (column, row - 1);
         }
 
-        public static int ToArray(this (int column, int row) position)
+        /// <summary>
+        /// Conversion from [column,row] to [64]
+        /// E.g.
+        /// [0,0] = 0
+        /// [0,1] = 1
+        /// [0,2] = 2
+        /// [1,1] = 9
+        /// [7,7] = 63
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public static int To1DimensionArray(this (int column, int row) position)
         {
             return (position.row * 8) + position.column;
         }
@@ -43,9 +54,9 @@ namespace vergiBlue
         /// <summary>
         /// Transforms array index to (column, row) format
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="oneDimensionArrayIndex"></param>
         /// <returns></returns>
-        public static (int column, int row) ToTuple(this int index)
+        public static (int column, int row) ToTuple(this int oneDimensionArrayIndex)
         {
             // 1,0 -> 8
             // 1,1 -> 9
@@ -55,8 +66,8 @@ namespace vergiBlue
             // 9 -> row = 1
             // 9 -> column = 1
 
-            var row = index / 8;
-            var column = index % 8;
+            var row = oneDimensionArrayIndex / 8;
+            var column = oneDimensionArrayIndex % 8;
             return (column, row);
         }
 

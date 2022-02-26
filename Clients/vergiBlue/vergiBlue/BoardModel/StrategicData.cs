@@ -29,7 +29,8 @@ namespace vergiBlue.BoardModel
         public bool BlackRightCastlingValid { get; set; } = true;
 
         /// <summary>
-        /// For testing. Don't want to use opening book for arbitrary test situations. 
+        /// For testing. Don't want to use opening book for arbitrary test situations.
+        /// TODO might belong to Logic-side
         /// </summary>
         public bool SkipOpeningChecks { get; set; } = false;
 

@@ -7,8 +7,8 @@ namespace Benchmarker
     {
         static void Main(string[] args)
         {
-            var summary = BenchmarkRunner.Run<PerftBenchmark>();
-            
+            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+
             Console.ReadKey();
         }
     }
