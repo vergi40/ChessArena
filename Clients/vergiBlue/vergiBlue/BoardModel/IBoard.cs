@@ -51,7 +51,7 @@ namespace vergiBlue.BoardModel
         IList<IPiece> InterfacePieces { get; }
 
         MoveGenerator MoveGenerator { get; }
-
+        AttackSquares AttackMapper { get; }
 
 
         // Functionality
@@ -61,7 +61,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Prerequisite: Pieces are set. Castling rights and en passant set.
         /// </summary>
-        void InitializeHashing();
+        void InitializeSubSystems();
 
         /// <summary>
         /// Apply single move to board.

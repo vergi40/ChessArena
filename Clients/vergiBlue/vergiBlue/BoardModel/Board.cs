@@ -78,6 +78,7 @@ namespace vergiBlue.BoardModel
         public bool DebugPostCheckMate { get; set; }
 
         public MoveGenerator MoveGenerator { get; }
+        public AttackSquares AttackMapper { get; private set; }
 
         /// <summary>
         /// Start game initialization
@@ -100,7 +101,7 @@ namespace vergiBlue.BoardModel
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
-            
+
             InitializeFromReference(other);
 
             Shared = other.Shared;
@@ -109,12 +110,13 @@ namespace vergiBlue.BoardModel
             if (cloneBoardHash)
             {
                 BoardHash = other.BoardHash;
+                AttackMapper = other.AttackMapper.Clone(PieceList);
             }
             else
             {
-                InitializeHashing();
+                InitializeSubSystems();
             }
-            
+
             UpdateEndGameWeight();
         }
 
@@ -126,6 +128,7 @@ namespace vergiBlue.BoardModel
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
+            AttackMapper = other.AttackMapper.Clone(PieceList);
 
             InitializeFromReference(other);
             Shared = other.Shared;
@@ -138,10 +141,12 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Prerequisite: Pieces are set. Castling rights and en passant set.
         /// </summary>
-        public void InitializeHashing()
+        public void InitializeSubSystems()
         {
             Shared.Transpositions.Initialize();
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
+
+            AttackMapper = new AttackSquares(this);
         }
 
         private void InitializeFromReference(IBoard previous)
@@ -211,7 +216,7 @@ namespace vergiBlue.BoardModel
             AddNew(blackKing);
             Kings = (whiteKing, blackKing);
 
-            InitializeHashing();
+            InitializeSubSystems();
         }
 
         public void ExecuteMoveWithValidation(SingleMove move)
@@ -223,6 +228,11 @@ namespace vergiBlue.BoardModel
         public void ExecuteMove(SingleMove move)
         {
             BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
+            if(Shared.UseCachedAttackSquares)
+            {
+                AttackMapper.Update(this, move);
+            }
+
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
 
@@ -561,6 +571,13 @@ namespace vergiBlue.BoardModel
             {
                 DebugPostCheckMate = true;
                 return false; // Test override, don't always have kings on board
+            }
+
+            if (Shared.UseCachedAttackSquares)
+            {
+                var isAttacked = AttackMapper.IsPositionAttacked(opponentKing.CurrentPosition, isWhiteOffensive);
+                _isCheckForOffensivePrecalculated = true;
+                return isAttacked;
             }
 
             foreach (var attackMove in GetAttackSquares(isWhiteOffensive))

@@ -9,7 +9,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Create empty board.
         /// Add pieces with <see cref="IBoard.AddNew(PieceBase)"/>
-        /// Initialize hashing with <see cref="IBoard.InitializeHashing"/>
+        /// Initialize hashing with <see cref="IBoard.InitializeSubSystems"/>
         /// </summary>
         public static IBoard Create()
         {
@@ -24,7 +24,7 @@ namespace vergiBlue.BoardModel
         {
             var board = Create();
             board.AddNew(pieces);
-            board.InitializeHashing();
+            board.InitializeSubSystems();
             return board;
         }
 
@@ -98,7 +98,7 @@ namespace vergiBlue.BoardModel
             //var halfMoveClock = int.Parse(components[4]);
             //var fullMoveNumber = int.Parse(components[5]);
 
-            board.InitializeHashing();
+            board.InitializeSubSystems();
             return board;
         }
     }

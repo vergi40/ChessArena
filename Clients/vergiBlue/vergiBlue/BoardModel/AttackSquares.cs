@@ -47,6 +47,14 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
+        /// Constructor for cloning
+        /// </summary>
+        private AttackSquares(AttackLink[,] clonedLinks)
+        {
+            Links = clonedLinks;
+        }
+
+        /// <summary>
         /// First time initialization. Resource-heavy
         /// </summary>
         /// <param name="board"></param>
@@ -100,6 +108,8 @@ namespace vergiBlue.BoardModel
                 }
             }
 
+            // TODO extra handling, like promotion?
+
             // Note: maybe handle as enumerable?
             needUpdate = needUpdate.Distinct().ToList();
             
@@ -150,6 +160,27 @@ namespace vergiBlue.BoardModel
         {
             return GetAllFor(white).ToList();
         }
+
+        public AttackSquares Clone(IReadOnlyList<PieceBase> pieces)
+        {
+            // Usefulness of this class depends much how quick the cloning is
+            var links = new AttackLink[8, 8];
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    links[i, j] = new AttackLink();
+                }
+            }
+
+            foreach (var piece in pieces)
+            {
+                var (column, row) = piece.CurrentPosition;
+                links[column, row] = Links[column, row].Clone();
+            }
+
+            return new AttackSquares(links);
+        }
     }
 
     /// <summary>
@@ -164,7 +195,7 @@ namespace vergiBlue.BoardModel
 
         public void AddLink(AttackCache cache, bool softTarget)
         {
-            PiecesLinkedToSquare.Add(cache, softTarget);
+            PiecesLinkedToSquare.TryAdd(cache, softTarget);
         }
 
         public void RemoveLink(AttackCache cache)
@@ -189,6 +220,22 @@ namespace vergiBlue.BoardModel
             if (!PiecesLinkedToSquare.Any()) return "-";
             return string.Join(", ", PiecesLinkedToSquare.Select(c => c.Key.Identity));
         }
+
+        public AttackLink Clone()
+        {
+            var dict = new Dictionary<AttackCache, bool>();
+            foreach (var entry in PiecesLinkedToSquare)
+            {
+                var keyClone = entry.Key.Clone();
+                dict.Add(keyClone, entry.Value);
+            }
+
+            var linkClone = new AttackLink()
+            {
+                PiecesLinkedToSquare = dict
+            };
+            return linkClone;
+        }
     }
 
     /// <summary>
@@ -205,6 +252,14 @@ namespace vergiBlue.BoardModel
         public AttackCache(PieceBase piece)
         {
             Piece = piece;
+        }
+
+        private AttackCache(PieceBase piece, HashSet<(int column, int row)> attackSquares,
+            HashSet<(int column, int row)> softSquares)
+        {
+            Piece = piece;
+            AttackSquares = attackSquares;
+            SoftSquares = softSquares;
         }
 
         public void TriggerCacheUpdate(IBoard board, AttackLink[,] links)
@@ -246,6 +301,12 @@ namespace vergiBlue.BoardModel
         public override string ToString()
         {
             return $"{Identity}: iswhite = {IsWhite}. {AttackSquares.Count} attack, {SoftSquares.Count} soft squares";
+        }
+
+        public AttackCache Clone()
+        {
+            var cacheClone = new AttackCache(Piece.CreateCopy(), AttackSquares.ToHashSet(), SoftSquares.ToHashSet());
+            return cacheClone;
         }
     }
 }
