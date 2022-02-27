@@ -5,6 +5,7 @@ using CommonNetStandard;
 using CommonNetStandard.Interface;
 using log4net;
 using vergiBlue.Algorithms;
+using vergiBlue.BoardModel.Subsystems;
 using vergiBlue.BoardModel.SubSystems;
 using vergiBlue.Pieces;
 

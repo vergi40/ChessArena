@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using CommonNetStandard;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using CommonNetStandard.LocalImplementation;
 using log4net;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
-using vergiBlue.BoardModel;
 
 
 namespace vergiBlue.ConsoleTools

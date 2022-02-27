@@ -1,4 +1,5 @@
 ﻿using vergiBlue.Algorithms;
+using vergiBlue.BoardModel.Subsystems;
 
 namespace vergiBlue.BoardModel
 {

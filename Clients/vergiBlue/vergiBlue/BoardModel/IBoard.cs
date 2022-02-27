@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
+using vergiBlue.BoardModel.Subsystems;
 using vergiBlue.BoardModel.SubSystems;
 using vergiBlue.Pieces;
 

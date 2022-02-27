@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using CommonNetStandard.Interface;
-using vergiBlue.BoardModel;
 using vergiBlue.Pieces;
 
-namespace vergiBlue.Algorithms
+namespace vergiBlue.BoardModel.Subsystems
 {
     /// <summary>
     /// Alpha-beta tree node types.
@@ -252,14 +250,16 @@ namespace vergiBlue.Algorithms
             var color = 0;
             if (!isWhite) color = 6;
 
-            if (identity == 'P') return 0 + color;
-            if (identity == 'B') return 1 + color;
-            if (identity == 'N') return 2 + color;
-            if (identity == 'R') return 3 + color;
-            if (identity == 'Q') return 4 + color;
-            if (identity == 'K') return 5 + color;
-
-            throw new ArgumentException();
+            return identity switch
+            {
+                'P' => 0 + color,
+                'B' => 1 + color,
+                'N' => 2 + color,
+                'R' => 3 + color,
+                'Q' => 4 + color,
+                'K' => 5 + color,
+                _ => throw new ArgumentException($"Unknown identity {identity}")
+            };
         }
 
         private ulong GetRandom(Random random)

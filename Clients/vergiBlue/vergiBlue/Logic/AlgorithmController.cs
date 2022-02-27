@@ -173,46 +173,6 @@ namespace vergiBlue.Logic
                 }
             }
         }
-
-        private SingleMove? FindCheckMate(GamePhase gamePhase, BoardContext context)
-        {
-            var validMoves = context.ValidMoves;
-            var board = context.CurrentBoard;
-
-            // TODO BoardContext parameter
-            if (gamePhase == GamePhase.MidEndGame || gamePhase == GamePhase.EndGame)
-            {
-                var isMaximizing = _contextAnalyzer.IsWhite;
-                var checkMate = MoveResearch.ImmediateCheckMateAvailable(validMoves.ToList(), board, isMaximizing);
-                if (checkMate != null) return checkMate;
-
-                var twoTurnCheckMates = MoveResearch.CheckMateInTwoTurns(validMoves.ToList(), board, isMaximizing);
-                if (twoTurnCheckMates.Count > 1)
-                {
-                    var newContext = context with { ValidMoves = twoTurnCheckMates.ToList() };
-                    return _algorithm.CalculateBestMove(newContext);
-                }
-                else if (twoTurnCheckMates.Count > 0)
-                {
-                    return twoTurnCheckMates.First();
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// For tests, visualization etc.
-        /// </summary>
-        /// <param name="board"></param>
-        /// <param name="validMoves"></param>
-        /// <returns></returns>
-        public EvaluationResult GetEvalForEachMove(IBoard board, IReadOnlyList<SingleMove> validMoves)
-        {
-            // TODO
-            // Could be cool to give player hints about evaluations for next move
-            throw new NotImplementedException();
-        }
     }
 
     /// <summary>

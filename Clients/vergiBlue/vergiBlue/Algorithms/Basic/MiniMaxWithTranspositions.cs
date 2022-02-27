@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems;
 using vergiBlue.Logic;
 
 namespace vergiBlue.Algorithms.Basic
