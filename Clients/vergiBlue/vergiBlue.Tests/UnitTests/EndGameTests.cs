@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
+using vergiBlue;
+using vergiBlue.Algorithms;
+using vergiBlue.Algorithms.Basic;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
@@ -121,6 +125,73 @@ namespace UnitTests
 
             var move = ai.CreateMoveWithDepth(5);
             move.Move.EndPosition.ShouldBe("d4");
+        }
+        
+        
+        [TestMethod]
+        public void EvaluationResult_AlreadyCheckMate_ReturnBestForMaximizing()
+        {
+            // Start situation
+            // 8r      k  
+            // 7 r 
+            // 6      
+            // 5    
+            // 4
+            // 3K   
+            // 2
+            // 1       
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(false, "a3"),
+                new King(true, "h8"),
+                new Rook(true, "b7"),
+                new Rook(true, "a8"),
+            };
+            var board = BoardFactory.CreateFromPieces(pieces);
+
+            var moves = board.MoveGenerator.MovesQuick(true, false).ToList();
+            var orderGuess = MoveOrdering.DebugSortMovesByGuessWeight(moves, board, true);
+            var orderEval = MoveOrdering.DebugSortMovesByEvaluation(moves, board, true);
+
+            var eval = new EvaluationResult();
+            eval.Add(orderEval);
+
+            var expected = new SingleMove("a8", "a3");
+            eval.Best(true).EqualPositions(expected).ShouldBeTrue();
+        }
+
+        [TestMethod]
+        public void EvaluationResult_AlreadyCheckMate_ReturnBestForMinimizing()
+        {
+            // Start situation
+            // 8r      k  
+            // 7 r 
+            // 6      
+            // 5    
+            // 4
+            // 3K   
+            // 2
+            // 1       
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "a3"),
+                new King(false, "h8"),
+                new Rook(false, "b7"),
+                new Rook(false, "a8"),
+            };
+            var board = BoardFactory.CreateFromPieces(pieces);
+
+            var moves = board.MoveGenerator.MovesQuick(false, false).ToList();
+            var orderGuess = MoveOrdering.DebugSortMovesByGuessWeight(moves, board, false);
+            var orderEval = MoveOrdering.DebugSortMovesByEvaluation(moves, board, false);
+
+            var eval = new EvaluationResult();
+            eval.Add(orderEval);
+
+            var expected = new SingleMove("a8", "a3");
+            eval.Best(false).EqualPositions(expected).ShouldBeTrue();
         }
     }
 }

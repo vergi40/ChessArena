@@ -12,7 +12,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
     /// <summary>
     /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ... 
     /// </summary>
-    internal class IDBasic : IAlgorithm
+    public class IDBasic : IAlgorithm
     {
         public SingleMove CalculateBestMove(BoardContext context)
         {

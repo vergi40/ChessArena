@@ -178,7 +178,7 @@ namespace vergiBlue.Logic
     /// <summary>
     /// Info needed for algorithm
     /// </summary>
-    record BoardContext
+    public record BoardContext
     {
         public bool IsWhiteTurn { get; init; }
         public IBoard CurrentBoard { get; init; } = new Board();

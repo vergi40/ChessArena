@@ -83,38 +83,65 @@ namespace vergiBlue.Pieces
             // Only check if not done yet
             if (IsWhite)
             {
-                if (board.Strategic.WhiteLeftCastlingValid && board.CanCastleToLeft(true))
+                if (board.Strategic.WhiteLeftCastlingValid)
                 {
-                    yield return new SingleMove(CurrentPosition, (2, 0))
+                    if (board.CanCastleToLeft(true))
                     {
-                        Castling = true
-                    };
+                        yield return new SingleMove(CurrentPosition, (2, 0))
+                        {
+                            Castling = true
+                        };
+                    }
+                    else
+                    {
+                        board.Strategic.WhiteLeftCastlingValid = false;
+                    }
                 }
-
-                if (board.Strategic.WhiteRightCastlingValid && board.CanCastleToRight(true))
+                if (board.Strategic.WhiteRightCastlingValid)
                 {
-                    yield return new SingleMove(CurrentPosition, (6, 0))
+                    if(board.CanCastleToRight(true))
                     {
-                        Castling = true
-                    };
+                        yield return new SingleMove(CurrentPosition, (6, 0))
+                        {
+                            Castling = true
+                        };
+                    }
+                    else
+                    {
+                        board.Strategic.WhiteRightCastlingValid = false;
+                    }
                 }
             }
             else
             {
-                if (board.Strategic.BlackLeftCastlingValid && board.CanCastleToLeft(false))
+                if (board.Strategic.BlackLeftCastlingValid)
                 {
-                    yield return new SingleMove(CurrentPosition, (2, 7))
+                    if(board.CanCastleToLeft(false))
                     {
-                        Castling = true
-                    };
+                        yield return new SingleMove(CurrentPosition, (2, 7))
+                        {
+                            Castling = true
+                        };
+                    }
+                    else
+                    {
+                        board.Strategic.BlackLeftCastlingValid = false;
+                    }
                 }
 
-                if (board.Strategic.BlackRightCastlingValid && board.CanCastleToRight(false))
+                if (board.Strategic.BlackRightCastlingValid)
                 {
-                    yield return new SingleMove(CurrentPosition, (6, 7))
+                    if(board.CanCastleToRight(false))
                     {
-                        Castling = true
-                    };
+                        yield return new SingleMove(CurrentPosition, (6, 7))
+                        {
+                            Castling = true
+                        };
+                    }
+                    else
+                    {
+                        board.Strategic.BlackRightCastlingValid = false;
+                    }
                 }
             }
         }

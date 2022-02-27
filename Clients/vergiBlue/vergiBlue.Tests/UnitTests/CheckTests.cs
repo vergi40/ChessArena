@@ -267,5 +267,66 @@ namespace UnitTests
                 board.AddNew(rook);
             }
         }
+
+        [TestMethod]
+        public void EnPassant_LeavesKingCheck_ShouldNotContain()
+        {
+            // Start situation
+            // 8       k  
+            // 7  
+            // 6    
+            // 5K Pp   q
+            // 4
+            // 3   
+            // 2
+            // 1       
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "a5"),
+                new King(false, "h8"),
+                new Pawn(true, "c5"),
+                new Pawn(false, "d5"),
+                new Queen(false, "h5"),
+            };
+
+            var board = BoardFactory.CreateFromPieces(pieces);
+            board.Strategic.EnPassantPossibility = "d6".ToTuple();
+
+            var moves = board.MoveGenerator.MovesQuick(true, true).ToList();
+            
+            moves.ShouldNotContain(m => m.EnPassant);
+        }
+
+        [TestMethod]
+        public void KingInCheck_PawnCanProtect_Normal_EnPassant()
+        {
+            // Start situation
+            // 8       k  
+            // 7  
+            // 6K      q
+            // 5  Pp   
+            // 4
+            // 3   
+            // 2
+            // 1       
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "a6"),
+                new King(false, "h8"),
+                new Pawn(true, "c5"),
+                new Pawn(false, "d5"),
+                new Queen(false, "h6"),
+            };
+
+            var board = BoardFactory.CreateFromPieces(pieces);
+            board.Strategic.EnPassantPossibility = "d6".ToTuple();
+
+            var moves = board.MoveGenerator.MovesQuick(true, true).ToList();
+
+            moves.ShouldContain(m => m.EnPassant);
+            moves.ShouldContain(m => m.PrevPos.Equals("c5".ToTuple()) && m.NewPos.Equals("c6".ToTuple()));
+        }
     }
 }
