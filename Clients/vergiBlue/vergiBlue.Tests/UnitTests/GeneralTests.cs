@@ -19,7 +19,7 @@ namespace UnitTests
         [TestMethod]
         public void PawnWhite_EnPassant()
         {
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "b5"),
@@ -40,7 +40,7 @@ namespace UnitTests
         [TestMethod]
         public void PawnBlack_EnPassant()
         {
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "b2"),

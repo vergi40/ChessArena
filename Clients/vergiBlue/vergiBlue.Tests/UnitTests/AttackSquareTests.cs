@@ -2,6 +2,7 @@
 using Shouldly;
 using vergiBlue;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.SubSystems;
 
 namespace vergiBlueTests
 {
@@ -13,7 +14,7 @@ namespace vergiBlueTests
         {
             var board = BoardFactory.CreateDefault();
 
-            var instance = new AttackSquares(board);
+            var instance = new AttackSquareMapper(board);
 
             instance.IsPositionAttacked((0,2), true).ShouldBeTrue();
             instance.IsPositionAttacked((2,2), true).ShouldBeTrue();
@@ -31,7 +32,7 @@ namespace vergiBlueTests
         {
             var board = BoardFactory.CreateDefault();
 
-            var instance = new AttackSquares(board);
+            var instance = new AttackSquareMapper(board);
 
             // Open room for queen and bishop
             var move = new SingleMove((4, 1), (4, 2));

@@ -29,7 +29,7 @@ namespace UnitTests
             //   0 1 2 3 4 5 6 7  
             var sut = PieceFactory.Create('K', (3, 3));
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(false, (3,2)),
@@ -73,7 +73,7 @@ namespace UnitTests
             //   0 1 2 3 4 5 6 7 
             var sut = PieceFactory.Create('K', (1,0));
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, (0,1)),
@@ -107,7 +107,7 @@ namespace UnitTests
             //   0 1 2 3 4 5 6 7  
             var sut = PieceFactory.Create('K', (1, 0));
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, (0,1)),
@@ -140,7 +140,7 @@ namespace UnitTests
             //   0 1 2 3 4 5 6 7  
             var sut = PieceFactory.Create('K', (3, 0));
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, (0,1)),

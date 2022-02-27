@@ -21,7 +21,7 @@ namespace UnitTests
             var white = new King(true, "a1");
             var black = new King(false, "a8");
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             board.AddNew(white, black);
             board.Kings = (white, black);
 
@@ -56,7 +56,7 @@ namespace UnitTests
             // 1
             //  ABCDEFGH
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             board.Shared.GameTurnCount = 20;
             // 
             var rookPositions = new List<string> { "a8", "b7" };
@@ -87,7 +87,7 @@ namespace UnitTests
             // 1
             //  ABCDEFGH
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             // 
             var rookPositions = new List<string> { "a6", "b7" };
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
@@ -128,7 +128,7 @@ namespace UnitTests
 
             var opponent = LogicFactory.CreateWithoutBoardInit(false);
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             // 
             var rookPositions = new List<string> { "a6", "b5" };
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
@@ -178,7 +178,7 @@ namespace UnitTests
             var opponent = LogicFactory.CreateWithoutBoardInit(false);
             opponent.LatestOpponentMove = new MoveImplementation(){Check = true};
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             // 
             var pieces = new List<PieceBase>
             {
@@ -233,7 +233,7 @@ namespace UnitTests
             player.LatestOpponentMove = previousMove;
             player.GameHistory.Add(previousMove);
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "b5"),

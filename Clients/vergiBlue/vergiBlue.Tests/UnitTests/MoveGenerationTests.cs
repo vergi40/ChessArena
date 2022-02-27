@@ -31,7 +31,7 @@ namespace UnitTests
             var sut2 = PieceFactory.Create('P', (2, 3));
             var sut3 = PieceFactory.Create('P', (7, 3));
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(false, (0, 2)),
@@ -140,7 +140,7 @@ namespace UnitTests
 
             var sut = PieceFactory.Create(pieceIdentity, (3, 2));
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Bishop(true, (5, 0)),
@@ -206,7 +206,7 @@ namespace UnitTests
 
             var sut = PieceFactory.Create('N', (4, 3));
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Bishop(true, (5, 0)),

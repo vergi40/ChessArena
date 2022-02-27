@@ -5,6 +5,7 @@ using CommonNetStandard;
 using CommonNetStandard.Interface;
 using log4net;
 using vergiBlue.Algorithms;
+using vergiBlue.BoardModel.SubSystems;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
@@ -78,7 +79,7 @@ namespace vergiBlue.BoardModel
         public bool DebugPostCheckMate { get; set; }
 
         public MoveGenerator MoveGenerator { get; }
-        public AttackSquares AttackMapper { get; private set; }
+        public AttackSquareMapper AttackMapper { get; private set; }
 
         /// <summary>
         /// Start game initialization
@@ -88,6 +89,7 @@ namespace vergiBlue.BoardModel
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
+            AttackMapper = new AttackSquareMapper();
 
             Shared = new SharedData();
             Strategic = new StrategicData();
@@ -96,21 +98,25 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Create board clone for testing purposes. Set kings explicitly
         /// </summary>
-        public Board(IBoard other, bool cloneBoardHash)
+        public Board(IBoard other, bool cloneSubSystems)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
+            AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);
 
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
 
-            if (cloneBoardHash)
+            if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
-                AttackMapper = other.AttackMapper.Clone(PieceList);
+                if(Shared.UseCachedAttackSquares)
+                {
+                    AttackMapper = other.AttackMapper.Clone(PieceList);
+                }
             }
             else
             {
@@ -121,18 +127,23 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// Create board setup after move
+        /// Create board setup after move. Clone subsystems
         /// </summary>
         public Board(IBoard other, SingleMove move)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
-            AttackMapper = other.AttackMapper.Clone(PieceList);
+            AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
+
+            if (Shared.UseCachedAttackSquares)
+            {
+                AttackMapper = other.AttackMapper.Clone(PieceList);
+            }
             BoardHash = other.BoardHash;
 
             ExecuteMove(move);
@@ -146,7 +157,7 @@ namespace vergiBlue.BoardModel
             Shared.Transpositions.Initialize();
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
 
-            AttackMapper = new AttackSquares(this);
+            AttackMapper = new AttackSquareMapper(this);
         }
 
         private void InitializeFromReference(IBoard previous)

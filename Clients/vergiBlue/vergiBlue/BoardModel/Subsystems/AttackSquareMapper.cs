@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using vergiBlue.Pieces;
 
-namespace vergiBlue.BoardModel
+namespace vergiBlue.BoardModel.SubSystems
 {
     /// <summary>
     /// Semi-passive cache-driven tactic to keep updated attack squares.
@@ -21,7 +19,7 @@ namespace vergiBlue.BoardModel
     ///
     /// Class provides fast dict-based or array-based methods to query square status or show all squares. 
     /// </summary>
-    public class AttackSquares
+    public class AttackSquareMapper
     {
         /// <summary>
         /// Contains every cache linked to each square
@@ -31,8 +29,12 @@ namespace vergiBlue.BoardModel
         private List<AttackCache> Whites { get; } = new();
         private List<AttackCache> Blacks { get; } = new();
 
+        /// <summary>
+        /// Use only if known that mapper is initialized later
+        /// </summary>
+        public AttackSquareMapper(){ Links = new AttackLink[0,0]; }
 
-        public AttackSquares(IBoard board)
+        public AttackSquareMapper(IBoard board)
         {
             Links = new AttackLink[8,8];
             for (int i = 0; i < 8; i++)
@@ -49,7 +51,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Constructor for cloning
         /// </summary>
-        private AttackSquares(AttackLink[,] clonedLinks)
+        private AttackSquareMapper(AttackLink[,] clonedLinks)
         {
             Links = clonedLinks;
         }
@@ -161,7 +163,7 @@ namespace vergiBlue.BoardModel
             return GetAllFor(white).ToList();
         }
 
-        public AttackSquares Clone(IReadOnlyList<PieceBase> pieces)
+        public AttackSquareMapper Clone(IReadOnlyList<PieceBase> pieces)
         {
             // Usefulness of this class depends much how quick the cloning is
             var links = new AttackLink[8, 8];
@@ -179,7 +181,7 @@ namespace vergiBlue.BoardModel
                 links[column, row] = Links[column, row].Clone();
             }
 
-            return new AttackSquares(links);
+            return new AttackSquareMapper(links);
         }
     }
 

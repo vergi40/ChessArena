@@ -32,7 +32,7 @@ namespace UnitTests
             // 4... Bd7 5. Bxg6!
          
             
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "b4"),
