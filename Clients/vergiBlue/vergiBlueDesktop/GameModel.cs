@@ -87,7 +87,7 @@ namespace vergiBlueDesktop
             TurnCount = 0;
             if (initializedBoard == null)
             {
-                initializedBoard = BoardFactory.Create();
+                initializedBoard = BoardFactory.CreateEmptyBoard();
                 initializedBoard.InitializeDefaultBoard();
             }
 
@@ -255,7 +255,7 @@ namespace vergiBlueDesktop
             InitializeEnvironment(true, true);
 
             TurnCount = 0;
-            var initializedBoard = BoardFactory.Create();
+            var initializedBoard = BoardFactory.CreateEmptyBoard();
             initializedBoard.InitializeDefaultBoard();
 
             Session = new GameSession(initializedBoard, true, true, _viewModel.AiLogicSettings);

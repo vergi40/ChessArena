@@ -19,7 +19,7 @@ namespace UnitTests
         /// <returns></returns>
         private IBoard CreateMockPawnSetup()
         {
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
 
             // Lonely pawns, not very high eval
             for (int i = 1; i < 4; i++)
@@ -117,7 +117,7 @@ namespace UnitTests
             // 1
             //  ABCDEFGH
             var logic = LogicFactory.CreateWithoutBoardInit(true);
-            logic.Board = BoardFactory.Create();
+            logic.Board = BoardFactory.CreateEmptyBoard();
 
             // Pawns
             var pawnPositions = new List<string> { "a5", "b6", "c7", "d8", "e7", "f6", "g5" };

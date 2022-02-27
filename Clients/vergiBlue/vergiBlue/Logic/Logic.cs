@@ -14,7 +14,7 @@ namespace vergiBlue.Logic
         public IMove? LatestOpponentMove { get; set; }
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
         
-        public IBoard Board { get; set; } = BoardFactory.Create();
+        public IBoard Board { get; set; } = BoardFactory.CreateEmptyBoard();
 
         /// <summary>
         /// For testing single next turn, overwrite this.

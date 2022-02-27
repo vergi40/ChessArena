@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
+using vergiBlue.BoardModel.SubSystems;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
@@ -51,7 +52,7 @@ namespace vergiBlue.BoardModel
         IList<IPiece> InterfacePieces { get; }
 
         MoveGenerator MoveGenerator { get; }
-
+        AttackSquareMapper AttackMapper { get; }
 
 
         // Functionality
@@ -61,7 +62,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Prerequisite: Pieces are set. Castling rights and en passant set.
         /// </summary>
-        void InitializeHashing();
+        void InitializeSubSystems();
 
         /// <summary>
         /// Apply single move to board.

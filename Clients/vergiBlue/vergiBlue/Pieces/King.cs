@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -121,6 +122,11 @@ namespace vergiBlue.Pieces
         public override PieceBase CreateCopy()
         {
             return new King(IsWhite, CurrentPosition);
+        }
+
+        public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
+        {
+            return Moves(board);
         }
     }
 }

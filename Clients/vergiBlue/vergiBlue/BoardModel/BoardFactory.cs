@@ -9,11 +9,10 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Create empty board.
         /// Add pieces with <see cref="IBoard.AddNew(PieceBase)"/>
-        /// Initialize hashing with <see cref="IBoard.InitializeHashing"/>
+        /// Initialize hashing etc with <see cref="IBoard.InitializeSubSystems"/>
         /// </summary>
-        public static IBoard Create()
+        public static IBoard CreateEmptyBoard()
         {
-            // TODO rename to "CreateEmptyBoard"
             return new Board();
         }
 
@@ -22,22 +21,22 @@ namespace vergiBlue.BoardModel
         /// </summary>
         public static IBoard CreateFromPieces(IEnumerable<PieceBase> pieces)
         {
-            var board = Create();
+            var board = CreateEmptyBoard();
             board.AddNew(pieces);
-            board.InitializeHashing();
+            board.InitializeSubSystems();
             return board;
         }
 
         /// <summary>
         /// Create board clone for testing purposes
         /// </summary>
-        public static IBoard CreateClone(IBoard previous, bool cloneBoardHash = true)
+        public static IBoard CreateClone(IBoard previous, bool cloneSubSystems = true)
         {
-            return new Board(previous, cloneBoardHash);
+            return new Board(previous, cloneSubSystems);
         }
-        
+
         /// <summary>
-        /// Create board setup after move
+        /// Create board setup after move. Clone subsystems
         /// </summary>
         public static IBoard CreateFromMove(IBoard previous, SingleMove move)
         {
@@ -46,7 +45,7 @@ namespace vergiBlue.BoardModel
 
         public static IBoard CreateDefault()
         {
-            var board = Create();
+            var board = CreateEmptyBoard();
             board.InitializeDefaultBoard();
             return board;
         }
@@ -98,7 +97,7 @@ namespace vergiBlue.BoardModel
             //var halfMoveClock = int.Parse(components[4]);
             //var fullMoveNumber = int.Parse(components[5]);
 
-            board.InitializeHashing();
+            board.InitializeSubSystems();
             return board;
         }
     }

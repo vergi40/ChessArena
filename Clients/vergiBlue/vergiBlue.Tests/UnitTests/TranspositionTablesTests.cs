@@ -24,7 +24,7 @@ namespace UnitTests
             var transposition = new TranspositionTables();
             transposition.Initialize();
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             board.InitializeDefaultBoard();
 
             var hash = board.BoardHash;
@@ -37,7 +37,7 @@ namespace UnitTests
             var transposition = new TranspositionTables();
             transposition.Initialize();
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             board.InitializeDefaultBoard();
 
             // 
@@ -160,8 +160,8 @@ namespace UnitTests
             // 1
             //  ABCDEFGH
 
-            var board1 = BoardFactory.Create();
-            var board2 = BoardFactory.Create();
+            var board1 = BoardFactory.CreateEmptyBoard();
+            var board2 = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(false, "a4"),

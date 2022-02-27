@@ -5,6 +5,7 @@ using CommonNetStandard;
 using CommonNetStandard.Interface;
 using log4net;
 using vergiBlue.Algorithms;
+using vergiBlue.BoardModel.SubSystems;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
@@ -78,6 +79,7 @@ namespace vergiBlue.BoardModel
         public bool DebugPostCheckMate { get; set; }
 
         public MoveGenerator MoveGenerator { get; }
+        public AttackSquareMapper AttackMapper { get; private set; }
 
         /// <summary>
         /// Start game initialization
@@ -87,6 +89,7 @@ namespace vergiBlue.BoardModel
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
+            AttackMapper = new AttackSquareMapper();
 
             Shared = new SharedData();
             Strategic = new StrategicData();
@@ -95,41 +98,52 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Create board clone for testing purposes. Set kings explicitly
         /// </summary>
-        public Board(IBoard other, bool cloneBoardHash)
+        public Board(IBoard other, bool cloneSubSystems)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
-            
+            AttackMapper = new AttackSquareMapper();
+
             InitializeFromReference(other);
 
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
 
-            if (cloneBoardHash)
+            if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
+                if(Shared.UseCachedAttackSquares)
+                {
+                    AttackMapper = other.AttackMapper.Clone(PieceList);
+                }
             }
             else
             {
-                InitializeHashing();
+                InitializeSubSystems();
             }
-            
+
             UpdateEndGameWeight();
         }
 
         /// <summary>
-        /// Create board setup after move
+        /// Create board setup after move. Clone subsystems
         /// </summary>
         public Board(IBoard other, SingleMove move)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
+            AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
+
+            if (Shared.UseCachedAttackSquares)
+            {
+                AttackMapper = other.AttackMapper.Clone(PieceList);
+            }
             BoardHash = other.BoardHash;
 
             ExecuteMove(move);
@@ -138,10 +152,12 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Prerequisite: Pieces are set. Castling rights and en passant set.
         /// </summary>
-        public void InitializeHashing()
+        public void InitializeSubSystems()
         {
             Shared.Transpositions.Initialize();
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
+
+            AttackMapper = new AttackSquareMapper(this);
         }
 
         private void InitializeFromReference(IBoard previous)
@@ -211,7 +227,7 @@ namespace vergiBlue.BoardModel
             AddNew(blackKing);
             Kings = (whiteKing, blackKing);
 
-            InitializeHashing();
+            InitializeSubSystems();
         }
 
         public void ExecuteMoveWithValidation(SingleMove move)
@@ -223,6 +239,11 @@ namespace vergiBlue.BoardModel
         public void ExecuteMove(SingleMove move)
         {
             BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
+            if(Shared.UseCachedAttackSquares)
+            {
+                AttackMapper.Update(this, move);
+            }
+
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
 
@@ -561,6 +582,13 @@ namespace vergiBlue.BoardModel
             {
                 DebugPostCheckMate = true;
                 return false; // Test override, don't always have kings on board
+            }
+
+            if (Shared.UseCachedAttackSquares)
+            {
+                var isAttacked = AttackMapper.IsPositionAttacked(opponentKing.CurrentPosition, isWhiteOffensive);
+                _isCheckForOffensivePrecalculated = true;
+                return isAttacked;
             }
 
             foreach (var attackMove in GetAttackSquares(isWhiteOffensive))
