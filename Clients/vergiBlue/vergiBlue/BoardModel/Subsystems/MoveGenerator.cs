@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using vergiBlue.Algorithms;
 
@@ -148,6 +149,23 @@ namespace vergiBlue.BoardModel.Subsystems
 
             priorityList.AddRange(MoveOrdering.SortMovesByGuessWeight(otherList, _board, forWhite));
             return priorityList;
+        }
+
+        /// <summary>
+        /// All possible capture positions (including pawn).
+        /// No need to validate check (atm)
+        /// </summary>
+        /// <param name="forWhiteAttacker"></param>
+        /// <returns></returns>
+        public IEnumerable<SingleMove> AttackMoves(bool forWhiteAttacker)
+        {
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhiteAttacker))
+            {
+                foreach (var singleMove in piece.PseudoCaptureMoves(_board))
+                {
+                    yield return singleMove;
+                }
+            }
         }
     }
 }

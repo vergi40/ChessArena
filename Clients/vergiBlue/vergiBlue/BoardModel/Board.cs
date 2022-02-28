@@ -706,7 +706,7 @@ namespace vergiBlue.BoardModel
         public IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker)
         {
             // TODO separate method for capture moves and all moves
-            foreach (var move in MoveGenerator.MovesQuickWithoutCastling(forWhiteAttacker, false))
+            foreach (var move in MoveGenerator.AttackMoves(forWhiteAttacker))
             {
                 yield return move.NewPos;
             }

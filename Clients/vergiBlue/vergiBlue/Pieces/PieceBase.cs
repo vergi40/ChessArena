@@ -214,5 +214,18 @@ namespace vergiBlue.Pieces
         /// <param name="board"></param>
         /// <returns></returns>
         public abstract IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board);
+
+        /// <summary>
+        /// List all capture moves for knowing possible attack squares.
+        /// "Pseudo" as the pawn captures are listed even though there is no opponent in target square
+        /// </summary>
+        /// <param name="board"></param>
+        /// <returns></returns>
+        public virtual IEnumerable<SingleMove> PseudoCaptureMoves(IBoard board)
+        {
+            // Probably should have individual override for each function. 
+            // Now only for pawn
+            return Moves(board);
+        }
     }
 }
