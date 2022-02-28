@@ -139,5 +139,31 @@ namespace vergiBlue
             info += NewPos.ToAlgebraic();
             return info;
         }
+
+        public string ToCompactString()
+        {
+            var from = PrevPos.ToAlgebraic();
+            var to = NewPos.ToAlgebraic();
+
+            if (Promotion)
+            {
+                to += ConvertPromotion(PromotionType);
+            }
+
+            return from + to;
+        }
+
+        private char ConvertPromotion(PromotionPieceType type)
+        {
+            var c = type switch
+            {
+                PromotionPieceType.Queen => 'Q',
+                PromotionPieceType.Rook => 'R',
+                PromotionPieceType.Bishop => 'B',
+                PromotionPieceType.Knight => 'N',
+                _ => ' '
+            };
+            return c;
+        }
     }
 }
