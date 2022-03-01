@@ -81,14 +81,6 @@ namespace vergiBlue.Pieces
         }
 
         /// <summary>
-        /// Stub
-        /// </summary>
-        public virtual IEnumerable<SingleMove> CastlingMoves(IBoard board)
-        {
-            return Enumerable.Empty<SingleMove>();
-        }
-
-        /// <summary>
         /// Each move the piece can make in current board setting
         /// </summary>
         /// <returns></returns>

@@ -277,69 +277,16 @@ namespace vergiBlue.BoardModel
             {
                 Strategic.UpdateCastlingStatusFromMove(move);
             }
+            else
+            {
+                Castling.UpdateStatusForNonCastling(this, piece, move);
+            }
 
-            UpdateCastlingStatus(piece.IsWhite);
-
-            
             UpdatePosition(piece, move);
             
             // General every turn processes
             UpdateEndGameWeight();
             Strategic.TurnCountInCurrentDepth++;
-        }
-
-        /// <summary>
-        /// Check if castling pieces are still in place
-        /// </summary>
-        private void UpdateCastlingStatus(bool isWhite)
-        {
-            // TODO lot of statements, could use optimization
-            var row = 0;
-            if (isWhite && (Strategic.WhiteLeftCastlingValid || Strategic.WhiteRightCastlingValid))
-            {
-                // Castling pieces are intact
-                var leftRook = ValueAt((0, row));
-                var rightRook = ValueAt((7, row));
-                var king = ValueAt((4, row));
-
-                if (king == null || king.Identity != 'K')
-                {
-                    Strategic.WhiteLeftCastlingValid = false;
-                    Strategic.WhiteRightCastlingValid = false;
-                }
-
-                if (leftRook == null || leftRook.Identity != 'R')
-                {
-                    Strategic.WhiteLeftCastlingValid = false;
-                }
-                if (rightRook == null || rightRook.Identity != 'R')
-                {
-                    Strategic.WhiteRightCastlingValid = false;
-                }
-            }
-            else if(Strategic.BlackLeftCastlingValid || Strategic.BlackRightCastlingValid)
-            {
-                row = 7;
-                // Castling pieces are intact
-                var leftRook = ValueAt((0, row));
-                var rightRook = ValueAt((7, row));
-                var king = ValueAt((4, row));
-
-                if (king == null || king.Identity != 'K')
-                {
-                    Strategic.BlackLeftCastlingValid = false;
-                    Strategic.BlackRightCastlingValid = false;
-                }
-
-                if (leftRook == null || leftRook.Identity != 'R')
-                {
-                    Strategic.BlackLeftCastlingValid = false;
-                }
-                if (rightRook == null || rightRook.Identity != 'R')
-                {
-                    Strategic.BlackRightCastlingValid = false;
-                }
-            }
         }
 
         public void UpdateEndGameWeight()

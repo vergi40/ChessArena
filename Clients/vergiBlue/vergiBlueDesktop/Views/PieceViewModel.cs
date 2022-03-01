@@ -32,15 +32,13 @@ namespace vergiBlueDesktop.Views
         {
             ClearPossibleTiles();
 
-            var moves = PieceModel.Moves(_gameModel.Model.Session.Board)
-                .Concat(PieceModel.CastlingMoves(_gameModel.Model.Session.Board));
-            moves = _gameModel.Model.Session.Board.FilterOutIllegalMoves(moves, IsWhite);// TODO how to fix awkward referencing?
-            var detailedMoves = _gameModel.Model.Session.Board.CollectMoveProperties(moves);
+            var moves = _gameModel.Model.Session.Board.MoveGenerator.MovesForPiece(PieceModel.CurrentPosition);
+            //var detailedMoves = _gameModel.Model.Session.Board.CollectMoveProperties(moves);
 
             var basicColor = GraphicConstants.PlayerMoveColor;
             if (IsWhite != Main.PlayerIsWhite) basicColor = GraphicConstants.OpponentMoveColor;
 
-            foreach (var singleMove in detailedMoves)
+            foreach (var singleMove in moves)
             {
                 if (singleMove.Castling && PieceModel.Identity == 'K')
                 {

@@ -13,5 +13,14 @@
                 SoftTarget = true
             };
         }
+
+        public static SingleMove CreateCastling((int column, int row) previousPosition,
+            (int column, int row) newPosition)
+        {
+            return new SingleMove(previousPosition, newPosition)
+            {
+                Castling = true
+            };
+        }
     }
 }
