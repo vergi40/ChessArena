@@ -1,16 +1,7 @@
 ﻿# TODO list
 
 ## Concepts
-* IO-support 
-  - FEN parsing http://www.fam-petzke.de/cp_fen_en.shtml
 * Create benchmarking project
-  - Perft tests. Multiple test positions, calculated to various depths. Track:
-    - https://stackoverflow.com/questions/1110439/chess-optimizations
-    - http://www.rocechess.ch/perft.html
-    - https://www.chessprogramming.org/Perft
-    - Time the search took
-    - Amount of nodes searched
-  - Bratko-Kopec positions 
   - http://www.netlib.org/utk/lsi/pcwLSI/text/node354.html#SECTION001635000000000000000
   - Alter search class structure so more data can be recorded
 * Evaluation overhaul
@@ -43,7 +34,6 @@ Evaluation strategies
 ## Dev
 * Create comment print from FEN
 * Output FEN-string from sandbox
-* Add console project with BenchmarkDotNet
 
 
 ## User experience
@@ -71,9 +61,6 @@ Evaluation strategies
 * Attack squares
   * This is tricky, as calculating for each depth is really expensive
   * For main logic board, could contain 'current turn data'
-* TDD move validation
-  * Invalid move throws InvalidMoveException
-  * This can be catched in main logic. Return backup move if stable game is required.
 
 ## Design
 * Event system for turn start/end
