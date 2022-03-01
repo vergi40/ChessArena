@@ -21,7 +21,7 @@ namespace UnitTests
             var white = new King(true, "a1");
             var black = new King(false, "a8");
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             board.AddNew(white, black);
             board.Kings = (white, black);
 
@@ -56,7 +56,7 @@ namespace UnitTests
             // 1
             //  ABCDEFGH
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             board.Shared.GameTurnCount = 20;
             // 
             var rookPositions = new List<string> { "a8", "b7" };
@@ -87,7 +87,7 @@ namespace UnitTests
             // 1
             //  ABCDEFGH
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             // 
             var rookPositions = new List<string> { "a6", "b7" };
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
@@ -101,7 +101,7 @@ namespace UnitTests
             board.AddNew(whiteKing);
 
             board.Kings = (whiteKing, blackKing);
-            board.InitializeHashing();
+            board.InitializeSubSystems();
 
             var player = LogicFactory.CreateForTest(true, board);
             var playerMove = player.CreateMoveWithDepth(4);
@@ -128,7 +128,7 @@ namespace UnitTests
 
             var opponent = LogicFactory.CreateWithoutBoardInit(false);
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             // 
             var rookPositions = new List<string> { "a6", "b5" };
             var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
@@ -142,7 +142,7 @@ namespace UnitTests
             board.AddNew(whiteKing);
 
             board.Kings = (whiteKing, blackKing);
-            board.InitializeHashing();
+            board.InitializeSubSystems();
 
             player.Board = BoardFactory.CreateClone(board);
             opponent.Board = BoardFactory.CreateClone(board);
@@ -178,7 +178,7 @@ namespace UnitTests
             var opponent = LogicFactory.CreateWithoutBoardInit(false);
             opponent.LatestOpponentMove = new MoveImplementation(){Check = true};
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             // 
             var pieces = new List<PieceBase>
             {
@@ -233,7 +233,7 @@ namespace UnitTests
             player.LatestOpponentMove = previousMove;
             player.GameHistory.Add(previousMove);
 
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "b5"),
@@ -266,6 +266,67 @@ namespace UnitTests
                 var rook = new Rook(isWhite, coordinates);
                 board.AddNew(rook);
             }
+        }
+
+        [TestMethod]
+        public void EnPassant_LeavesKingCheck_ShouldNotContain()
+        {
+            // Start situation
+            // 8       k  
+            // 7  
+            // 6    
+            // 5K Pp   q
+            // 4
+            // 3   
+            // 2
+            // 1       
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "a5"),
+                new King(false, "h8"),
+                new Pawn(true, "c5"),
+                new Pawn(false, "d5"),
+                new Queen(false, "h5"),
+            };
+
+            var board = BoardFactory.CreateFromPieces(pieces);
+            board.Strategic.EnPassantPossibility = "d6".ToTuple();
+
+            var moves = board.MoveGenerator.MovesQuick(true, true).ToList();
+            
+            moves.ShouldNotContain(m => m.EnPassant);
+        }
+
+        [TestMethod]
+        public void KingInCheck_PawnCanProtect_Normal_EnPassant()
+        {
+            // Start situation
+            // 8       k  
+            // 7  
+            // 6K      q
+            // 5  Pp   
+            // 4
+            // 3   
+            // 2
+            // 1       
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "a6"),
+                new King(false, "h8"),
+                new Pawn(true, "c5"),
+                new Pawn(false, "d5"),
+                new Queen(false, "h6"),
+            };
+
+            var board = BoardFactory.CreateFromPieces(pieces);
+            board.Strategic.EnPassantPossibility = "d6".ToTuple();
+
+            var moves = board.MoveGenerator.MovesQuick(true, true).ToList();
+
+            moves.ShouldContain(m => m.EnPassant);
+            moves.ShouldContain(m => m.PrevPos.Equals("c5".ToTuple()) && m.NewPos.Equals("c6".ToTuple()));
         }
     }
 }

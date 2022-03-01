@@ -72,6 +72,32 @@ namespace vergiBlue.BoardModel
             }
         }
 
+        public void RevokeCastlingFor(bool forWhite, bool left, bool right)
+        {
+            if (forWhite)
+            {
+                if (left)
+                {
+                    WhiteLeftCastlingValid = false;
+                }
+                if (right)
+                {
+                    WhiteRightCastlingValid = false;
+                }
+            }
+            else
+            {
+                if (left)
+                {
+                    BlackLeftCastlingValid = false;
+                }
+                if (right)
+                {
+                    BlackRightCastlingValid = false;
+                }
+            }
+        }
+
         /// <summary>
         /// Status from FEN string (e.g. KQkq)
         /// </summary>

@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace PerftTests
 {
     [TestFixture]
-    class BasicCases
+    class PerftBoards_ValidateNodesTests
     {
         [Test]
         [TestCase(0, ExpectedResult = 1)]

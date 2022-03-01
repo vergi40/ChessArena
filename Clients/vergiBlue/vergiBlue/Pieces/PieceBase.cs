@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Interface;
@@ -59,11 +60,7 @@ namespace vergiBlue.Pieces
         /// <summary>
         /// If target position is empty or has opponent piece, return SingleMove. If own piece or outside board, return null.
         /// </summary>
-        /// <param name="target"></param>
-        /// <param name="board"></param>
-        /// <param name="validateBorders"></param>
-        /// <returns></returns>
-        protected virtual SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false)
+        protected virtual SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false, bool returnSoftTargets = false)
         {
             if (validateBorders && Validator.IsOutside(target)) return null;
 
@@ -76,15 +73,11 @@ namespace vergiBlue.Pieces
             {
                 return new SingleMove(CurrentPosition, target, true);
             }
+            else if (returnSoftTargets && valueAt.IsWhite == IsWhite)
+            {
+                return SingleMoveFactory.CreateSoftTarget(CurrentPosition, target);
+            }
             return null;
-        }
-
-        /// <summary>
-        /// Stub
-        /// </summary>
-        public virtual IEnumerable<SingleMove> CastlingMoves(IBoard board)
-        {
-            return Enumerable.Empty<SingleMove>();
         }
 
         /// <summary>
@@ -153,7 +146,7 @@ namespace vergiBlue.Pieces
             }
         }
 
-        protected IEnumerable<SingleMove> BishopMoves(IBoard board)
+        protected IEnumerable<SingleMove> BishopMoves(IBoard board, bool returnSoftTargets = false)
         {
             var column = CurrentPosition.column;
             var row = CurrentPosition.row;
@@ -161,7 +154,7 @@ namespace vergiBlue.Pieces
             // NE
             for (int i = 1; i < 8; i++)
             {
-                var move = CanMoveTo((column + i, row + i), board, true);
+                var move = CanMoveTo((column + i, row + i), board, true, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
@@ -173,7 +166,7 @@ namespace vergiBlue.Pieces
             // SE
             for (int i = 1; i < 8; i++)
             {
-                var move = CanMoveTo((column + i, row - i), board, true);
+                var move = CanMoveTo((column + i, row - i), board, true, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
@@ -185,7 +178,7 @@ namespace vergiBlue.Pieces
             // SW
             for (int i = 1; i < 8; i++)
             {
-                var move = CanMoveTo((column - i, row - i), board, true);
+                var move = CanMoveTo((column - i, row - i), board, true, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
@@ -197,7 +190,7 @@ namespace vergiBlue.Pieces
             // NW
             for (int i = 1; i < 8; i++)
             {
-                var move = CanMoveTo((column - i, row + i), board, true);
+                var move = CanMoveTo((column - i, row + i), board, true, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
@@ -205,6 +198,26 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
+        }
+
+        /// <summary>
+        /// In addition to all valid moves, return soft targets (captures on own pieces)
+        /// </summary>
+        /// <param name="board"></param>
+        /// <returns></returns>
+        public abstract IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board);
+
+        /// <summary>
+        /// List all capture moves for knowing possible attack squares.
+        /// "Pseudo" as the pawn captures are listed even though there is no opponent in target square
+        /// </summary>
+        /// <param name="board"></param>
+        /// <returns></returns>
+        public virtual IEnumerable<SingleMove> PseudoCaptureMoves(IBoard board)
+        {
+            // Probably should have individual override for each function. 
+            // Now only for pawn
+            return Moves(board);
         }
     }
 }

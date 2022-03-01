@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using CommonNetStandard;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using CommonNetStandard.LocalImplementation;
 using log4net;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
-using vergiBlue.BoardModel;
 
 
 namespace vergiBlue.ConsoleTools
@@ -105,7 +100,7 @@ namespace vergiBlue.ConsoleTools
             }
             else if (input.KeyChar.ToString() == "2")
             {
-                var board = BoardFactory.Create();
+                var board = BoardFactory.CreateEmptyBoard();
                 var pieces = new List<PieceBase>
                 {
                     new Rook(true, "a1"),
@@ -124,7 +119,7 @@ namespace vergiBlue.ConsoleTools
             }
             else if (input.KeyChar.ToString() == "3")
             {
-                var board = BoardFactory.Create();
+                var board = BoardFactory.CreateEmptyBoard();
                 var pieces = new List<PieceBase>
                 {
                     new Rook(true, "a1"),
@@ -144,7 +139,7 @@ namespace vergiBlue.ConsoleTools
             }
             else if (input.KeyChar.ToString() == "4")
             {
-                var board = BoardFactory.Create();
+                var board = BoardFactory.CreateEmptyBoard();
                 var pieces = new List<PieceBase>
                 {
                     new Pawn(true, "c2"),

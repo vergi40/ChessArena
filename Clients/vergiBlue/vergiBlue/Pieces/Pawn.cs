@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 
@@ -125,6 +126,32 @@ namespace vergiBlue.Pieces
         }
 
         /// <summary>
+        /// Used for attack squares - only need to know there is chance of attack
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="row"></param>
+        /// <param name="board"></param>
+        /// <returns></returns>
+        private IEnumerable<SingleMove> GetPseudoPromotionMoves(int column, int row, IBoard board)
+        {
+            var nextRow = row + Direction;
+            if (ValidPseudoCapturePosition(column - 1, nextRow, board))
+            {
+                yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Queen);
+                //yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Rook);
+                //yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Knight);
+                //yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Bishop);
+            }
+            if (ValidPseudoCapturePosition(column + 1, nextRow, board))
+            {
+                yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Queen);
+                //yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Rook);
+                //yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Knight);
+                //yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Bishop);
+            }
+        }
+
+        /// <summary>
         /// Assumes row value is valid. Column can be outside.
         /// </summary>
         private bool ValidCapturePosition(int column, int row, IBoard board)
@@ -132,6 +159,37 @@ namespace vergiBlue.Pieces
             if (column < 0 || column > 7) return false;
             var piece = board.ValueAt((column, row));
             if (piece != null && piece.IsWhite != IsWhite)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Valid if there is opponent or empty "possible" square
+        /// </summary>
+        private bool ValidPseudoCapturePosition(int column, int row, IBoard board)
+        {
+            if (column < 0 || column > 7) return false;
+            var piece = board.ValueAt((column, row));
+            if (piece == null)
+            {
+                return true;
+            }
+            if (piece.IsWhite != IsWhite)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ValidSoftPosition(int column, int row, IBoard board)
+        {
+            if (column < 0 || column > 7) return false;
+            var piece = board.ValueAt((column, row));
+            if (piece != null && piece.IsWhite == IsWhite)
             {
                 return true;
             }
@@ -149,6 +207,52 @@ namespace vergiBlue.Pieces
         {
             var piece = new Pawn(IsWhite, CurrentPosition);
             return piece;
+        }
+
+        public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
+        {
+            foreach (var move in Moves(board))
+            {
+                yield return move;
+            }
+
+            var (column, row) = CurrentPosition;
+            if (ValidCapturePosition(column - 1, row + Direction, board))
+            {
+                yield return new SingleMove((column, row), (column - 1, row + Direction), true);
+            }
+            if (ValidCapturePosition(column + 1, row + Direction, board))
+            {
+                yield return new SingleMove((column, row), (column + 1, row + Direction), true);
+            }
+        }
+
+        public override IEnumerable<SingleMove> PseudoCaptureMoves(IBoard board)
+        {
+            // This is a bit tricky
+            // Add capture moves even though there isn't opponent at square. Skip if there is own piece.
+            // Remember promotions
+            var (column, row) = CurrentPosition;
+            var (start, end, enpassantRow) = GetSpecialRows();
+
+            if (row == end)
+            {
+                foreach (var move in GetPseudoPromotionMoves(column, row, board))
+                {
+                    yield return move;
+                }
+            }
+            else
+            {
+                if (ValidPseudoCapturePosition(column - 1, row + Direction, board))
+                {
+                    yield return new SingleMove((column, row), (column - 1, row + Direction), true);
+                }
+                if (ValidPseudoCapturePosition(column + 1, row + Direction, board))
+                {
+                    yield return new SingleMove((column, row), (column + 1, row + Direction), true);
+                }
+            }
         }
     }
 }

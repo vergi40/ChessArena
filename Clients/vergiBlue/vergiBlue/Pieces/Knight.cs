@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using vergiBlue.BoardModel;
 
 namespace vergiBlue.Pieces
 {
@@ -63,6 +65,11 @@ namespace vergiBlue.Pieces
         public override PieceBase CreateCopy()
         {
             return new Knight(IsWhite, CurrentPosition);
+        }
+
+        public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
+        {
+            return Moves(board);
         }
     }
 }

@@ -8,7 +8,7 @@ using vergiBlue.Logic;
 
 namespace vergiBlue.Algorithms.Basic
 {
-    internal class MiniMaxBasic : IAlgorithm
+    public class MiniMaxBasic : IAlgorithm
     {
         public SingleMove CalculateBestMove(BoardContext context)
         {
@@ -16,6 +16,8 @@ namespace vergiBlue.Algorithms.Basic
 
             return MoveResearch.SelectBestMove(evaluated, context.IsWhiteTurn, true);
         }
+
+
 
         private EvaluationResult GetMoveScoreList(IReadOnlyList<SingleMove> moves,
             int searchDepth, IBoard board, bool isMaximizing)

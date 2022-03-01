@@ -1,11 +1,10 @@
-﻿using System;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using vergiBlue.Algorithms;
+using vergiBlue.Pieces;
 
-namespace vergiBlue.BoardModel
+namespace vergiBlue.BoardModel.Subsystems
 {
     public class MoveGenerator
     {
@@ -24,14 +23,9 @@ namespace vergiBlue.BoardModel
         /// <returns></returns>
         public IEnumerable<SingleMove> MovesQuick(bool forWhite, bool kingInDanger = false)
         {
-            // In tests king might not exist
-            var king = _board.KingLocation(forWhite);
-            if (king != null)
+            foreach (var castlingMove in CastlingMoves(forWhite))
             {
-                foreach (var castling in king.CastlingMoves(_board))
-                {
-                    yield return castling;
-                }
+                yield return castlingMove;
             }
 
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
@@ -50,6 +44,55 @@ namespace vergiBlue.BoardModel
             }
         }
 
+        public IEnumerable<SingleMove> MovesForPiece((int column, int row) position)
+        {
+            var piece = _board.ValueAtDefinitely(position);
+            var isWhite = piece.IsWhite;
+
+            if(piece.Identity == 'K')
+            {
+                foreach (var castlingMove in CastlingMoves(isWhite))
+                {
+                    yield return castlingMove;
+                }
+            }
+
+            foreach (var singleMove in piece.Moves(_board))
+            {
+                // Only allow moves that don't result in check
+                var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
+                if (newBoard.IsCheck(!isWhite)) continue;
+
+                yield return singleMove;
+            }
+        }
+
+        private IEnumerable<SingleMove> CastlingMoves(bool forWhite)
+        {
+            // In tests king might not exist
+            var king = _board.KingLocation(forWhite);
+            if (king != null)
+            {
+                // Quick validations
+                var (leftOk, rightOk) = Castling.PreValidation(_board, king);
+                if (!leftOk && !rightOk)
+                {
+                    yield break;
+                }
+
+                // Heavy validation (attack squares)
+                var attackSquares = AttackMoves(!forWhite).Select(m => m.NewPos).ToHashSet();
+                if (leftOk && Castling.TryCreateLeftCastling(king, attackSquares, out var leftCastling))
+                {
+                    yield return leftCastling;
+                }
+                if (rightOk && Castling.TryCreateRightCastling(king, attackSquares, out var rightCastling))
+                {
+                    yield return rightCastling;
+                }
+            }
+        }
+
         /// <summary>
         /// Find every possible move for every piece for given color.
         /// Because sorting, full list returned.
@@ -61,15 +104,9 @@ namespace vergiBlue.BoardModel
         public IList<SingleMove> MovesWithOrdering(bool forWhite, bool heavyOrdering, bool kingInDanger = false)
         {
             IList<SingleMove> list = new List<SingleMove>();
-
-            // In tests king might not exist
-            var king = _board.KingLocation(forWhite);
-            if (king != null)
+            foreach (var castlingMove in CastlingMoves(forWhite))
             {
-                foreach (var castling in king.CastlingMoves(_board))
-                {
-                    list.Add(castling);
-                }
+                list.Add(castlingMove);
             }
 
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
@@ -151,6 +188,23 @@ namespace vergiBlue.BoardModel
 
             priorityList.AddRange(MoveOrdering.SortMovesByGuessWeight(otherList, _board, forWhite));
             return priorityList;
+        }
+
+        /// <summary>
+        /// All possible capture positions (including pawn).
+        /// No need to validate check (atm)
+        /// </summary>
+        /// <param name="forWhiteAttacker"></param>
+        /// <returns></returns>
+        public IEnumerable<SingleMove> AttackMoves(bool forWhiteAttacker)
+        {
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhiteAttacker))
+            {
+                foreach (var singleMove in piece.PseudoCaptureMoves(_board))
+                {
+                    yield return singleMove;
+                }
+            }
         }
     }
 }

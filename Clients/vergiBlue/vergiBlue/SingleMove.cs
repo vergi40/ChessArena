@@ -30,6 +30,11 @@ namespace vergiBlue
         public (int column, int row) PrevPos { get; }
         public (int column, int row) NewPos { get; }
 
+        /// <summary>
+        /// Internal soft target - aka capture own piece
+        /// </summary>
+        public bool SoftTarget { get; set; }
+
         public SingleMove((int column, int row) previousPosition, (int column, int row) newPosition,
             bool capture = false, PromotionPieceType promotionType = PromotionPieceType.NoPromotion)
         {
@@ -50,7 +55,7 @@ namespace vergiBlue
             Capture = capture;
             EnPassant = enPassant;
         }
-
+        
         public SingleMove(string previousPosition, string newPosition, bool capture = false, 
             PromotionPieceType promotionType = PromotionPieceType.NoPromotion)
         {
@@ -105,6 +110,7 @@ namespace vergiBlue
             if (!Check.Equals(other.Check)) return false;
             if (!CheckMate.Equals(other.CheckMate)) return false;
             if (!EnPassant.Equals(other.EnPassant)) return false;
+            if (!SoftTarget.Equals(other.SoftTarget)) return false;
 
             return true;
         }

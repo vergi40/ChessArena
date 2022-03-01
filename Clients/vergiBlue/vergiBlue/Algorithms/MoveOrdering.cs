@@ -7,7 +7,7 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue.Algorithms
 {
-    static class MoveOrdering
+    public static class MoveOrdering
     {
         // ------------
         // Order by light score guessing
@@ -17,6 +17,17 @@ namespace vergiBlue.Algorithms
             var list = CreateGuessWeightedList(moves, board, isMaximizing);
             var sorted = SortWeightedMovesWithSort(list, isMaximizing);
             return sorted.Select(m => m.move).ToList();
+        }
+
+        /// <summary>
+        /// Return weight results for testing
+        /// </summary>
+        public static IList<(double weight, SingleMove move)> DebugSortMovesByGuessWeight(IList<SingleMove> moves, IBoard board, bool isMaximizing)
+        {
+            // Sort moves by evaluation score they produce
+            var list = CreateGuessWeightedList(moves, board, isMaximizing);
+            var sorted = SortWeightedMovesWithSort(list, isMaximizing);
+            return sorted;
         }
 
         /// <summary>
@@ -96,6 +107,14 @@ namespace vergiBlue.Algorithms
             var list = CreateEvaluationList(moves, board, isMaximizing);
             var sorted = SortWeightedMovesWithSort(list, isMaximizing);
             return sorted.Select(m => m.move).ToList();
+        }
+
+        public static IList<(double weight, SingleMove move)> DebugSortMovesByEvaluation(IList<SingleMove> moves, IBoard board, bool isMaximizing)
+        {
+            // Sort moves by evaluation score they produce
+            var list = CreateEvaluationList(moves, board, isMaximizing);
+            var sorted = SortWeightedMovesWithSort(list, isMaximizing);
+            return sorted;
         }
 
         private static IList<(double eval, SingleMove move)> CreateEvaluationList(IEnumerable<SingleMove> moves,

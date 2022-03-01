@@ -313,7 +313,7 @@ namespace UnitTests
             // 2PPPP| PPP
             // 1RNBQ|K  R
             //  ABCD EFGH
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             board.InitializeDefaultBoard();
 
             // 1.e4 e5 2.Nf3 Nc6 3.Bb5
@@ -398,7 +398,7 @@ namespace UnitTests
 
         public void GreatestEndings_1_MidGame(int searchDepth, LogicSettings settings)
         {
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Pawn(true, "a4"),
@@ -449,7 +449,7 @@ namespace UnitTests
             // 2    K
             // 1
             //  ABCDEFGH
-            var board = BoardFactory.Create();
+            var board = BoardFactory.CreateEmptyBoard();
             var pieces = new List<PieceBase>
             {
                 new Rook(false, "d5"),

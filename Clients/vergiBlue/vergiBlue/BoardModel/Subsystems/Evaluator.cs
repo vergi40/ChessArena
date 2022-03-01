@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using vergiBlue.Algorithms;
 
-namespace vergiBlue.BoardModel
+namespace vergiBlue.BoardModel.Subsystems
 {
-    internal class Evaluator
+    internal static class Evaluator
     {
         public static double Evaluate(IBoard board, bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
         {
