@@ -7,7 +7,7 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
-    static class Castling
+    public static class Castling
     {
         public static (bool leftOk, bool rightOk) PreValidation(IBoard board, PieceBase king)
         {
@@ -58,7 +58,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return (left, right);
         }
 
-        private static int GetRow(bool isWhite)
+        public static int GetRow(bool isWhite)
         {
             return isWhite ? 0 : 7;
         }
