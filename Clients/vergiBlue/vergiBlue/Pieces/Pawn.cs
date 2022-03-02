@@ -126,28 +126,30 @@ namespace vergiBlue.Pieces
         }
 
         /// <summary>
-        /// Used for attack squares - only need to know there is chance of attack
+        /// Used for attack squares - use allPromotions switch to return all possibilities
         /// </summary>
-        /// <param name="column"></param>
-        /// <param name="row"></param>
-        /// <param name="board"></param>
-        /// <returns></returns>
-        private IEnumerable<SingleMove> GetPseudoPromotionMoves(int column, int row, IBoard board)
+        private IEnumerable<SingleMove> GetPseudoPromotionMoves(int column, int row, IBoard board, bool allPromotions = false)
         {
             var nextRow = row + Direction;
             if (ValidPseudoCapturePosition(column - 1, nextRow, board))
             {
                 yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Queen);
-                //yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Rook);
-                //yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Knight);
-                //yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Bishop);
+                if (allPromotions)
+                {
+                    yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Rook);
+                    yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Knight);
+                    yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Bishop);
+                }
             }
             if (ValidPseudoCapturePosition(column + 1, nextRow, board))
             {
                 yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Queen);
-                //yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Rook);
-                //yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Knight);
-                //yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Bishop);
+                if (allPromotions)
+                {
+                    yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Rook);
+                    yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Knight);
+                    yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Bishop);
+                }
             }
         }
 
@@ -227,7 +229,53 @@ namespace vergiBlue.Pieces
             }
         }
 
-        public override IEnumerable<SingleMove> PseudoCaptureMoves(IBoard board)
+        /// <summary>
+        /// Normal forwarding and en passant
+        /// </summary>
+        public override IEnumerable<SingleMove> PawnNormalMoves(IBoard board)
+        {
+            var (column, row) = CurrentPosition;
+            var (start, end, enpassantRow) = GetSpecialRows();
+
+            if (row == end)
+            {
+                // Use PseudoCaptureMoves
+            }
+            else
+            {
+                var normalMove = TryForward(column, row, board);
+                if (normalMove != null)
+                {
+                    yield return normalMove;
+                    if (row == start && board.ValueAt((column, row + Direction * 2)) == null)
+                    {
+                        // Free to do start move
+                        yield return new SingleMove((column, row), (column, row + Direction * 2));
+                    }
+                }
+                
+                if (board.Strategic.EnPassantPossibility != null && row == enpassantRow)
+                {
+                    // E.g. if possibility (2,2)
+                    // (3,3) -> (2,2)
+                    // (1,3) -> (2,2)
+                    var (eColumn, eRow) = board.Strategic.EnPassantPossibility.Value;
+                    if (column == eColumn + 1 && row == eRow - Direction)
+                    {
+                        yield return new SingleMove((column, row), (eColumn, eRow), true, true);
+                    }
+                    else if (column == eColumn - 1 && row == eRow - Direction)
+                    {
+                        yield return new SingleMove((column, row), (eColumn, eRow), true, true);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// All capturing positions, even if there is no opponent present
+        /// </summary>
+        public override IEnumerable<SingleMove> PawnPseudoCaptureMoves(IBoard board)
         {
             // This is a bit tricky
             // Add capture moves even though there isn't opponent at square. Skip if there is own piece.
@@ -237,7 +285,7 @@ namespace vergiBlue.Pieces
 
             if (row == end)
             {
-                foreach (var move in GetPseudoPromotionMoves(column, row, board))
+                foreach (var move in GetPseudoPromotionMoves(column, row, board, true))
                 {
                     yield return move;
                 }

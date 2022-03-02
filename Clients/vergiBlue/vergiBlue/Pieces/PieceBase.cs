@@ -2,8 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems;
 
 
 namespace vergiBlue.Pieces
@@ -208,16 +210,191 @@ namespace vergiBlue.Pieces
         public abstract IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board);
 
         /// <summary>
-        /// List all capture moves for knowing possible attack squares.
-        /// "Pseudo" as the pawn captures are listed even though there is no opponent in target square
+        /// Pawn capturing positions, even if there is no opponent present
+        /// </summary>
+        public virtual IEnumerable<SingleMove> PawnPseudoCaptureMoves(IBoard board)
+        {
+            return Enumerable.Empty<SingleMove>();
+        }
+
+        /// <summary>
+        /// Pawn normal forwarding and en passant
+        /// </summary>
+        public virtual IEnumerable<SingleMove> PawnNormalMoves(IBoard board)
+        {
+            return Enumerable.Empty<SingleMove>();
+        }
+
+        /// <summary>
+        /// Sliding attacker has line for king
+        /// </summary>
+        public bool TryFindPseudoKingCapture(IBoard board, out KingUnderSliderAttack attack)
+        {
+            attack = new KingUnderSliderAttack();
+            if (Identity == 'R')
+            {
+                if (TryCreateRookAttack(board, out attack))
+                {
+                    return true;
+                }
+            }
+            else if (Identity == 'B')
+            {
+                if (TryCreateBishopAttack(board, out attack))
+                {
+                    return true;
+                }
+            }
+            else if (Identity == 'Q')
+            {
+                if (TryCreateRookAttack(board, out attack))
+                {
+                    return true;
+                }
+                if (TryCreateBishopAttack(board, out attack))
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        enum SquareTypes
+        {
+            Empty,
+            OpponentKing,
+            Outside,
+            OpponentPiece,
+            OwnPiece
+        }
+
+        /// <summary>
+        /// 0: go on
+        /// 1: king
+        /// 2: outside
+        /// 3: own piece
+        /// </summary>
+        private SquareTypes IsKingOrOutside((int column, int row) target, IBoard board)
+        {
+            if (Validator.IsOutside(target)) return SquareTypes.Outside;
+
+            var valueAt = board.ValueAt(target);
+            if (valueAt == null)
+            {
+                return SquareTypes.Empty;
+            }
+            else if (valueAt.IsWhite != IsWhite && valueAt.Identity == 'K')
+            {
+                return SquareTypes.OpponentKing;
+            }
+            else if (valueAt.IsWhite == IsWhite)
+            {
+                return SquareTypes.OwnPiece;
+            }
+
+            return SquareTypes.OpponentPiece;
+        }
+
+        // TODO use unit vectors to check king direction 
+
+        /// <summary>
+        /// Iterate to one direction and collect square information.
         /// </summary>
         /// <param name="board"></param>
+        /// <param name="directionUnit">E.g. (+1, -1)</param>
+        /// <param name="attack"></param>
         /// <returns></returns>
-        public virtual IEnumerable<SingleMove> PseudoCaptureMoves(IBoard board)
+        private bool TryBuildKingSliderAttack(IBoard board, (int column, int row) directionUnit, out KingUnderSliderAttack attack)
         {
-            // Probably should have individual override for each function. 
-            // Now only for pawn
-            return Moves(board);
+            var (column, row) = CurrentPosition;
+            attack = new KingUnderSliderAttack
+            {
+                Attacker = CurrentPosition,
+                WhiteAttacking = IsWhite
+            };
+            var kingFound = false;
+            var guardPieceCount = 0;
+
+            for (int i = 1; i < 8; i++)
+            {
+                var nextColumn = column + i * directionUnit.column;
+                var nextRow = row + i * directionUnit.row;
+                var next = IsKingOrOutside((nextColumn, nextRow), board);
+                if (next == SquareTypes.Outside) break;
+                else if (next == SquareTypes.OwnPiece && !kingFound) break;
+                else if (next == SquareTypes.OpponentKing)
+                {
+                    attack.AttackLine.Add((nextColumn, nextRow));
+                    attack.King = (nextColumn, nextRow);
+                    kingFound = true;
+                }
+                else if (next == SquareTypes.OpponentPiece && !kingFound)
+                {
+                    guardPieceCount++;
+                    attack.AttackLine.Add((nextColumn, nextRow));
+                    attack.GuardPiece = (nextColumn, nextRow);
+                }
+                else
+                {
+                    if (kingFound)
+                    {
+                        attack.BehindKing.Add((nextColumn, nextRow));
+                    }
+                    else
+                    {
+                        attack.AttackLine.Add((nextColumn, nextRow));
+                    }
+                }
+            }
+
+            if (!kingFound) return false;
+            if (guardPieceCount > 1) return false;
+            return true;
+        }
+
+        private bool TryCreateRookAttack(IBoard board, out KingUnderSliderAttack attack)
+        {
+            if (TryBuildKingSliderAttack(board, (1, 0), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (-1, 0), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (0, 1), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (0, -1), out attack))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryCreateBishopAttack(IBoard board, out KingUnderSliderAttack attack)
+        {
+            if (TryBuildKingSliderAttack(board, (1, 1), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (-1, 1), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (1, -1), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (-1, -1), out attack))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

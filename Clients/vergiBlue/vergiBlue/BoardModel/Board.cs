@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using CommonNetStandard;
 using CommonNetStandard.Interface;
 using log4net;
@@ -539,14 +540,16 @@ namespace vergiBlue.BoardModel
                 return isAttacked;
             }
 
-            foreach (var attackMove in GetAttackSquares(isWhiteOffensive))
+            var attackModel = MoveGenerator.GetAttacks(isWhiteOffensive);
+            if (attackModel.CaptureTargets.Contains(opponentKing.CurrentPosition))
             {
+                // TODO check diagnostics fundamentals changed
+                // Before: each check validation
+                // After: each actual check finding
                 Diagnostics.IncrementCheckCount();
-                if (attackMove == opponentKing.CurrentPosition)
-                {
-                    _isCheckForOffensivePrecalculated = true;
-                    return true;
-                }
+
+                _isCheckForOffensivePrecalculated = true;
+                return true;
             }
             
             return false;
@@ -652,89 +655,10 @@ namespace vergiBlue.BoardModel
         
         public IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker)
         {
-            // TODO separate method for capture moves and all moves
-            foreach (var move in MoveGenerator.AttackMoves(forWhiteAttacker))
+            foreach (var target in MoveGenerator.GetAttacks(forWhiteAttacker).CaptureTargets)
             {
-                yield return move.NewPos;
+                yield return target;
             }
         }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToLeft(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteLeftCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackLeftCastlingValid) return false;
-                row = 7;
-            }
-            
-            // Castling pieces are intact
-            var rook = ValueAt((0, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-            
-            // No other pieces on the way
-            if (ValueAt((1, row)) != null) return false;
-            if (ValueAt((2, row)) != null) return false;
-            if (ValueAt((3, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> {(2, row), (3, row), (4, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToRight(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteRightCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackRightCastlingValid) return false;
-                row = 7;
-            }
-
-            // Castling pieces are intact
-            var rook = ValueAt((7, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-
-            // No other pieces on the way
-            if (ValueAt((5, row)) != null) return false;
-            if (ValueAt((6, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> { (4, row), (5, row), (6, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
     }
 }

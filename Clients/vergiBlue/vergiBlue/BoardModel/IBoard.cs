@@ -163,11 +163,6 @@ namespace vergiBlue.BoardModel
         /// </summary>
         IEnumerable<SingleMove> FilterOutIllegalMoves(IEnumerable<SingleMove> moves, bool isWhite);
 
-        /// <summary>
-        /// WARNING: Performance-heavy
-        /// </summary>
         IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker);
-        bool CanCastleToLeft(bool white);
-        bool CanCastleToRight(bool white);
     }
 }
