@@ -53,6 +53,19 @@ namespace vergiBlue.BoardModel
         IList<IPiece> InterfacePieces { get; }
 
         MoveGenerator MoveGenerator { get; }
+
+        /// <summary>
+        /// Either run this or <see cref="UpdateAttackCache"/> before next move to refresh attack cache
+        /// </summary>
+        IEnumerable<SingleMove> GenerateMovesAndUpdateCache(bool forWhite);
+
+        /// <summary>
+        /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
+        /// </summary>
+        /// <param name="updateWhiteAttacks"></param>
+        void UpdateAttackCache(bool updateWhiteAttacks);
+
+
         AttackSquareMapper AttackMapper { get; }
 
 

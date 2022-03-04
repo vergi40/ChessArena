@@ -159,6 +159,11 @@ namespace vergiBlueDesktop
 
                 TurnFinished(nextMove, true);
             }
+            else
+            {
+                // Update attack squares
+                Session.Board.UpdateAttackCache(!Session.PlayerIsWhite);
+            }
         }
 
         

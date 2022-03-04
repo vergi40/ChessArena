@@ -25,11 +25,12 @@ namespace vergiBlue.BoardModel.Subsystems
         public HashSet<(int column, int row)> CaptureTargets { get; set; } = new();
 
         /// <summary>
-        /// [target square][pinner]
-        /// All squares that were targeted by sliding attacker (rook, bishop, queen) with the target protecting king.
-        /// Extra validation needed if pinned target moves, as this exposes king.
+        /// Pre-game initialization
         /// </summary>
-        public Dictionary<(int column, int row),(int column, int row)> PinnedTargets { get; set; } = new();
+        public AttackCache()
+        {
+
+        }
 
         public AttackCache(List<SingleMove> pseudoAttacks, List<KingUnderSliderAttack> kingPseudos)
         {
@@ -117,6 +118,19 @@ namespace vergiBlue.BoardModel.Subsystems
                                 return false;
                             }
                         }
+
+                        // TODO known bug - en passant also removes other pasn
+                        // Protection from direct sliding attacker
+                        // E.g. move king away or pawn in front or capture queen
+                        // 8       k  
+                        // 7   
+                        // 6   o
+                        // 5K Pp     q     
+                        // 4
+                        // 3   
+                        // 2
+                        // 1       
+                        //  ABCDEFGH
                     }
                 }
             }

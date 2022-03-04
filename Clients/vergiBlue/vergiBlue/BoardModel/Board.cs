@@ -115,7 +115,8 @@ namespace vergiBlue.BoardModel
             if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
-                if(Shared.UseCachedAttackSquares)
+                MoveGenerator = new MoveGenerator(this, other.MoveGenerator);
+                if (Shared.UseCachedAttackSquares)
                 {
                     AttackMapper = other.AttackMapper.Clone(PieceList);
                 }
@@ -129,13 +130,13 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// Create board setup after move. Clone subsystems
+        /// Create board setup after move. Clone subsystems. Used in every depth - should be as fast as possible.
         /// </summary>
         public Board(IBoard other, SingleMove move)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
-            MoveGenerator = new MoveGenerator(this);
+            MoveGenerator = new MoveGenerator(this, other.MoveGenerator);
             AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);
@@ -160,6 +161,9 @@ namespace vergiBlue.BoardModel
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
 
             AttackMapper = new AttackSquareMapper(this);
+
+            UpdateAttackCache(true);
+            UpdateAttackCache(false);
         }
 
         private void InitializeFromReference(IBoard previous)
@@ -237,7 +241,24 @@ namespace vergiBlue.BoardModel
             Validator.ValidateMove(this, move);
             ExecuteMove(move);
         }
-        
+
+        public IEnumerable<SingleMove> GenerateMovesAndUpdateCache(bool forWhite)
+        {
+            return MoveGenerator.GenerateMovesAndUpdateCache(forWhite);
+        }
+
+        // GenerateMoves and ExecuteMove should be sequential
+
+        /// <summary>
+        /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
+        /// </summary>
+        /// <param name="updateWhiteAttacks"></param>
+        public void UpdateAttackCache(bool updateWhiteAttacks)
+        {
+            MoveGenerator.UpdateAttackCache(updateWhiteAttacks);
+        }
+
+
         public void ExecuteMove(SingleMove move)
         {
             BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
