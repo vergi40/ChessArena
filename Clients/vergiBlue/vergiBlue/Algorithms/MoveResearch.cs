@@ -26,42 +26,5 @@ namespace vergiBlue.Algorithms
             if (isMaximizing) return -1000000;
             return 1000000;
         }
-
-        /// <summary>
-        /// Returns checkmate move or null.
-        /// </summary>
-        /// <returns></returns>
-        public static SingleMove? ImmediateCheckMateAvailable(IList<SingleMove> moves, IBoard board, bool isMaximizing)
-        {
-            // Brute search checkmate
-            foreach (var singleMove in moves)
-            {
-                var newBoard = BoardFactory.CreateFromMove(board, singleMove);
-                if (newBoard.IsCheckMate(isMaximizing, false))
-                {
-                    singleMove.CheckMate = true;
-                    return singleMove;
-                }
-            }
-
-            return null;
-        }
-
-        public static IList<SingleMove> CheckMateInTwoTurns(IList<SingleMove> moves, IBoard board, bool isMaximizing)
-        {
-            IList<SingleMove> checkMates = new List<SingleMove>();
-            foreach (var singleMove in moves)
-            {
-                var newBoard = BoardFactory.CreateFromMove(board, singleMove);
-                if (CheckMate.InTwoTurns(newBoard, isMaximizing))
-                {
-                    // TODO collect all choices and choose best
-                    // Game goes to draw loop otherwise
-                    checkMates.Add(singleMove);
-                }
-            }
-
-            return checkMates;
-        }
     }
 }
