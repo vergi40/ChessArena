@@ -54,6 +54,8 @@ namespace vergiBlueDesktop
             _viewModel.FenCommand = new RelayCommand<object>(LoadFenGame);
             _viewModel.ToggleWhiteAttackCommand = new RelayCommand<object>(ToggleWhiteAttackVisuals);
             _viewModel.ToggleBlackAttackCommand = new RelayCommand<object>(ToggleBlackAttackVisuals);
+            _viewModel.ToggleWhiteSlideCommand = new RelayCommand<object>(ToggleWhiteSlideAttackVisuals);
+            _viewModel.ToggleBlackSlideCommand = new RelayCommand<object>(ToggleBlackSlideAttackVisuals);
         }
         
         private void StartWhite(object parameter)
@@ -307,7 +309,9 @@ namespace vergiBlueDesktop
 
         // Quick and dirty
         private bool _showWhite = false;
+        private bool _showWhiteSlide = false;
         private bool _showBlack = false;
+        private bool _showBlackSlide = false;
 
         private void ToggleWhiteAttackVisuals(object obj)
         {
@@ -329,6 +333,26 @@ namespace vergiBlueDesktop
             }
         }
 
+        private void ToggleWhiteSlideAttackVisuals(object obj)
+        {
+            if (!_viewModel.GameStarted) return;
+
+            _showWhiteSlide = !_showWhiteSlide;
+            if (_showWhiteSlide)
+            {
+                var tiles = Session.Board.MoveGenerator.GetAttacks(true).SlideTargets().Distinct().ToList();
+                foreach (var (column, row) in tiles)
+                {
+                    var position = new Position(row, column, Brushes.OrangeRed);
+                    _viewModel.VisualizationTiles.Add(position);
+                }
+            }
+            else
+            {
+                _viewModel.VisualizationTiles.Clear();
+            }
+        }
+
         private void ToggleBlackAttackVisuals(object obj)
         {
             if (!_viewModel.GameStarted) return;
@@ -340,6 +364,26 @@ namespace vergiBlueDesktop
                 foreach (var (column, row) in tiles)
                 {
                     var position = new Position(row, column, Brushes.Crimson);
+                    _viewModel.VisualizationTiles.Add(position);
+                }
+            }
+            else
+            {
+                _viewModel.VisualizationTiles.Clear();
+            }
+        }
+
+        private void ToggleBlackSlideAttackVisuals(object obj)
+        {
+            if (!_viewModel.GameStarted) return;
+
+            _showBlackSlide = !_showBlackSlide;
+            if (_showBlackSlide)
+            {
+                var tiles = Session.Board.MoveGenerator.GetAttacks(false).SlideTargets().Distinct().ToList();
+                foreach (var (column, row) in tiles)
+                {
+                    var position = new Position(row, column, Brushes.OrangeRed);
                     _viewModel.VisualizationTiles.Add(position);
                 }
             }

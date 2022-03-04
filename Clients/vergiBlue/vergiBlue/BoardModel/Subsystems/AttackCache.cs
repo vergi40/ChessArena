@@ -137,6 +137,21 @@ namespace vergiBlue.BoardModel.Subsystems
             
             return true;
         }
+
+        public List<(int column, int row)> SlideTargets()
+        {
+            var result = new List<(int column, int row)>();
+            if (KingSliderAttack != null)
+            {
+                foreach (var attack in KingSliderAttack)
+                {
+                    result.AddRange(attack.AttackLine);
+                    result.AddRange(attack.BehindKing);
+                }
+            }
+
+            return result;
+        }
     }
     
     /// <summary>

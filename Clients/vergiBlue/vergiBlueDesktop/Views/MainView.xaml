@@ -229,6 +229,16 @@
                 <ToggleButton
                     Width="100"
                     Height="60"
+                    Margin="3,217,3,417"
+                    Command="{Binding ToggleBlackSlideCommand}">
+                    <TextBlock
+                        Text="Show black slide attack squares"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </ToggleButton>
+                <ToggleButton
+                    Width="100"
+                    Height="60"
                     Margin="3,250,3,320"
                     Command="{Binding ToggleBlackAttackCommand}">
                     <TextBlock
@@ -239,10 +249,20 @@
                 <ToggleButton
                     Width="100"
                     Height="60"
-                    Margin="3,326,3,244"
+                    Margin="3,320,3,244"
                     Command="{Binding ToggleWhiteAttackCommand}">
                     <TextBlock
                         Text="Show white attack squares"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </ToggleButton>
+                <ToggleButton
+                    Width="100"
+                    Height="60"
+                    Margin="3,420,3,214"
+                    Command="{Binding ToggleWhiteSlideCommand}">
+                    <TextBlock
+                        Text="Show white slide attack squares"
                         TextAlignment="Center"
                         TextWrapping="Wrap" />
                 </ToggleButton>
