@@ -10,7 +10,7 @@ namespace vergiBlueTests
     public class AttackSquareTests
     {
         [TestMethod]
-        public void Initialization_ShouldContainKnightAttacks()
+        public void Initialization_MapperShouldContainKnightAttacks()
         {
             var board = BoardFactory.CreateDefault();
 
@@ -28,7 +28,7 @@ namespace vergiBlueTests
         }
 
         [TestMethod]
-        public void AfterOpening_ShouldContainQueenBishopSquares()
+        public void AfterOpening_MapperShouldContainQueenBishopSquares()
         {
             var board = BoardFactory.CreateDefault();
 
@@ -50,6 +50,32 @@ namespace vergiBlueTests
             instance.IsPositionAttacked((2, 3), true).ShouldBeTrue();
             instance.IsPositionAttacked((1, 4), true).ShouldBeTrue();
             instance.IsPositionAttacked((0, 5), true).ShouldBeTrue();
+        }
+
+        [TestMethod]
+        public void AfterOpening_CacheShouldContainQueenBishopSquares()
+        {
+            var board = BoardFactory.CreateDefault();
+
+            // Open room for queen and bishop
+            var move = new SingleMove((4, 1), (4, 2));
+            board.ExecuteMove(move);
+
+            board.UpdateAttackCache(true);
+
+            var targets = board.MoveGenerator.GetAttacks(true).CaptureTargets;
+
+            // Q
+            targets.ShouldContain((4,1));
+            targets.ShouldContain((5,2));
+            targets.ShouldContain((6,3));
+            targets.ShouldContain((7,4));
+
+            // B
+            targets.ShouldContain((3,2));
+            targets.ShouldContain((2,3));
+            targets.ShouldContain((1,4));
+            targets.ShouldContain((0,5));
         }
     }
 }

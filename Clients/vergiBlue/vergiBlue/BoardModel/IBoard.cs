@@ -60,9 +60,9 @@ namespace vergiBlue.BoardModel
         IEnumerable<SingleMove> GenerateMovesAndUpdateCache(bool forWhite);
 
         /// <summary>
+        /// Update attack squares and slide attacks for given color.
         /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
         /// </summary>
-        /// <param name="updateWhiteAttacks"></param>
         void UpdateAttackCache(bool updateWhiteAttacks);
 
 

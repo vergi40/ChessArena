@@ -160,7 +160,7 @@ namespace vergiBlue.BoardModel.Subsystems
         public void UpdateAttackCache(bool updateWhiteAttacks)
         {
             // TODO simplify
-            _ = GenerateMovesAndUpdateCache(!updateWhiteAttacks).ToList();
+            _ = GenerateMovesAndUpdateCache(updateWhiteAttacks).ToList();
         }
 
         /// <summary>

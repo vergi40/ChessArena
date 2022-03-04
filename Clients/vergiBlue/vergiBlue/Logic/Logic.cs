@@ -44,7 +44,7 @@ namespace vergiBlue.Logic
         public Logic(bool isPlayerWhite, IBoard board, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
-            Board = BoardFactory.CreateClone(board);
+            Board = BoardFactory.CreateClone(board, false);
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
@@ -189,6 +189,7 @@ namespace vergiBlue.Logic
             move = Board.CollectMoveProperties(move);
 
             Board.ExecuteMoveWithValidation(move);
+            Board.UpdateAttackCache(!IsPlayerWhite);
             GameHistory.Add(opponentMove);
             Board.Shared.GameTurnCount++;
         }

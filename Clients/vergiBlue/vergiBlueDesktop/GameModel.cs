@@ -107,7 +107,7 @@ namespace vergiBlueDesktop
 
             Session.Board.ExecuteMove(move);
             _viewModel.UpdatePostGraphics(move, _proxy);
-
+            
             // Game ended?
             if (move.CheckMate)
             {
@@ -119,6 +119,9 @@ namespace vergiBlueDesktop
             TurnCount++;
             _viewModel.AppendHistory(move, TurnCount, Session.Board.IsCheck(Session.IsWhiteTurn));
             Session.TurnChanged();
+
+            // Update attack squares
+            Session.Board.UpdateAttackCache(Session.IsWhiteTurn);
 
             if (Session.IsWhiteTurn != Session.PlayerIsWhite)
             {
@@ -158,11 +161,6 @@ namespace vergiBlueDesktop
                 var nextMove = new SingleMove(interfaceMoveData.Move);
 
                 TurnFinished(nextMove, true);
-            }
-            else
-            {
-                // Update attack squares
-                Session.Board.UpdateAttackCache(!Session.PlayerIsWhite);
             }
         }
 

@@ -250,9 +250,9 @@ namespace vergiBlue.BoardModel
         // GenerateMoves and ExecuteMove should be sequential
 
         /// <summary>
+        /// Update attack squares and slide attacks for given color.
         /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
         /// </summary>
-        /// <param name="updateWhiteAttacks"></param>
         public void UpdateAttackCache(bool updateWhiteAttacks)
         {
             MoveGenerator.UpdateAttackCache(updateWhiteAttacks);
@@ -519,7 +519,7 @@ namespace vergiBlue.BoardModel
 
             // Iterate all opponent moves and check is there any that doesn't have check when next player moves
             // TODO double-check that castling moves not needed to validate
-            var opponentMoves = MoveGenerator.MovesQuickWithoutCastling(!isWhiteOffensive, false);
+            var opponentMoves = MoveGenerator.GenerateMovesWithoutCastlingAndUpdateCache(!isWhiteOffensive);
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = BoardFactory.CreateFromMove(this, singleMove);
