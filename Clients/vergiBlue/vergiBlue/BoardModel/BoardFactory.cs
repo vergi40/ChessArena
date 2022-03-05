@@ -17,13 +17,24 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// Preferred way to create board from pieces. Does initializations and hashing.
+        /// Preferred way to create board. Does initializations and hashing.
         /// </summary>
         public static IBoard CreateFromPieces(IEnumerable<PieceBase> pieces)
         {
             var board = CreateEmptyBoard();
             board.AddNew(pieces);
             board.InitializeSubSystems();
+            return board;
+        }
+
+        /// <summary>
+        /// Create full board with syntax e.g. ("a1K", "b2P", "g5k").
+        /// Preferred way to create board. Does initializations and hashing.
+        /// </summary>
+        public static IBoard CreateFromPieces(params string[] posAndIdentityList)
+        {
+            var pieces = PieceFactory.CreateWithShortSyntax(posAndIdentityList);
+            var board = CreateFromPieces(pieces);
             return board;
         }
 
