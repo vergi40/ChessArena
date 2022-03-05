@@ -10,8 +10,8 @@ namespace vergiBlue.BoardModel.Subsystems
     {
         private IBoard _board { get; }
 
-        public AttackCache WhiteAttackCache { get; private set; }
-        public AttackCache BlackAttackCache { get; private set; }
+        protected AttackCache WhiteAttackCache { get; private set; }
+        protected AttackCache BlackAttackCache { get; private set; }
 
         /// <summary>
         /// Pieces not known - no attack cache
@@ -33,6 +33,11 @@ namespace vergiBlue.BoardModel.Subsystems
         public MoveGenerator(IBoard board, MoveGenerator other)
         {
             _board = board;
+
+            // Shallow clone - shouldn't matter. Caches are only read
+            // E.g. d5 white generates moves -> white cache filled
+            // d4 Black turn -> generates black cache
+            // d3 White turn -> generates white cache -> substitutes old
             WhiteAttackCache = other.WhiteAttackCache;
             BlackAttackCache = other.BlackAttackCache;
         }

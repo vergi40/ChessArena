@@ -316,13 +316,44 @@ namespace vergiBlue.Pieces
             var kingFound = false;
             var guardPieceCount = 0;
 
+            var attackHorizontalWithEnPassantPossibility = false;
+            if (directionUnit.row == 0 && Math.Abs(directionUnit.column) == 1 && row is 4 or 5 && board.Strategic.EnPassantPossibility != null)
+            {
+                attackHorizontalWithEnPassantPossibility = true;
+            }
+
             for (int i = 1; i < 8; i++)
             {
                 var nextColumn = column + i * directionUnit.column;
                 var nextRow = row + i * directionUnit.row;
                 var next = IsKingOrOutside((nextColumn, nextRow), board);
                 if (next == SquareTypes.Outside) break;
-                else if (next == SquareTypes.OwnPiece && !kingFound) break;
+                else if (next == SquareTypes.OwnPiece && !kingFound)
+                {
+                    // niche case
+                    // En passant can't leave open
+                    // 8       k  
+                    // 7   
+                    // 6      o
+                    // 5K   P p     q     
+                    // 4
+                    // 3   
+                    // 2
+                    // 1       
+                    //  A B C D E F G H
+                    if (attackHorizontalWithEnPassantPossibility && nextColumn == board.Strategic.EnPassantPossibility?.column)
+                    {
+                        // Add to attackline
+                        attack.AttackLine.Add((nextColumn, nextRow));
+                        attack.HasEnPassantPawnOpportunity = true;
+                    }
+                    else
+                    {
+                        // No worries about this line
+                        break;
+                    }
+
+                }
                 else if (next == SquareTypes.OpponentKing)
                 {
                     attack.AttackLine.Add((nextColumn, nextRow));

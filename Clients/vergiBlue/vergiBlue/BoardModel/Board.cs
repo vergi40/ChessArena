@@ -305,6 +305,7 @@ namespace vergiBlue.BoardModel
             }
 
             UpdatePosition(piece, move);
+            UpdateAttackCache(piece.IsWhite);
             
             // General every turn processes
             UpdateEndGameWeight();

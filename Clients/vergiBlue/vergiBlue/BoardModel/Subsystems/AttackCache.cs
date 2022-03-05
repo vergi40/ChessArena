@@ -63,6 +63,8 @@ namespace vergiBlue.BoardModel.Subsystems
                 {
                     if (!sliderAttack.IsGuarded)
                     {
+                        // Direct line of attack
+
                         // Protection from direct sliding attacker
                         // E.g. move king away or pawn in front or capture queen
                         // 8       k  
@@ -81,9 +83,17 @@ namespace vergiBlue.BoardModel.Subsystems
                                 // Still along attack line
                                 return false;
                             }
+                            if (sliderAttack.BehindKing.Contains(move.NewPos))
+                            {
+                                // Still along attack line
+                                return false;
+                            }
                         }
                         else
                         {
+                            // Indirect line
+
+                            // Did something move in front of attack line, blocking 
                             if (sliderAttack.AttackLine.Contains(move.NewPos) || move.NewPos == sliderAttack.Attacker)
                             {
                                 // Ok
@@ -96,41 +106,58 @@ namespace vergiBlue.BoardModel.Subsystems
                     }
                     else
                     {
-                        // E.g. cannot move guarding pawn
-                        // 7    
-                        // 6           
-                        // 5       
-                        // 4             b
-                        // 3           x
-                        // 2       ^ x
-                        // 1 P P P P      
-                        // 0     K        
-                        //   0 1 2 3 4 5 6 7 
+                        
                         if (sliderAttack.AttackLine.Contains(move.PrevPos))
                         {
-                            // Only valid if moves to attack line or capture attacker
-                            if (sliderAttack.AttackLine.Contains(move.NewPos) || move.NewPos == sliderAttack.Attacker)
+                            if (piece.Identity != 'K')
                             {
-                                // Ok
+                                // E.g. cannot move guarding pawn
+                                // 7    
+                                // 6           
+                                // 5       
+                                // 4             b
+                                // 3           x
+                                // 2       ^ x
+                                // 1 P P P P      
+                                // 0     K        
+                                //   0 1 2 3 4 5 6 7 
+
+                                // Only valid if moves to attack line or capture attacker
+                                if (sliderAttack.AttackLine.Contains(move.NewPos) || move.NewPos == sliderAttack.Attacker)
+                                {
+                                    // Ok
+                                }
+                                else if (sliderAttack.HasEnPassantPawnOpportunity)
+                                {
+                                    if (move.EnPassant)
+                                    {
+                                        return false;
+                                    }
+                                    // In this case normal forward movement ok
+                                }
+                                else
+                                {
+                                    return false;
+                                }
                             }
                             else
                             {
-                                return false;
+                                // Ok
+                                // King can be moved freely, since capture squares have been checked already
+
+                                // E.g. queen attack. Can't move pawn b2, it's guarding
+                                // Can move king away to a1 a3
+                                // 8 k   
+                                // 7           
+                                // 6       
+                                // 5 
+                                // 4           
+                                // 3 o        
+                                // 2 K P q P   
+                                // 1 o            
+                                //   A B C D E F G H
                             }
                         }
-
-                        // TODO known bug - en passant also removes other pasn
-                        // Protection from direct sliding attacker
-                        // E.g. move king away or pawn in front or capture queen
-                        // 8       k  
-                        // 7   
-                        // 6   o
-                        // 5K Pp     q     
-                        // 4
-                        // 3   
-                        // 2
-                        // 1       
-                        //  ABCDEFGH
                     }
                 }
             }
@@ -176,6 +203,11 @@ namespace vergiBlue.BoardModel.Subsystems
         public (int column, int row) Attacker { get; set; }
         public (int column, int row) GuardPiece { get; set; } = (-1, -1);
         public (int column, int row) King { get; set; }
+
+        /// <summary>
+        /// Only valid if attack row contains both: opponent enpassant pawn and next to it own pawn
+        /// </summary>
+        public bool HasEnPassantPawnOpportunity { get; set; }
 
         /// <summary>
         /// All squares leading to king, including king
