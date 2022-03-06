@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
+using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
@@ -17,7 +18,9 @@ namespace vergiBlue.BoardModel.Subsystems
     /// </summary>
     public class AttackCache
     {
-        private List<KingUnderSliderAttack>? KingSliderAttack { get; } = null;
+        private DirectAttackMap DirectAttackMap { get; } = new DirectAttackMap();
+        private DirectAttackMap KingDirectAttackMap { get; } = new DirectAttackMap();
+        private List<KingUnderSliderAttack> KingSliderAttack { get; } = new();
 
         /// <summary>
         /// All squares that had capture opportunity. Includes pawn attacks.
@@ -32,9 +35,21 @@ namespace vergiBlue.BoardModel.Subsystems
 
         }
 
-        public AttackCache(List<SingleMove> pseudoAttacks, List<KingUnderSliderAttack> kingPseudos)
+        public AttackCache(List<SingleMove> pseudoAttackMoves, List<KingUnderSliderAttack> kingPseudos, (int column, int row) opponentKing)
         {
-            CaptureTargets = pseudoAttacks.Select(m => m.NewPos).ToHashSet();
+            foreach (var pseudoAttack in pseudoAttackMoves)
+            {
+                if (pseudoAttack.NewPos == opponentKing)
+                {
+                    KingDirectAttackMap.Add(pseudoAttack);
+                }
+                else
+                {
+                    DirectAttackMap.Add(pseudoAttack);
+                }
+            }
+
+            CaptureTargets = DirectAttackMap.AllTargets().Concat(KingDirectAttackMap.AllTargets()).ToHashSet();
 
             KingSliderAttack = kingPseudos;
         }
@@ -47,138 +62,241 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <returns></returns>
         public bool IsValidMove(SingleMove move, IBoard board)
         {
+            // If king is targeted by capture: 
+            // * Either move has to put king safe
+            // * Or attacker captured
+            // * Or move piece in attack line
+            
+            // Don't move king to capture square
+
+            // Don't move piece positioned to indirect slider attack line
+            
+
             // Return as soon as invalid move discovered
+            var kingUnderDirectAttack = KingDirectAttackMap.TargetAttackerDict.Any();
             var piece = board.ValueAtDefinitely(move.PrevPos);
-            if (piece.Identity == 'K')
+
+            if (kingUnderDirectAttack)
             {
-                if (CaptureTargets.Contains(move.NewPos))
-                {
-                    return false;
-                }
+                if (KingMovedOutOfDirectAttacks(move, board)) return true; 
+                if(KingAttackerCaptured(move)) return true;
+                if(KingSliderAttackerBlocked(move, piece)) return true;
+                return false;
             }
 
-            if (KingSliderAttack != null)
+
+            if (piece.Identity == 'K')
             {
-                foreach (var sliderAttack in KingSliderAttack)
-                {
-                    if (!sliderAttack.IsGuarded)
-                    {
-                        // Direct line of attack
+                if (KingMovedToDirectAttack(move)) return false;
+                return true;
+            }
 
-                        // Protection from direct sliding attacker
-                        // E.g. move king away or pawn in front or capture queen
-                        // 8       k  
-                        // 7  
-                        // 6K      q
-                        // 5  Pp   
-                        // 4
-                        // 3   
-                        // 2
-                        // 1       
-                        //  ABCDEFGH
-                        if (piece.Identity == 'K')
-                        {
-                            if (sliderAttack.AttackLine.Contains(move.NewPos))
-                            {
-                                // Still along attack line
-                                return false;
-                            }
-                            if (sliderAttack.BehindKing.Contains(move.NewPos))
-                            {
-                                // Still along attack line
-                                return false;
-                            }
-                        }
-                        else
-                        {
-                            // Indirect line
+            // Direct slider attacks can be resolved with other pieces also
 
-                            // Did something move in front of attack line, blocking 
-                            if (sliderAttack.AttackLine.Contains(move.NewPos) || move.NewPos == sliderAttack.Attacker)
-                            {
-                                // Ok
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        
-                        if (sliderAttack.AttackLine.Contains(move.PrevPos))
-                        {
-                            if (piece.Identity != 'K')
-                            {
-                                // E.g. cannot move guarding pawn
-                                // 7    
-                                // 6           
-                                // 5       
-                                // 4             b
-                                // 3           x
-                                // 2       ^ x
-                                // 1 P P P P      
-                                // 0     K        
-                                //   0 1 2 3 4 5 6 7 
-
-                                // Only valid if moves to attack line or capture attacker
-                                if (sliderAttack.AttackLine.Contains(move.NewPos) || move.NewPos == sliderAttack.Attacker)
-                                {
-                                    // Ok
-                                }
-                                else if (sliderAttack.HasEnPassantPawnOpportunity)
-                                {
-                                    if (move.EnPassant)
-                                    {
-                                        return false;
-                                    }
-                                    // In this case normal forward movement ok
-                                }
-                                else
-                                {
-                                    return false;
-                                }
-                            }
-                            else
-                            {
-                                // Ok
-                                // King can be moved freely, since capture squares have been checked already
-
-                                // E.g. queen attack. Can't move pawn b2, it's guarding
-                                // Can move king away to a1 a3
-                                // 8 k   
-                                // 7           
-                                // 6       
-                                // 5 
-                                // 4           
-                                // 3 o        
-                                // 2 K P q P   
-                                // 1 o            
-                                //   A B C D E F G H
-                            }
-                        }
-                    }
-                }
+            // Moving piece is not king
+            if (!IndirectSliderAttackResolved(move))
+            {
+                return false;
             }
             
             return true;
         }
 
+        /// <summary>
+        /// Prerequisite: piece not king
+        /// </summary>
+        private bool IndirectSliderAttackResolved(SingleMove move)
+        {
+            foreach (var sliderAttack in KingSliderAttack)
+            {
+                if (sliderAttack.AttackLine.Contains(move.PrevPos))
+                {
+                    // E.g. cannot move guarding pawn
+                    // 7    
+                    // 6           
+                    // 5       
+                    // 4             b
+                    // 3           x
+                    // 2       ^ x
+                    // 1 P P P P      
+                    // 0     K        
+                    //   0 1 2 3 4 5 6 7 
+                    
+                    // Only valid if moves to attack line or capture attacker
+                    if (sliderAttack.AttackLine.Contains(move.NewPos) || move.NewPos == sliderAttack.Attacker)
+                    {
+                        // Ok
+                    }
+                    else if (sliderAttack.HasEnPassantPawnOpportunity)
+                    {
+                        if (move.EnPassant)
+                        {
+                            return false;
+                        }
+                        // In this case normal forward movement ok
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// If there is direct sliding attack and it's blocked, true.
+        /// Prerequisite: moving piece not king
+        /// </summary>
+        private bool KingSliderAttackerBlocked(SingleMove move, PieceBase piece)
+        {
+            if (!KingSliderAttack.Any()) return false;
+            if (piece.Identity == 'K') return false;
+            var unguardedList = KingSliderAttack.Where(a => !a.IsGuarded).ToList();
+            if (unguardedList.Count != 1) return false;
+
+            var unguarded = unguardedList.Single();
+            if (unguarded.AttackLine.Contains(move.NewPos)) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Out of capture targets. Out of attack lines (they continue behind king)
+        /// </summary>
+        private bool KingMovedOutOfDirectAttacks(SingleMove move, IBoard board)
+        {
+            var piece = board.ValueAtDefinitely(move.PrevPos);
+            if (piece.Identity == 'K')
+            {
+                if (CaptureTargets.Contains(move.NewPos))
+                {
+                    // Still in danger
+                    return false;
+                }
+
+                foreach (var sliderAttack in KingSliderAttack.Where(a => !a.IsGuarded))
+                {
+                    if (sliderAttack.BehindKing.Contains(move.NewPos))
+                    {
+                        return false;
+                    }
+                }
+
+                // All clear for king move
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Prerequisite: single attacker
+        /// </summary>
+        private bool KingAttackerCaptured(SingleMove move)
+        {
+            var attackers = KingDirectAttackMap.AllAttackers().ToList();
+            if (attackers.Count == 0)
+            {
+                // Not sure if this is ever possible, as "king under direct attack"
+                throw new ArgumentException("Logical error: there should be attackers if king under direct attack");
+                return true;
+            }
+            if (attackers.Count == 1)
+            {
+                // Capture attacker (with king or any piece)
+                // TODO is valid move if attacker is guarded anyway?
+
+                var attacker = attackers.Single();
+                if (attacker == move.NewPos)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool KingMovedToDirectAttack(SingleMove move)
+        {
+            // E.g. queen attack. Can't move pawn b2, it's guarding
+            // Can move king away to a1 a3
+            // 8 k   
+            // 7           
+            // 6       
+            // 5 
+            // 4           
+            // 3 o x       
+            // 2 K P q P   
+            // 1 o x           
+            //   A B C D E F G H
+            if (CaptureTargets.Contains(move.NewPos))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public List<(int column, int row)> SlideTargets()
         {
             var result = new List<(int column, int row)>();
-            if (KingSliderAttack != null)
+            foreach (var attack in KingSliderAttack)
             {
-                foreach (var attack in KingSliderAttack)
-                {
-                    result.AddRange(attack.AttackLine);
-                    result.AddRange(attack.BehindKing);
-                }
+                result.AddRange(attack.AttackLine);
+                result.AddRange(attack.BehindKing);
             }
 
             return result;
         }
+    }
+
+    public class DirectAttackMap
+    {
+        /// <summary>
+        /// [capture target position][list of attacker positions]
+        /// </summary>
+        public Dictionary<(int column, int row), List<(int column, int row)>> TargetAttackerDict { get; set; } = new();
+
+        public void Add(SingleMove move)
+        {
+            // key = new position
+            // values = prev pos
+            if (TargetAttackerDict.TryGetValue(move.NewPos, out var value))
+            {
+                value.Add(move.PrevPos);
+            }
+            else
+            {
+                var attackerList = new List<(int column, int row)>();
+                attackerList.Add(move.PrevPos);
+                TargetAttackerDict.Add(move.NewPos, attackerList);
+            }
+        }
+
+        public IEnumerable<(int column, int row)> AllTargets()
+        {
+            return TargetAttackerDict.Select(d => d.Key);
+        }
+
+        public IEnumerable<(int column, int row)> AllAttackers()
+        {
+            foreach (var keyValue in TargetAttackerDict)
+            {
+                foreach (var attacker in keyValue.Value)
+                {
+                    yield return attacker;
+                }
+            }
+        }
+
+        public IEnumerable<(int column, int row)> Attackers((int column, int row) target)
+        {
+            foreach (var attacker in TargetAttackerDict[target])
+            {
+                yield return attacker;
+            }
+        }
+
+
     }
     
     /// <summary>

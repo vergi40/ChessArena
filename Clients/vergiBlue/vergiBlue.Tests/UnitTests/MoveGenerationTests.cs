@@ -222,8 +222,5 @@ namespace UnitTests
             board.AddNew(pieces);
             return (board, sut);
         }
-
-
-        
     }
 }

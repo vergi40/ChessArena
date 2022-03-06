@@ -1,13 +1,12 @@
 ﻿using System.Linq;
+using CommonNetStandard.Interface;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
-using UnitTests;
 using vergiBlue;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.SubSystems;
-using vergiBlue.Pieces;
 
-namespace vergiBlueTests
+namespace UnitTests
 {
     [TestClass]
     public class AttackSquareTests
@@ -162,6 +161,87 @@ namespace vergiBlueTests
 
             var moves = board.GenerateMovesAndUpdateCache(true).ToList();
             moves.ShouldNotContain(m => m.EnPassant);
+        }
+
+        [TestMethod]
+        public void Cache_PromotionKnight()
+        {
+            var fen = "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1";
+            var board = BoardFactory.CreateFromFen(fen, out var whiteStart);
+
+            var move = new SingleMove("g2", "g1", false, PromotionPieceType.Knight);
+            board.ExecuteMove(move);
+
+            // King has to move 
+            var moves = board.MoveGenerator.GenerateMovesAndUpdateCache(true).ToList();
+        }
+
+        [TestMethod]
+        public void Cache_PromotionKnight_Simple()
+        {
+            // 8k
+            // 7 
+            // 6
+            // 5
+            // 4
+            // 3 x
+            // 2pKx
+            // 1N 
+            //  ABCDEFGH
+            var board = BoardFactory.CreateFromPieces("b2K", "a2p", "a8k");
+
+            var move = new SingleMove("a2", "a1", false, PromotionPieceType.Knight);
+            board.ExecuteMove(move);
+
+            // King can move or capture
+            var moves = board.MoveGenerator.GenerateMovesAndUpdateCache(true).ToList();
+            moves.ShouldNotContain(m => m.NewPos.Equals("c2".ToTuple()));
+            moves.ShouldNotContain(m => m.NewPos.Equals("b3".ToTuple()));
+        }
+
+        [TestMethod]
+        public void Cache_PromotionKnight_KingUnderAttack_Simple()
+        {
+            // 8k
+            // 7 
+            // 6
+            // 5
+            // 4  P
+            // 3 x
+            // 2p K
+            // 1N 
+            //  ABCDEFGH
+            var board = BoardFactory.CreateFromPieces("c2K", "c4P", "a2p", "a8k");
+
+            var move = new SingleMove("a2", "a1", false, PromotionPieceType.Knight);
+            board.ExecuteMove(move);
+
+            // King can move or capture
+            var moves = board.MoveGenerator.GenerateMovesAndUpdateCache(true).ToList();
+            moves.ShouldNotContain(m => m.NewPos.Equals("b3".ToTuple()));
+            moves.ShouldNotContain(m => m.NewPos.Equals("c5".ToTuple()));
+        }
+
+        [TestMethod]
+        public void DoubleRookCheckMate_ShouldNotBeAnyMovesForKing()
+        {
+            // Easy double rook checkmate
+
+            // 8r     K
+            // 7 r
+            // 6
+            // 5k
+            // 4
+            // 3
+            // 2
+            // 1
+            //  ABCDEFGH
+
+            var board = BoardFactory.CreateFromPieces("a1k", "a8r", "b7r", "g8K");
+            board.Shared.GameTurnCount = 20;
+
+            var moves = board.GenerateMovesAndUpdateCache(true).ToList();
+            moves.ShouldBeEmpty();
         }
     }
 }

@@ -238,21 +238,31 @@ namespace vergiBlue.BoardModel.Subsystems
                         {
                             validMoves.Add(singleMove);
                         }
+                        // TODO should skip Q B R?
                         attackMoves.Add(singleMove);
                     }
                 }
             }
 
+            var opponentKing = GetKingLocationOrDefault(!forWhite);
+
             if (forWhite)
             {
-                WhiteAttackCache = new AttackCache(attackMoves, lines);
+                WhiteAttackCache = new AttackCache(attackMoves, lines, opponentKing);
             }
             else
             {
-                BlackAttackCache = new AttackCache(attackMoves, lines);
+                BlackAttackCache = new AttackCache(attackMoves, lines, opponentKing);
             }
 
             return validMoves;
+        }
+
+        private (int column, int row) GetKingLocationOrDefault(bool whiteKing)
+        {
+            var opponentKing = _board.KingLocation(whiteKing);
+            var position = opponentKing != null ? opponentKing.CurrentPosition : (-1, -1);
+            return position;
         }
 
         public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false)
