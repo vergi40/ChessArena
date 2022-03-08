@@ -32,10 +32,10 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board, bool returnSoftTargets = false)
         {
-            var moves = BishopMoves(board);
-            return moves.Concat(RookMoves(board));
+            var moves = BishopMoves(board, returnSoftTargets);
+            return moves.Concat(RookMoves(board, returnSoftTargets));
         }
 
         public override PieceBase CreateCopy()
@@ -46,7 +46,7 @@ namespace vergiBlue.Pieces
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
             var moves = BishopMoves(board, true);
-            return moves.Concat(RookMoves(board));
+            return moves.Concat(RookMoves(board, true));
         }
     }
 }

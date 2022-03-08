@@ -23,6 +23,11 @@ namespace vergiBlue.BoardModel.Subsystems
         private List<KingUnderSliderAttack> KingSliderAttack { get; } = new();
 
         /// <summary>
+        /// Own pieces that are guarded by other piece. Use for validating if king can capture
+        /// </summary>
+        private HashSet<(int column, int row)> GuardedMap { get; } = new();
+
+        /// <summary>
         /// All squares that had capture opportunity. Includes pawn attacks.
         /// </summary>
         public HashSet<(int column, int row)> CaptureTargets { get; set; } = new();
@@ -39,7 +44,11 @@ namespace vergiBlue.BoardModel.Subsystems
         {
             foreach (var pseudoAttack in pseudoAttackMoves)
             {
-                if (pseudoAttack.NewPos == opponentKing)
+                if (pseudoAttack.SoftTarget)
+                {
+                    GuardedMap.Add(pseudoAttack.NewPos);
+                }
+                else if (pseudoAttack.NewPos == opponentKing)
                 {
                     KingDirectAttackMap.Add(pseudoAttack);
                 }
@@ -79,7 +88,7 @@ namespace vergiBlue.BoardModel.Subsystems
             if (kingUnderDirectAttack)
             {
                 if (KingMovedOutOfDirectAttacks(move, board)) return true; 
-                if(KingAttackerCaptured(move)) return true;
+                if(KingAttackerCaptured(move, piece)) return true;
                 if(KingSliderAttackerBlocked(move, piece)) return true;
                 return false;
             }
@@ -109,7 +118,7 @@ namespace vergiBlue.BoardModel.Subsystems
         {
             foreach (var sliderAttack in KingSliderAttack)
             {
-                if (sliderAttack.AttackLine.Contains(move.PrevPos))
+                if (sliderAttack.AttackLine.Contains(move.PrevPos) || move.EnPassant)
                 {
                     // E.g. cannot move guarding pawn
                     // 7    
@@ -129,6 +138,17 @@ namespace vergiBlue.BoardModel.Subsystems
                     }
                     else if (sliderAttack.HasEnPassantPawnOpportunity)
                     {
+                        // niche case
+                        // En passant will leave king open
+                        // 8K     K  
+                        // 7   
+                        // 6      o
+                        // 5K   P p      r     
+                        // 4
+                        // 3         b
+                        // 2
+                        // 1      r
+                        //  A B C D E F G H
                         if (move.EnPassant)
                         {
                             return false;
@@ -175,6 +195,12 @@ namespace vergiBlue.BoardModel.Subsystems
                     return false;
                 }
 
+                if (GuardedMap.Contains(move.NewPos))
+                {
+                    // Illegal as the guard will capture king
+                    return false;
+                }
+
                 foreach (var sliderAttack in KingSliderAttack.Where(a => !a.IsGuarded))
                 {
                     if (sliderAttack.BehindKing.Contains(move.NewPos))
@@ -192,7 +218,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <summary>
         /// Prerequisite: single attacker
         /// </summary>
-        private bool KingAttackerCaptured(SingleMove move)
+        private bool KingAttackerCaptured(SingleMove move, PieceBase piece)
         {
             var attackers = KingDirectAttackMap.AllAttackers().ToList();
             if (attackers.Count == 0)
@@ -209,6 +235,12 @@ namespace vergiBlue.BoardModel.Subsystems
                 var attacker = attackers.Single();
                 if (attacker == move.NewPos)
                 {
+                    // King can't capture guarded piece
+                    if (piece.Identity == 'K' && GuardedMap.Contains(attacker))
+                    {
+                        return false;
+                    }
+
                     return true;
                 }
             }
@@ -229,6 +261,11 @@ namespace vergiBlue.BoardModel.Subsystems
             // 1 o x           
             //   A B C D E F G H
             if (CaptureTargets.Contains(move.NewPos))
+            {
+                return true;
+            }
+
+            if (GuardedMap.Contains(move.NewPos))
             {
                 return true;
             }
@@ -316,7 +353,16 @@ namespace vergiBlue.BoardModel.Subsystems
     /// </summary>
     public class KingUnderSliderAttack
     {
-        public bool IsGuarded => GuardPiece != (-1, -1);
+        public bool IsGuarded
+        {
+            get
+            {
+                if(GuardPiece != (-1, -1)) return true;
+                if (HasEnPassantPawnOpportunity) return true;
+                return false;
+            }
+        }
+
         public bool WhiteAttacking { get; set; }
         public (int column, int row) Attacker { get; set; }
         public (int column, int row) GuardPiece { get; set; } = (-1, -1);

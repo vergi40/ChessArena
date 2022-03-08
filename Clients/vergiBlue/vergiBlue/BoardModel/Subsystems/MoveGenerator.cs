@@ -208,8 +208,14 @@ namespace vergiBlue.BoardModel.Subsystems
                         }
                     }
 
-                    foreach (var captureMove in piece.PawnPseudoCaptureMoves(_board))
+                    foreach (var captureMove in piece.PawnPseudoCaptureMoves(_board, true))
                     {
+                        if (captureMove.SoftTarget)
+                        {
+                            attackMoves.Add(captureMove);
+                            continue;
+                        }
+
                         var targetPos = captureMove.NewPos;
                         var valueAt = _board.ValueAt(targetPos);
 
@@ -231,9 +237,13 @@ namespace vergiBlue.BoardModel.Subsystems
                         lines.Add(kingAttack);
                     }
 
-                    foreach (var singleMove in piece.Moves(_board))
+                    foreach (var singleMove in piece.Moves(_board, true))
                     {
-
+                        if(singleMove.SoftTarget)
+                        {
+                            attackMoves.Add(singleMove);
+                            continue;
+                        }
                         if (attacksModel.IsValidMove(singleMove, _board))
                         {
                             validMoves.Add(singleMove);

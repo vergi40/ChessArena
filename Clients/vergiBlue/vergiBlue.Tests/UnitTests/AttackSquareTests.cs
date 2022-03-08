@@ -140,20 +140,44 @@ namespace UnitTests
         }
 
         [TestMethod]
-        public void Cache_TrickyEnPassant_ShouldNotContainEnPassant()
+        public void CacheRook_TrickyEnPassant_ShouldNotContainEnPassant()
         {
             // niche case
-            // Can't en passant since leaves attack open 
-            // 8       k  
+            // En passant will leave king open
+            // 8K     K  
             // 7   
             // 6      o
-            // 5K   P p     q     
+            // 5K   P p      r     
             // 4
-            // 3   
+            // 3         b
             // 2
-            // 1       
+            // 1      r
             //  A B C D E F G H
-            var board = BoardFactory.CreateFromPieces("a5K", "c5P", "d5p", "g5q", "g8k");
+            var board = BoardFactory.CreateFromPieces("a5K", "c5P", "d5p", "g5r", "g8k");
+            board.Strategic.EnPassantPossibility = "d6".ToTuple();
+
+            // Re-generate since en passant possibility wasn't applied
+            board.UpdateAttackCache(false);
+
+            var moves = board.GenerateMovesAndUpdateCache(true).ToList();
+            moves.ShouldNotContain(m => m.EnPassant);
+        }
+
+        [TestMethod]
+        public void CacheBishop_TrickyEnPassant_ShouldNotContainEnPassant()
+        {
+            // niche case
+            // En passant will leave king open
+            // 8K     K  
+            // 7   
+            // 6      o
+            // 5K   P p      r     
+            // 4
+            // 3         b
+            // 2
+            // 1      r
+            //  A B C D E F G H
+            var board = BoardFactory.CreateFromPieces("a8K", "c5P", "d5p", "f3b", "g8k");
             board.Strategic.EnPassantPossibility = "d6".ToTuple();
 
             // Re-generate since en passant possibility wasn't applied
@@ -242,6 +266,28 @@ namespace UnitTests
 
             var moves = board.GenerateMovesAndUpdateCache(true).ToList();
             moves.ShouldBeEmpty();
+        }
+
+        [TestMethod]
+        public void King_AfterPromotion_ShouldNotCaptureGuarded()
+        {
+            // 8
+            // 7PPPk 
+            // 6
+            // 5
+            // 4
+            // 3
+            // 2    Kppp
+            // 1
+            //  ABCDEFGH
+            // Just kings and pawns. King does greedy invalid capture moves
+            var fen = "8/PPPk4/8/8/8/8/4Kppp/8 b - - 0 1";
+            var board = BoardFactory.CreateFromFen(fen, out _);
+
+            board.ExecuteMove(new SingleMove("g2", "g1", false, PromotionPieceType.Queen));
+
+            var kingMoves = board.GenerateMovesAndUpdateCache(true).ToList();
+            kingMoves.ShouldNotContain(m => m.NewPos.Equals("f2".ToTuple()));
         }
     }
 }

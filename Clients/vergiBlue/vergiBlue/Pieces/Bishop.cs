@@ -33,9 +33,9 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board, bool returnSoftTargets = false)
         {
-            return BishopMoves(board);
+            return BishopMoves(board, returnSoftTargets);
         }
         
         public override PieceBase CreateCopy()

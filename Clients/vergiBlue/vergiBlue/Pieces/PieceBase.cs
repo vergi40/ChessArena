@@ -60,7 +60,9 @@ namespace vergiBlue.Pieces
         
 
         /// <summary>
-        /// If target position is empty or has opponent piece, return SingleMove. If own piece or outside board, return null.
+        /// If target position is empty or has opponent piece, return SingleMove. If outside board, return null. If own piece:
+        /// * Return soft targets: return the move
+        /// * Otherwise return null
         /// </summary>
         protected virtual SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false, bool returnSoftTargets = false)
         {
@@ -86,7 +88,7 @@ namespace vergiBlue.Pieces
         /// Each move the piece can make in current board setting
         /// </summary>
         /// <returns></returns>
-        public abstract IEnumerable<SingleMove> Moves(IBoard board);
+        public abstract IEnumerable<SingleMove> Moves(IBoard board, bool returnSoftTargets = false);
 
         /// <summary>
         /// Copy needs to be made with the derived class constructor so type matches
@@ -94,7 +96,7 @@ namespace vergiBlue.Pieces
         /// <returns></returns>
         public abstract PieceBase CreateCopy();
 
-        protected IEnumerable<SingleMove> RookMoves(IBoard board)
+        protected IEnumerable<SingleMove> RookMoves(IBoard board, bool returnSoftTargets = false)
         {
             var column = CurrentPosition.column;
             var row = CurrentPosition.row;
@@ -102,11 +104,11 @@ namespace vergiBlue.Pieces
             // Up
             for (int i = row + 1; i < 8; i++)
             {
-                var move = CanMoveTo((column, i), board);
+                var move = CanMoveTo((column, i), board, false, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -114,11 +116,11 @@ namespace vergiBlue.Pieces
             // Down
             for (int i = row - 1; i >= 0; i--)
             {
-                var move = CanMoveTo((column, i), board);
+                var move = CanMoveTo((column, i), board, false, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -126,11 +128,11 @@ namespace vergiBlue.Pieces
             // Right
             for (int i = column + 1; i < 8; i++)
             {
-                var move = CanMoveTo((i, row), board);
+                var move = CanMoveTo((i, row), board, false, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -138,11 +140,11 @@ namespace vergiBlue.Pieces
             // Left
             for (int i = column - 1; i >= 0; i--)
             {
-                var move = CanMoveTo((i, row), board);
+                var move = CanMoveTo((i, row), board, false, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -160,7 +162,7 @@ namespace vergiBlue.Pieces
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -172,7 +174,7 @@ namespace vergiBlue.Pieces
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -184,7 +186,7 @@ namespace vergiBlue.Pieces
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -196,7 +198,7 @@ namespace vergiBlue.Pieces
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -207,12 +209,13 @@ namespace vergiBlue.Pieces
         /// </summary>
         /// <param name="board"></param>
         /// <returns></returns>
+        [Obsolete("Directly implemented to pseudo moves")]
         public abstract IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board);
 
         /// <summary>
         /// Pawn capturing positions, even if there is no opponent present
         /// </summary>
-        public virtual IEnumerable<SingleMove> PawnPseudoCaptureMoves(IBoard board)
+        public virtual IEnumerable<SingleMove> PawnPseudoCaptureMoves(IBoard board, bool returnSoftTargets)
         {
             return Enumerable.Empty<SingleMove>();
         }
@@ -317,9 +320,23 @@ namespace vergiBlue.Pieces
             var guardPieceCount = 0;
 
             var attackHorizontalWithEnPassantPossibility = false;
-            if (directionUnit.row == 0 && Math.Abs(directionUnit.column) == 1 && row is 4 or 5 && board.Strategic.EnPassantPossibility != null)
+            var attackDiagonalWithEnPassantPossibility = false;
+            var enPassantTarget = (-1, -1);
+            var enPassant = board.Strategic.EnPassantPossibility;
+            if (enPassant != null)
             {
-                attackHorizontalWithEnPassantPossibility = true;
+                var pawnRow = enPassant.Value.row == 2 ? 3 : 4;
+                var pawnColumn = enPassant.Value.column;
+                enPassantTarget = (pawnColumn, pawnRow);
+                if(directionUnit.column * directionUnit.row == 0)
+                {
+                    attackHorizontalWithEnPassantPossibility = true;
+                }
+                else
+                {
+                    attackDiagonalWithEnPassantPossibility = true;
+                }
+
             }
 
             for (int i = 1; i < 8; i++)
@@ -331,28 +348,43 @@ namespace vergiBlue.Pieces
                 else if (next == SquareTypes.OwnPiece && !kingFound)
                 {
                     // niche case
-                    // En passant can't leave open
-                    // 8       k  
+                    // En passant will leave king open
+                    // 8K     K  
                     // 7   
                     // 6      o
-                    // 5K   P p     q     
+                    // 5K   P p      r     
                     // 4
-                    // 3   
+                    // 3         b
                     // 2
-                    // 1       
+                    // 1      r
                     //  A B C D E F G H
-                    if (attackHorizontalWithEnPassantPossibility && nextColumn == board.Strategic.EnPassantPossibility?.column)
+                    if ((nextColumn, nextRow) == enPassantTarget)
                     {
-                        // Add to attackline
-                        attack.AttackLine.Add((nextColumn, nextRow));
-                        attack.HasEnPassantPawnOpportunity = true;
+                        if (attackHorizontalWithEnPassantPossibility)
+                        {
+                            // Vertical is fine
+                            if (Math.Abs(directionUnit.column) == 1)
+                            {
+                                attack.AttackLine.Add((nextColumn, nextRow));
+                                attack.HasEnPassantPawnOpportunity = true;
+                            }
+                            else
+                            {
+                                // No worries about this line
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            // Any diagonal with enpassant captured is a risk
+                            attack.AttackLine.Add((nextColumn, nextRow));
+                            attack.HasEnPassantPawnOpportunity = true;
+                        }
                     }
                     else
                     {
-                        // No worries about this line
                         break;
                     }
-
                 }
                 else if (next == SquareTypes.OpponentKing)
                 {
