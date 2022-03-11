@@ -147,7 +147,7 @@ namespace vergiBlue.Pieces
                 // TODO efficiency improvements
                 yield return SingleMoveFactory.CreateSoftTarget((column, row), (column - 1, nextRow));
             }
-            if (ValidPseudoCapturePosition(column + 1, nextRow, board, returnSoftTargets))
+            if (ValidPseudoCapturePosition(column + 1, nextRow, board))
             {
                 yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Queen);
                 if (allPromotions)

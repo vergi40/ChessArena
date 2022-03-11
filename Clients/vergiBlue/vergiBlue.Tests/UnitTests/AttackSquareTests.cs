@@ -188,6 +188,28 @@ namespace UnitTests
         }
 
         [TestMethod]
+        public void Cache_BishopPromotion()
+        {
+            var board = BoardFactory.CreateFromFen("8/PPPk4/8/8/8/8/4Kppp/8 w - - 0 1", out var whiteStarts);
+            var promotion = new SingleMove("c7", "c8") { PromotionType = PromotionPieceType.Bishop };
+            var next = BoardFactory.CreateFromMove(board, promotion);
+
+            // 8    B
+            // 7P P   k   
+            // 6     
+            // 5
+            // 4
+            // 3
+            // 2        K p p p
+            // 1
+            //  A B C D E F G H
+            var moves = next.GenerateMovesAndUpdateCache(false).ToList();
+
+            // d7c8 should be invalid
+            moves.Count.ShouldBe(6);
+        }
+
+        [TestMethod]
         public void Cache_PromotionKnight()
         {
             var fen = "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1";
