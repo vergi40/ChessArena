@@ -210,6 +210,55 @@ namespace UnitTests
         }
 
         [TestMethod]
+        public void Cache_r3k2r_h3g2()
+        {
+            // position fen "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1" moves e1f1 h3g2
+            // go perft 1
+            // f3g2: 1
+            // f1e1: 1
+            // f1g1: 1
+            // f1g2: 1
+            // 
+            // Nodes searched: 4
+            var board = BoardFactory.CreateFromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", out var whiteStarts);
+            board.ExecuteMove(SingleMoveFactory.Create("e1f1"));
+            board.ExecuteMove(SingleMoveFactory.Create("h3g2", true));
+
+            // 3          Q
+            // 2        B P p P  
+            // 1          K   R
+            //  A B C D E F G H
+            var moves = board.GenerateMovesAndUpdateCache(true).ToList();
+
+            // f3g2x missing
+            // KingDirectAttackMap.AllAttackers().ToList();
+            // Contains all promotions as different attackers
+            moves.Count.ShouldBe(4);
+        }
+
+        [TestMethod]
+        public void Cache_r3k2r_c7c5()
+        {
+            var board = BoardFactory.CreateFromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", out var whiteStarts);
+            board.ExecuteMove(SingleMoveFactory.Create("e1f1"));
+            board.ExecuteMove(SingleMoveFactory.Create("c7c5"));
+
+            // En passant
+            // 8r
+            // 7p   p p  
+            // 6b n     
+            // 5      P
+            //  A B C D E F G H
+            var moves = board.GenerateMovesAndUpdateCache(true).ToList();
+
+            // d5c6 missing
+            moves.Count.ShouldBe(46);
+
+            // TODO depth 4 fix missing
+            // Perft failed for [r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1] depth 4
+        }
+
+        [TestMethod]
         public void Cache_PromotionKnight()
         {
             var fen = "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1";

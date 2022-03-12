@@ -118,7 +118,7 @@ namespace vergiBlue.BoardModel.Subsystems
         {
             foreach (var sliderAttack in KingSliderAttack)
             {
-                if (sliderAttack.AttackLine.Contains(move.PrevPos) || move.EnPassant)
+                if (sliderAttack.AttackLine.Contains(move.PrevPos) || (sliderAttack.HasEnPassantPawnOpportunity && move.EnPassant))
                 {
                     // E.g. cannot move guarding pawn
                     // 7    
@@ -291,7 +291,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <summary>
         /// [capture target position][list of attacker positions]
         /// </summary>
-        public Dictionary<(int column, int row), List<(int column, int row)>> TargetAttackerDict { get; set; } = new();
+        public Dictionary<(int column, int row), HashSet<(int column, int row)>> TargetAttackerDict { get; set; } = new();
 
         public void Add(SingleMove move)
         {
@@ -303,7 +303,7 @@ namespace vergiBlue.BoardModel.Subsystems
             }
             else
             {
-                var attackerList = new List<(int column, int row)>();
+                var attackerList = new HashSet<(int column, int row)>();
                 attackerList.Add(move.PrevPos);
                 TargetAttackerDict.Add(move.NewPos, attackerList);
             }
