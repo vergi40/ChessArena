@@ -46,32 +46,32 @@ namespace vergiBlue.Pieces
             return RelativeStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board, bool returnSoftTargets = false)
         {
             var cur = CurrentPosition;
 
-            var moveRight = CanMoveTo((cur.column + 1, cur.row), board, true);
-            if (moveRight != null) yield return moveRight;
-
-            var move = CanMoveTo((cur.column + 1, cur.row + 1), board, true);
+            var move = CanMoveTo((cur.column + 1, cur.row), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column, cur.row + 1), board, true);
+            move = CanMoveTo((cur.column + 1, cur.row + 1), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column - 1, cur.row + 1), board, true);
+            move = CanMoveTo((cur.column, cur.row + 1), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            var moveLeft = CanMoveTo((cur.column - 1, cur.row), board, true);
-            if (moveLeft != null) yield return moveLeft;
-
-            move = CanMoveTo((cur.column - 1, cur.row - 1), board, true);
+            move = CanMoveTo((cur.column - 1, cur.row + 1), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column, cur.row - 1), board, true);
+            move = CanMoveTo((cur.column - 1, cur.row), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column + 1, cur.row - 1), board, true);
+            move = CanMoveTo((cur.column - 1, cur.row - 1), board, true, returnSoftTargets);
+            if (move != null) yield return move;
+
+            move = CanMoveTo((cur.column, cur.row - 1), board, true, returnSoftTargets);
+            if (move != null) yield return move;
+
+            move = CanMoveTo((cur.column + 1, cur.row - 1), board, true, returnSoftTargets);
             if (move != null) yield return move;
         }
         
@@ -82,7 +82,7 @@ namespace vergiBlue.Pieces
 
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
-            return Moves(board);
+            return Moves(board, true);
         }
     }
 }

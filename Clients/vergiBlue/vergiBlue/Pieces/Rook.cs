@@ -34,9 +34,9 @@ namespace vergiBlue.Pieces
             return RelativeStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board, bool returnSoftTargets = false)
         {
-            return RookMoves(board);
+            return RookMoves(board, returnSoftTargets);
         }
 
         public override PieceBase CreateCopy()
@@ -47,7 +47,7 @@ namespace vergiBlue.Pieces
 
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
-            return Moves(board);
+            return Moves(board, true);
         }
     }
 }

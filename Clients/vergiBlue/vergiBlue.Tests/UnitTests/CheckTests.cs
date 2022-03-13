@@ -46,30 +46,21 @@ namespace UnitTests
         {
             // Easy double rook checkmate
 
-            // 8R     K
-            // 7 R
+            // 8r     K
+            // 7 r
             // 6
-            // 5
+            // 5k
             // 4
             // 3
             // 2
             // 1
             //  ABCDEFGH
 
-            var board = BoardFactory.CreateEmptyBoard();
+            var board = BoardFactory.CreateFromPieces("a1k", "a8r", "b7r", "g8K");
             board.Shared.GameTurnCount = 20;
-            // 
-            var rookPositions = new List<string> { "a8", "b7" };
-            var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
-            CreateRooks(asTuples, board, true);
-
-            // 
-            var king = new King(false, "g8");
-            board.AddNew(king);
-            board.Kings = (null, king);
-
-            var player = LogicFactory.CreateForTest(true, board);
-            player.Board.IsCheckMate(true, false).ShouldBeTrue();
+            
+            //var player = LogicFactory.CreateForTest(true, board);
+            board.IsCheckMate(false, false).ShouldBeTrue();
 
         }
         [TestMethod]
@@ -197,10 +188,12 @@ namespace UnitTests
             board.AddNew(whiteKing);
 
             board.Kings = (whiteKing, blackKing);
+            board.InitializeSubSystems();
 
-            player.Board = BoardFactory.CreateClone(board);
-            opponent.Board = BoardFactory.CreateClone(board);
+            player.Board = BoardFactory.CreateClone(board, false);
+            opponent.Board = BoardFactory.CreateClone(board, false);
 
+            // TODO fails as the pawn capture is for the moment "valid" move
             var opponentMove = opponent.CreateMoveWithDepth(4);
             opponentMove.Move.EndPosition.ShouldBe("g7");
             Logger.LogMessage($"Test: {nameof(KingShouldMoveAwayFromEaten)}, diagnostics: {opponentMove.Diagnostics}");
@@ -292,6 +285,9 @@ namespace UnitTests
 
             var board = BoardFactory.CreateFromPieces(pieces);
             board.Strategic.EnPassantPossibility = "d6".ToTuple();
+
+            // Update since en passant wasn't used in attack cache yet
+            board.UpdateAttackCache(false);
 
             var moves = board.MoveGenerator.MovesQuick(true, true).ToList();
             

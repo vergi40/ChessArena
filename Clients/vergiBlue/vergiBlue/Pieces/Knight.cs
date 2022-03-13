@@ -33,32 +33,32 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board, bool returnSoftTargets)
         {
             var cur = CurrentPosition;
 
-            var move = CanMoveTo((cur.column - 1, cur.row + 2), board, true);
+            var move = CanMoveTo((cur.column - 1, cur.row + 2), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column + 1, cur.row + 2), board, true);
+            move = CanMoveTo((cur.column + 1, cur.row + 2), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column + 2, cur.row - 1), board, true);
+            move = CanMoveTo((cur.column + 2, cur.row - 1), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column + 2, cur.row + 1), board, true);
+            move = CanMoveTo((cur.column + 2, cur.row + 1), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column + 1, cur.row - 2), board, true);
+            move = CanMoveTo((cur.column + 1, cur.row - 2), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column - 1, cur.row - 2), board, true);
+            move = CanMoveTo((cur.column - 1, cur.row - 2), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column - 2, cur.row - 1), board, true);
+            move = CanMoveTo((cur.column - 2, cur.row - 1), board, true, returnSoftTargets);
             if (move != null) yield return move;
 
-            move = CanMoveTo((cur.column - 2, cur.row + 1), board, true);
+            move = CanMoveTo((cur.column - 2, cur.row + 1), board, true, returnSoftTargets);
             if (move != null) yield return move;
         }
 
@@ -67,9 +67,10 @@ namespace vergiBlue.Pieces
             return new Knight(IsWhite, CurrentPosition);
         }
 
+        [Obsolete("Directly implemented to pseudo moves")]
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
-            return Moves(board);
+            return Moves(board, true);
         }
     }
 }

@@ -39,6 +39,21 @@ namespace UnitTests
             }
         }
 
+        internal static void Assert_ContainsPositions(List<SingleMove> result, params (int, int)[] expected)
+        {
+            foreach (var (column, row) in expected)
+            {
+                var move = result.First(r => r.NewPos.column == column && r.NewPos.row == row);
+                move.ShouldNotBeNull();
+            }
+        }
+
+        internal static void Assert_ContainsPositions(List<SingleMove> result, params string[] expected)
+        {
+            var toTuple = expected.Select(p => p.ToTuple()).ToList();
+            Assert_ContainsPositions(result.Select(r => r.NewPos), toTuple);
+        }
+
         internal static void Assert_ContainsCaptures(List<SingleMove> result, params (int, int)[] expected)
         {
             foreach (var (column, row) in expected)

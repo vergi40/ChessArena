@@ -131,7 +131,9 @@ namespace vergiBlueDesktop.Views
         public ICommand SandboxCommand { get; set; }
         public ICommand FenCommand { get; set; }
         public ICommand ToggleWhiteAttackCommand { get; set; }
+        public ICommand ToggleWhiteSlideCommand { get; set; }
         public ICommand ToggleBlackAttackCommand { get; set; }
+        public ICommand ToggleBlackSlideCommand { get; set; }
 
         private GameSession _session { get; set; }
 

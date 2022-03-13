@@ -53,6 +53,19 @@ namespace vergiBlue.BoardModel
         IList<IPiece> InterfacePieces { get; }
 
         MoveGenerator MoveGenerator { get; }
+
+        /// <summary>
+        /// Either run this or <see cref="UpdateAttackCache"/> before next move to refresh attack cache
+        /// </summary>
+        IEnumerable<SingleMove> GenerateMovesAndUpdateCache(bool forWhite);
+
+        /// <summary>
+        /// Update attack squares and slide attacks for given color.
+        /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
+        /// </summary>
+        void UpdateAttackCache(bool updateWhiteAttacks);
+
+
         AttackSquareMapper AttackMapper { get; }
 
 
@@ -163,11 +176,6 @@ namespace vergiBlue.BoardModel
         /// </summary>
         IEnumerable<SingleMove> FilterOutIllegalMoves(IEnumerable<SingleMove> moves, bool isWhite);
 
-        /// <summary>
-        /// WARNING: Performance-heavy
-        /// </summary>
         IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker);
-        bool CanCastleToLeft(bool white);
-        bool CanCastleToRight(bool white);
     }
 }

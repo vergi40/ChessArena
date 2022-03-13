@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using CommonNetStandard;
 using CommonNetStandard.Interface;
 using log4net;
@@ -114,7 +115,8 @@ namespace vergiBlue.BoardModel
             if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
-                if(Shared.UseCachedAttackSquares)
+                MoveGenerator = new MoveGenerator(this, other.MoveGenerator);
+                if (Shared.UseCachedAttackSquares)
                 {
                     AttackMapper = other.AttackMapper.Clone(PieceList);
                 }
@@ -128,13 +130,13 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// Create board setup after move. Clone subsystems
+        /// Create board setup after move. Clone subsystems. Used in every depth - should be as fast as possible.
         /// </summary>
         public Board(IBoard other, SingleMove move)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
-            MoveGenerator = new MoveGenerator(this);
+            MoveGenerator = new MoveGenerator(this, other.MoveGenerator);
             AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);
@@ -159,6 +161,9 @@ namespace vergiBlue.BoardModel
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
 
             AttackMapper = new AttackSquareMapper(this);
+
+            UpdateAttackCache(true);
+            UpdateAttackCache(false);
         }
 
         private void InitializeFromReference(IBoard previous)
@@ -236,7 +241,24 @@ namespace vergiBlue.BoardModel
             Validator.ValidateMove(this, move);
             ExecuteMove(move);
         }
-        
+
+        public IEnumerable<SingleMove> GenerateMovesAndUpdateCache(bool forWhite)
+        {
+            return MoveGenerator.GenerateMovesAndUpdateCache(forWhite);
+        }
+
+        // GenerateMoves and ExecuteMove should be sequential
+
+        /// <summary>
+        /// Update attack squares and slide attacks for given color.
+        /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
+        /// </summary>
+        public void UpdateAttackCache(bool updateWhiteAttacks)
+        {
+            MoveGenerator.UpdateAttackCache(updateWhiteAttacks);
+        }
+
+
         public void ExecuteMove(SingleMove move)
         {
             BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
@@ -283,6 +305,7 @@ namespace vergiBlue.BoardModel
             }
 
             UpdatePosition(piece, move);
+            UpdateAttackCache(piece.IsWhite);
             
             // General every turn processes
             UpdateEndGameWeight();
@@ -497,7 +520,7 @@ namespace vergiBlue.BoardModel
 
             // Iterate all opponent moves and check is there any that doesn't have check when next player moves
             // TODO double-check that castling moves not needed to validate
-            var opponentMoves = MoveGenerator.MovesQuickWithoutCastling(!isWhiteOffensive, false);
+            var opponentMoves = MoveGenerator.GenerateMovesWithoutCastlingAndUpdateCache(!isWhiteOffensive);
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = BoardFactory.CreateFromMove(this, singleMove);
@@ -539,14 +562,16 @@ namespace vergiBlue.BoardModel
                 return isAttacked;
             }
 
-            foreach (var attackMove in GetAttackSquares(isWhiteOffensive))
+            var attackModel = MoveGenerator.GetAttacks(isWhiteOffensive);
+            if (attackModel.CaptureTargets.Contains(opponentKing.CurrentPosition))
             {
+                // TODO check diagnostics fundamentals changed
+                // Before: each check validation
+                // After: each actual check finding
                 Diagnostics.IncrementCheckCount();
-                if (attackMove == opponentKing.CurrentPosition)
-                {
-                    _isCheckForOffensivePrecalculated = true;
-                    return true;
-                }
+
+                _isCheckForOffensivePrecalculated = true;
+                return true;
             }
             
             return false;
@@ -652,89 +677,10 @@ namespace vergiBlue.BoardModel
         
         public IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker)
         {
-            // TODO separate method for capture moves and all moves
-            foreach (var move in MoveGenerator.AttackMoves(forWhiteAttacker))
+            foreach (var target in MoveGenerator.GetAttacks(forWhiteAttacker).CaptureTargets)
             {
-                yield return move.NewPos;
+                yield return target;
             }
         }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToLeft(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteLeftCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackLeftCastlingValid) return false;
-                row = 7;
-            }
-            
-            // Castling pieces are intact
-            var rook = ValueAt((0, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-            
-            // No other pieces on the way
-            if (ValueAt((1, row)) != null) return false;
-            if (ValueAt((2, row)) != null) return false;
-            if (ValueAt((3, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> {(2, row), (3, row), (4, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToRight(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteRightCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackRightCastlingValid) return false;
-                row = 7;
-            }
-
-            // Castling pieces are intact
-            var rook = ValueAt((7, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-
-            // No other pieces on the way
-            if (ValueAt((5, row)) != null) return false;
-            if (ValueAt((6, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> { (4, row), (5, row), (6, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
     }
 }

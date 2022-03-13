@@ -2,8 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems;
 
 
 namespace vergiBlue.Pieces
@@ -58,7 +60,9 @@ namespace vergiBlue.Pieces
         
 
         /// <summary>
-        /// If target position is empty or has opponent piece, return SingleMove. If own piece or outside board, return null.
+        /// If target position is empty or has opponent piece, return SingleMove. If outside board, return null. If own piece:
+        /// * Return soft targets: return the move
+        /// * Otherwise return null
         /// </summary>
         protected virtual SingleMove? CanMoveTo((int, int) target, IBoard board, bool validateBorders = false, bool returnSoftTargets = false)
         {
@@ -84,7 +88,7 @@ namespace vergiBlue.Pieces
         /// Each move the piece can make in current board setting
         /// </summary>
         /// <returns></returns>
-        public abstract IEnumerable<SingleMove> Moves(IBoard board);
+        public abstract IEnumerable<SingleMove> Moves(IBoard board, bool returnSoftTargets = false);
 
         /// <summary>
         /// Copy needs to be made with the derived class constructor so type matches
@@ -92,7 +96,7 @@ namespace vergiBlue.Pieces
         /// <returns></returns>
         public abstract PieceBase CreateCopy();
 
-        protected IEnumerable<SingleMove> RookMoves(IBoard board)
+        protected IEnumerable<SingleMove> RookMoves(IBoard board, bool returnSoftTargets = false)
         {
             var column = CurrentPosition.column;
             var row = CurrentPosition.row;
@@ -100,11 +104,11 @@ namespace vergiBlue.Pieces
             // Up
             for (int i = row + 1; i < 8; i++)
             {
-                var move = CanMoveTo((column, i), board);
+                var move = CanMoveTo((column, i), board, false, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -112,11 +116,11 @@ namespace vergiBlue.Pieces
             // Down
             for (int i = row - 1; i >= 0; i--)
             {
-                var move = CanMoveTo((column, i), board);
+                var move = CanMoveTo((column, i), board, false, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -124,11 +128,11 @@ namespace vergiBlue.Pieces
             // Right
             for (int i = column + 1; i < 8; i++)
             {
-                var move = CanMoveTo((i, row), board);
+                var move = CanMoveTo((i, row), board, false, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -136,11 +140,11 @@ namespace vergiBlue.Pieces
             // Left
             for (int i = column - 1; i >= 0; i--)
             {
-                var move = CanMoveTo((i, row), board);
+                var move = CanMoveTo((i, row), board, false, returnSoftTargets);
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -158,7 +162,7 @@ namespace vergiBlue.Pieces
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -170,7 +174,7 @@ namespace vergiBlue.Pieces
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -182,7 +186,7 @@ namespace vergiBlue.Pieces
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -194,7 +198,7 @@ namespace vergiBlue.Pieces
                 if (move != null)
                 {
                     yield return move;
-                    if (move.Capture) break;
+                    if (move.Capture || move.SoftTarget) break;
                 }
                 else break;
             }
@@ -205,19 +209,255 @@ namespace vergiBlue.Pieces
         /// </summary>
         /// <param name="board"></param>
         /// <returns></returns>
+        [Obsolete("Directly implemented to pseudo moves")]
         public abstract IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board);
 
         /// <summary>
-        /// List all capture moves for knowing possible attack squares.
-        /// "Pseudo" as the pawn captures are listed even though there is no opponent in target square
+        /// Pawn capturing positions, even if there is no opponent present
+        /// </summary>
+        public virtual IEnumerable<SingleMove> PawnPseudoCaptureMoves(IBoard board, bool returnSoftTargets)
+        {
+            return Enumerable.Empty<SingleMove>();
+        }
+
+        /// <summary>
+        /// Pawn normal forwarding and en passant
+        /// </summary>
+        public virtual IEnumerable<SingleMove> PawnNormalMoves(IBoard board)
+        {
+            return Enumerable.Empty<SingleMove>();
+        }
+
+        /// <summary>
+        /// Sliding attacker has line for king
+        /// </summary>
+        public bool TryFindPseudoKingCapture(IBoard board, out KingUnderSliderAttack attack)
+        {
+            attack = new KingUnderSliderAttack();
+            if (Identity == 'R')
+            {
+                if (TryCreateRookAttack(board, out attack))
+                {
+                    return true;
+                }
+            }
+            else if (Identity == 'B')
+            {
+                if (TryCreateBishopAttack(board, out attack))
+                {
+                    return true;
+                }
+            }
+            else if (Identity == 'Q')
+            {
+                if (TryCreateRookAttack(board, out attack))
+                {
+                    return true;
+                }
+                if (TryCreateBishopAttack(board, out attack))
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        enum SquareTypes
+        {
+            Empty,
+            OpponentKing,
+            Outside,
+            OpponentPiece,
+            OwnPiece
+        }
+
+        /// <summary>
+        /// 0: go on
+        /// 1: king
+        /// 2: outside
+        /// 3: own piece
+        /// </summary>
+        private SquareTypes IsKingOrOutside((int column, int row) target, IBoard board)
+        {
+            if (Validator.IsOutside(target)) return SquareTypes.Outside;
+
+            var valueAt = board.ValueAt(target);
+            if (valueAt == null)
+            {
+                return SquareTypes.Empty;
+            }
+            else if (valueAt.IsWhite != IsWhite && valueAt.Identity == 'K')
+            {
+                return SquareTypes.OpponentKing;
+            }
+            else if (valueAt.IsWhite == IsWhite)
+            {
+                return SquareTypes.OwnPiece;
+            }
+
+            return SquareTypes.OpponentPiece;
+        }
+
+        // TODO use unit vectors to check king direction 
+
+        /// <summary>
+        /// Iterate to one direction and collect square information.
         /// </summary>
         /// <param name="board"></param>
+        /// <param name="directionUnit">E.g. (+1, -1)</param>
+        /// <param name="attack"></param>
         /// <returns></returns>
-        public virtual IEnumerable<SingleMove> PseudoCaptureMoves(IBoard board)
+        private bool TryBuildKingSliderAttack(IBoard board, (int column, int row) directionUnit, out KingUnderSliderAttack attack)
         {
-            // Probably should have individual override for each function. 
-            // Now only for pawn
-            return Moves(board);
+            var (column, row) = CurrentPosition;
+            attack = new KingUnderSliderAttack
+            {
+                Attacker = CurrentPosition,
+                WhiteAttacking = IsWhite
+            };
+            var kingFound = false;
+            var guardPieceCount = 0;
+
+            var attackHorizontalWithEnPassantPossibility = false;
+            var attackDiagonalWithEnPassantPossibility = false;
+            var enPassantTarget = (-1, -1);
+            var enPassant = board.Strategic.EnPassantPossibility;
+            if (enPassant != null)
+            {
+                var pawnRow = enPassant.Value.row == 2 ? 3 : 4;
+                var pawnColumn = enPassant.Value.column;
+                enPassantTarget = (pawnColumn, pawnRow);
+                if(directionUnit.column * directionUnit.row == 0)
+                {
+                    attackHorizontalWithEnPassantPossibility = true;
+                }
+                else
+                {
+                    attackDiagonalWithEnPassantPossibility = true;
+                }
+
+            }
+
+            for (int i = 1; i < 8; i++)
+            {
+                var nextColumn = column + i * directionUnit.column;
+                var nextRow = row + i * directionUnit.row;
+                var next = IsKingOrOutside((nextColumn, nextRow), board);
+                if (next == SquareTypes.Outside) break;
+                else if (next == SquareTypes.OwnPiece && !kingFound)
+                {
+                    // niche case
+                    // En passant will leave king open
+                    // 8K     K  
+                    // 7   
+                    // 6      o
+                    // 5K   P p      r     
+                    // 4
+                    // 3         b
+                    // 2
+                    // 1      r
+                    //  A B C D E F G H
+                    if ((nextColumn, nextRow) == enPassantTarget)
+                    {
+                        if (attackHorizontalWithEnPassantPossibility)
+                        {
+                            // Vertical is fine
+                            if (Math.Abs(directionUnit.column) == 1)
+                            {
+                                attack.AttackLine.Add((nextColumn, nextRow));
+                                attack.HasEnPassantPawnOpportunity = true;
+                            }
+                            else
+                            {
+                                // No worries about this line
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            // Any diagonal with enpassant captured is a risk
+                            attack.AttackLine.Add((nextColumn, nextRow));
+                            attack.HasEnPassantPawnOpportunity = true;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else if (next == SquareTypes.OpponentKing)
+                {
+                    attack.AttackLine.Add((nextColumn, nextRow));
+                    attack.King = (nextColumn, nextRow);
+                    kingFound = true;
+                }
+                else if (next == SquareTypes.OpponentPiece && !kingFound)
+                {
+                    guardPieceCount++;
+                    attack.AttackLine.Add((nextColumn, nextRow));
+                    attack.GuardPiece = (nextColumn, nextRow);
+                }
+                else
+                {
+                    if (kingFound)
+                    {
+                        attack.BehindKing.Add((nextColumn, nextRow));
+                    }
+                    else
+                    {
+                        attack.AttackLine.Add((nextColumn, nextRow));
+                    }
+                }
+            }
+
+            if (!kingFound) return false;
+            if (guardPieceCount > 1) return false;
+            return true;
+        }
+
+        private bool TryCreateRookAttack(IBoard board, out KingUnderSliderAttack attack)
+        {
+            if (TryBuildKingSliderAttack(board, (1, 0), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (-1, 0), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (0, 1), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (0, -1), out attack))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryCreateBishopAttack(IBoard board, out KingUnderSliderAttack attack)
+        {
+            if (TryBuildKingSliderAttack(board, (1, 1), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (-1, 1), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (1, -1), out attack))
+            {
+                return true;
+            }
+            if (TryBuildKingSliderAttack(board, (-1, -1), out attack))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
