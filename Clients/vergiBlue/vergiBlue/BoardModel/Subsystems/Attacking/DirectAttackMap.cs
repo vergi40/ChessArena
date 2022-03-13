@@ -12,6 +12,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
 
         /// <summary>
         /// [attacker position][capture target position]
+        /// Only used for post-update cleaning
         /// </summary>
         private Dictionary<(int column, int row), (int column, int row)> _attackerTargetDict { get; set; } = new();
 

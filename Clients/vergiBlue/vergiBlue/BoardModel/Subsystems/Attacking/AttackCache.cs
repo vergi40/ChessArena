@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems.Attacking
@@ -33,7 +34,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
         /// <summary>
         /// Own pieces that are guarded by other piece. Use for validating if king can capture
         /// </summary>
-        private HashSet<(int column, int row)> GuardedMap { get; } = new();
+        private GuardedMap Guarded { get; } = new();
 
         /// <summary>
         /// All squares that had capture opportunity. Includes pawn attacks.
@@ -54,7 +55,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
             {
                 if (pseudoAttack.SoftTarget)
                 {
-                    GuardedMap.Add(pseudoAttack.NewPos);
+                    Guarded.Add(pseudoAttack);
                 }
                 else if (pseudoAttack.NewPos == opponentKing)
                 {
@@ -133,7 +134,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
                     return false;
                 }
 
-                if (GuardedMap.Contains(move.NewPos))
+                if (Guarded.IsGuarded(move.NewPos))
                 {
                     // Illegal as the guard will capture king
                     return false;
@@ -174,7 +175,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
                 if (attacker == move.NewPos)
                 {
                     // King can't capture guarded piece
-                    if (piece.Identity == 'K' && GuardedMap.Contains(attacker))
+                    if (piece.Identity == 'K' && Guarded.IsGuarded(attacker))
                     {
                         return false;
                     }
@@ -203,7 +204,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
                 return true;
             }
 
-            if (GuardedMap.Contains(move.NewPos))
+            if (Guarded.IsGuarded(move.NewPos))
             {
                 return true;
             }
@@ -240,8 +241,11 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
             KingDirectAttackMap.Remove(move);
             KingSliderAttacks.RemoveAll(a => a.Attacker.Equals(prevPos));
 
-            // GuardedMap?
+            Guarded.Remove(prevPos);
             CaptureTargets.Remove(move.NewPos);
+
+            // TODO inspect each slider attack if it needs updating
+            // TODO castling
 
             // Now generate attacks from new position
             var (pseudoAttackMoves, sliderAttack, opponentKing) = moveGenerator.MovesAndSlidersForPiece(piece);
@@ -250,9 +254,10 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
             {
                 if (pseudoAttack.SoftTarget)
                 {
-                    GuardedMap.Add(pseudoAttack.NewPos);
+                    Guarded.Add(pseudoAttack);
+                    continue;
                 }
-                else if (pseudoAttack.NewPos == opponentKing)
+                if (pseudoAttack.NewPos == opponentKing)
                 {
                     KingDirectAttackMap.Add(pseudoAttack);
                 }
@@ -260,9 +265,10 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
                 {
                     DirectAttackMap.Add(pseudoAttack);
                 }
+
+                CaptureTargets.Add(pseudoAttack.NewPos);
             }
 
-            CaptureTargets = DirectAttackMap.AllTargets().Concat(KingDirectAttackMap.AllTargets()).ToHashSet();
             if(sliderAttack != null) KingSliderAttacks.Add(sliderAttack);
         }
     }
