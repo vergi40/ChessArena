@@ -55,7 +55,7 @@ namespace vergiBlue.BoardModel
         MoveGeneratorV2 MoveGenerator { get; }
 
         /// <summary>
-        /// Either run this or <see cref="UpdateAttackCache"/> before next move to refresh attack cache
+        /// Either run this or <see cref="UpdateAttackCacheSlow"/> before next move to refresh attack cache
         /// </summary>
         IEnumerable<SingleMove> GenerateMovesAndUpdateCache(bool forWhite);
 
@@ -63,7 +63,7 @@ namespace vergiBlue.BoardModel
         /// Update attack squares and slide attacks for given color.
         /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
         /// </summary>
-        void UpdateAttackCache(bool updateWhiteAttacks);
+        void UpdateAttackCacheSlow(bool updateWhiteAttacks);
 
 
         AttackSquareMapper AttackMapper { get; }

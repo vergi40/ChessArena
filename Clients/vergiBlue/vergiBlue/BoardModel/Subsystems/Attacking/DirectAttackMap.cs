@@ -10,6 +10,11 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
         /// </summary>
         public Dictionary<(int column, int row), HashSet<(int column, int row)>> TargetAttackerDict { get; set; } = new();
 
+        /// <summary>
+        /// [attacker position][capture target position]
+        /// </summary>
+        private Dictionary<(int column, int row), (int column, int row)> _attackerTargetDict { get; set; } = new();
+
         public void Add(SingleMove move)
         {
             // key = new position
@@ -20,10 +25,11 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
             }
             else
             {
-                var attackerList = new HashSet<(int column, int row)>();
-                attackerList.Add(move.PrevPos);
+                var attackerList = new HashSet<(int column, int row)> { move.PrevPos };
                 TargetAttackerDict.Add(move.NewPos, attackerList);
             }
+
+            _attackerTargetDict.TryAdd(move.PrevPos, move.NewPos);
         }
 
         public IEnumerable<(int column, int row)> AllTargets()
@@ -47,6 +53,18 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
             foreach (var attacker in TargetAttackerDict[target])
             {
                 yield return attacker;
+            }
+        }
+
+        /// <summary>
+        /// Done move from previous pos to possibly capture target pos
+        /// </summary>
+        /// <param name="move"></param>
+        public void Remove(SingleMove move)
+        {
+            if (_attackerTargetDict.TryGetValue(move.PrevPos, out var target))
+            {
+                TargetAttackerDict.Remove(target);
             }
         }
     }

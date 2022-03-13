@@ -189,7 +189,7 @@ namespace vergiBlue.Logic
             move = Board.CollectMoveProperties(move);
 
             Board.ExecuteMoveWithValidation(move);
-            Board.UpdateAttackCache(!IsPlayerWhite);
+            Board.UpdateAttackCacheSlow(!IsPlayerWhite);
             GameHistory.Add(opponentMove);
             Board.Shared.GameTurnCount++;
         }

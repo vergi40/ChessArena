@@ -162,8 +162,8 @@ namespace vergiBlue.BoardModel
 
             AttackMapper = new AttackSquareMapper(this);
 
-            UpdateAttackCache(true);
-            UpdateAttackCache(false);
+            UpdateAttackCacheSlow(true);
+            UpdateAttackCacheSlow(false);
         }
 
         private void InitializeFromReference(IBoard previous)
@@ -253,9 +253,18 @@ namespace vergiBlue.BoardModel
         /// Update attack squares and slide attacks for given color.
         /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
         /// </summary>
-        public void UpdateAttackCache(bool updateWhiteAttacks)
+        [Obsolete("Use UpdateAttackCache instead, if move known")]
+        public void UpdateAttackCacheSlow(bool updateWhiteAttacks)
         {
-            MoveGenerator.UpdateAttackCache(updateWhiteAttacks);
+            MoveGenerator.UpdateAttackCacheSlow(updateWhiteAttacks);
+        }
+
+        /// <summary>
+        /// Update cache after move
+        /// </summary>
+        public void UpdateAttackCache(SingleMove move)
+        {
+            MoveGenerator.UpdateAttackCache(move);
         }
 
 
@@ -305,7 +314,7 @@ namespace vergiBlue.BoardModel
             }
 
             UpdatePosition(piece, move);
-            UpdateAttackCache(piece.IsWhite);
+            UpdateAttackCache(move);
             
             // General every turn processes
             UpdateEndGameWeight();

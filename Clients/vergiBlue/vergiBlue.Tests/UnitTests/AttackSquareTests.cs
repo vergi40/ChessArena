@@ -63,7 +63,7 @@ namespace UnitTests
             var move = new SingleMove((4, 1), (4, 2));
             board.ExecuteMove(move);
 
-            board.UpdateAttackCache(true);
+            board.UpdateAttackCacheSlow(true);
 
             var targets = board.MoveGenerator.GetAttacks(true).CaptureTargets;
 
@@ -157,7 +157,7 @@ namespace UnitTests
             board.Strategic.EnPassantPossibility = "d6".ToTuple();
 
             // Re-generate since en passant possibility wasn't applied
-            board.UpdateAttackCache(false);
+            board.UpdateAttackCacheSlow(false);
 
             var moves = board.GenerateMovesAndUpdateCache(true).ToList();
             moves.ShouldNotContain(m => m.EnPassant);
@@ -181,7 +181,7 @@ namespace UnitTests
             board.Strategic.EnPassantPossibility = "d6".ToTuple();
 
             // Re-generate since en passant possibility wasn't applied
-            board.UpdateAttackCache(false);
+            board.UpdateAttackCacheSlow(false);
 
             var moves = board.GenerateMovesAndUpdateCache(true).ToList();
             moves.ShouldNotContain(m => m.EnPassant);

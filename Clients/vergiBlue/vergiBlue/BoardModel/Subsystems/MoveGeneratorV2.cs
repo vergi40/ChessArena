@@ -2,6 +2,7 @@
 using System.Linq;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel.Subsystems.Attacking;
+using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
@@ -170,7 +171,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
         /// </summary>
         /// <param name="updateWhiteAttacks"></param>
-        public void UpdateAttackCache(bool updateWhiteAttacks)
+        public void UpdateAttackCacheSlow(bool updateWhiteAttacks)
         {
             // TODO simplify
             _ = GenerateMovesAndUpdateCache(updateWhiteAttacks).ToList();
@@ -328,6 +329,43 @@ namespace vergiBlue.BoardModel.Subsystems
         {
             var attackModel = GetAttacks(forWhiteAttacker);
             return attackModel.CaptureTargets;
+        }
+
+        public void UpdateAttackCache(SingleMove move)
+        {
+            var piece = _board.ValueAtDefinitely(move.NewPos);
+            var cache = GetAttacks(piece.IsWhite);
+            cache.UpdateAfterMove(move, piece, this);
+        }
+
+        public (List<SingleMove> attackMoves, SliderAttack? sliderAttack, (int column, int row) opponentKing) MovesAndSlidersForPiece(PieceBase piece)
+        {
+            var forWhite = piece.IsWhite;
+            var attackMoves = new List<SingleMove>();
+            SliderAttack? sliderAttack = null;
+
+            if (piece.Identity == 'P')
+            {
+                foreach (var captureMove in piece.PawnPseudoCaptureMoves(_board, true))
+                {
+                    attackMoves.Add(captureMove);
+                }
+            }
+            else
+            {
+                if (piece.TryFindPseudoKingCapture(_board, out var kingAttack))
+                {
+                    sliderAttack = kingAttack;
+                }
+
+                foreach (var singleMove in piece.Moves(_board, true))
+                {
+                    attackMoves.Add(singleMove);
+                }
+            }
+
+            var opponentKing = GetKingLocationOrDefault(!forWhite);
+            return (attackMoves, sliderAttack, opponentKing);
         }
     }
 }

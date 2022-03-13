@@ -123,7 +123,7 @@ namespace vergiBlueDesktop
             Session.TurnChanged();
 
             // Update attack squares
-            Session.Board.UpdateAttackCache(Session.IsWhiteTurn);
+            Session.Board.UpdateAttackCacheSlow(Session.IsWhiteTurn);
 
             if (Session.IsWhiteTurn != Session.PlayerIsWhite)
             {

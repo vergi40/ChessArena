@@ -222,5 +222,48 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
 
             return result;
         }
+
+        public void UpdateAfterMove(SingleMove move, PieceBase piece, MoveGeneratorV2 moveGenerator)
+        {
+            // Move = already done move
+
+            // Remove old references
+
+            // private DirectAttackMap DirectAttackMap { get; } = new DirectAttackMap();
+            // private DirectAttackMap KingDirectAttackMap { get; } = new DirectAttackMap();
+            // private List<SliderAttack> KingSliderAttacks { get; } = new();
+            // private HashSet<(int column, int row)> GuardedMap { get; } = new();
+            // public HashSet<(int column, int row)> CaptureTargets { get; set; } = new();
+            var prevPos = move.PrevPos;
+
+            DirectAttackMap.Remove(move);
+            KingDirectAttackMap.Remove(move);
+            KingSliderAttacks.RemoveAll(a => a.Attacker.Equals(prevPos));
+
+            // GuardedMap?
+            CaptureTargets.Remove(move.NewPos);
+
+            // Now generate attacks from new position
+            var (pseudoAttackMoves, sliderAttack, opponentKing) = moveGenerator.MovesAndSlidersForPiece(piece);
+            
+            foreach (var pseudoAttack in pseudoAttackMoves)
+            {
+                if (pseudoAttack.SoftTarget)
+                {
+                    GuardedMap.Add(pseudoAttack.NewPos);
+                }
+                else if (pseudoAttack.NewPos == opponentKing)
+                {
+                    KingDirectAttackMap.Add(pseudoAttack);
+                }
+                else
+                {
+                    DirectAttackMap.Add(pseudoAttack);
+                }
+            }
+
+            CaptureTargets = DirectAttackMap.AllTargets().Concat(KingDirectAttackMap.AllTargets()).ToHashSet();
+            if(sliderAttack != null) KingSliderAttacks.Add(sliderAttack);
+        }
     }
 }
