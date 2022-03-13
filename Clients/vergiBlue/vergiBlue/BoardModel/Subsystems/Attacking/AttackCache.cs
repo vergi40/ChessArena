@@ -248,7 +248,8 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
             // TODO castling
 
             // Now generate attacks from new position
-            var (pseudoAttackMoves, sliderAttack, opponentKing) = moveGenerator.MovesAndSlidersForPiece(piece);
+            var (pseudoAttackMoves, sliderAttack, opponentKing) = moveGenerator.AttacksAndSlidersForPiece(piece, move);
+            
             
             foreach (var pseudoAttack in pseudoAttackMoves)
             {

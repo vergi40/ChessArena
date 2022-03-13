@@ -338,7 +338,7 @@ namespace vergiBlue.BoardModel.Subsystems
             cache.UpdateAfterMove(move, piece, this);
         }
 
-        public (List<SingleMove> attackMoves, SliderAttack? sliderAttack, (int column, int row) opponentKing) MovesAndSlidersForPiece(PieceBase piece)
+        public (List<SingleMove> attackMoves, SliderAttack? sliderAttack, (int column, int row) opponentKing) AttacksAndSlidersForPiece(PieceBase piece, SingleMove move)
         {
             var forWhite = piece.IsWhite;
             var attackMoves = new List<SingleMove>();
@@ -362,6 +362,21 @@ namespace vergiBlue.BoardModel.Subsystems
                 {
                     attackMoves.Add(singleMove);
                 }
+            }
+
+            if (move.Castling)
+            {
+                var (newColumn, newRow) = move.NewPos;
+                var rookColumn = newColumn + 1;
+                if (move.NewPos.column > move.PrevPos.column)
+                {
+                    rookColumn = newColumn - 1;
+                }
+
+                var rook = _board.ValueAtDefinitely((rookColumn, newRow));
+                var (rookMoves, rookSlider, _) = AttacksAndSlidersForPiece(rook, SingleMoveFactory.CreateEmpty());
+                attackMoves.AddRange(rookMoves);
+                sliderAttack = rookSlider;
             }
 
             var opponentKing = GetKingLocationOrDefault(!forWhite);
