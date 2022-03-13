@@ -6,6 +6,7 @@ using System.Reflection.Metadata;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
+using vergiBlue.BoardModel.Subsystems.Attacking;
 
 
 namespace vergiBlue.Pieces
@@ -231,9 +232,9 @@ namespace vergiBlue.Pieces
         /// <summary>
         /// Sliding attacker has line for king
         /// </summary>
-        public bool TryFindPseudoKingCapture(IBoard board, out KingUnderSliderAttack attack)
+        public bool TryFindPseudoKingCapture(IBoard board, out SliderAttack attack)
         {
-            attack = new KingUnderSliderAttack();
+            attack = new SliderAttack();
             if (Identity == 'R')
             {
                 if (TryCreateRookAttack(board, out attack))
@@ -308,10 +309,10 @@ namespace vergiBlue.Pieces
         /// <param name="directionUnit">E.g. (+1, -1)</param>
         /// <param name="attack"></param>
         /// <returns></returns>
-        private bool TryBuildKingSliderAttack(IBoard board, (int column, int row) directionUnit, out KingUnderSliderAttack attack)
+        private bool TryBuildKingSliderAttack(IBoard board, (int column, int row) directionUnit, out SliderAttack attack)
         {
             var (column, row) = CurrentPosition;
-            attack = new KingUnderSliderAttack
+            attack = new SliderAttack
             {
                 Attacker = CurrentPosition,
                 WhiteAttacking = IsWhite
@@ -320,7 +321,6 @@ namespace vergiBlue.Pieces
             var guardPieceCount = 0;
 
             var attackHorizontalWithEnPassantPossibility = false;
-            var attackDiagonalWithEnPassantPossibility = false;
             var enPassantTarget = (-1, -1);
             var enPassant = board.Strategic.EnPassantPossibility;
             if (enPassant != null)
@@ -332,11 +332,6 @@ namespace vergiBlue.Pieces
                 {
                     attackHorizontalWithEnPassantPossibility = true;
                 }
-                else
-                {
-                    attackDiagonalWithEnPassantPossibility = true;
-                }
-
             }
 
             for (int i = 1; i < 8; i++)
@@ -416,7 +411,7 @@ namespace vergiBlue.Pieces
             return true;
         }
 
-        private bool TryCreateRookAttack(IBoard board, out KingUnderSliderAttack attack)
+        private bool TryCreateRookAttack(IBoard board, out SliderAttack attack)
         {
             if (TryBuildKingSliderAttack(board, (1, 0), out attack))
             {
@@ -438,7 +433,7 @@ namespace vergiBlue.Pieces
             return false;
         }
 
-        private bool TryCreateBishopAttack(IBoard board, out KingUnderSliderAttack attack)
+        private bool TryCreateBishopAttack(IBoard board, out SliderAttack attack)
         {
             if (TryBuildKingSliderAttack(board, (1, 1), out attack))
             {

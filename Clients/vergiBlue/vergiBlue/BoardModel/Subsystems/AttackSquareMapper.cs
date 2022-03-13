@@ -19,6 +19,7 @@ namespace vergiBlue.BoardModel.SubSystems
     ///
     /// Class provides fast dict-based or array-based methods to query square status or show all squares. 
     /// </summary>
+    [Obsolete("Use Attack cache instead")]
     public class AttackSquareMapper
     {
         /// <summary>

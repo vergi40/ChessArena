@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using vergiBlue.Algorithms;
+using vergiBlue.BoardModel.Subsystems.Attacking;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems
@@ -191,7 +192,7 @@ namespace vergiBlue.BoardModel.Subsystems
         {
             var validMoves = new List<SingleMove>();
             var attackMoves = new List<SingleMove>();
-            var lines = new List<KingUnderSliderAttack>();
+            var sliderAttacks = new List<SliderAttack>();
             // TODO list version for main moves generation, ienumerable version for quick generation
 
             var attacksModel = GetAttacks(!forWhite);
@@ -234,7 +235,7 @@ namespace vergiBlue.BoardModel.Subsystems
                 {
                     if (piece.TryFindPseudoKingCapture(_board, out var kingAttack))
                     {
-                        lines.Add(kingAttack);
+                        sliderAttacks.Add(kingAttack);
                     }
 
                     foreach (var singleMove in piece.Moves(_board, true))
@@ -258,11 +259,11 @@ namespace vergiBlue.BoardModel.Subsystems
 
             if (forWhite)
             {
-                WhiteAttackCache = new AttackCache(attackMoves, lines, opponentKing);
+                WhiteAttackCache = new AttackCache(attackMoves, sliderAttacks, opponentKing);
             }
             else
             {
-                BlackAttackCache = new AttackCache(attackMoves, lines, opponentKing);
+                BlackAttackCache = new AttackCache(attackMoves, sliderAttacks, opponentKing);
             }
 
             return validMoves;
