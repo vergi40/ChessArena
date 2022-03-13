@@ -80,7 +80,7 @@ namespace vergiBlue.BoardModel
         /// </summary>
         public bool DebugPostCheckMate { get; set; }
 
-        public MoveGenerator MoveGenerator { get; }
+        public MoveGeneratorV2 MoveGenerator { get; }
         public AttackSquareMapper AttackMapper { get; private set; }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace vergiBlue.BoardModel
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
-            MoveGenerator = new MoveGenerator(this);
+            MoveGenerator = MoveGeneratorFactory.Create(this);
             AttackMapper = new AttackSquareMapper();
 
             Shared = new SharedData();
@@ -104,7 +104,7 @@ namespace vergiBlue.BoardModel
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
-            MoveGenerator = new MoveGenerator(this);
+            MoveGenerator = MoveGeneratorFactory.Create(this);
             AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);
@@ -115,7 +115,7 @@ namespace vergiBlue.BoardModel
             if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
-                MoveGenerator = new MoveGenerator(this, other.MoveGenerator);
+                MoveGenerator = MoveGeneratorFactory.Create(this, other.MoveGenerator);
                 if (Shared.UseCachedAttackSquares)
                 {
                     AttackMapper = other.AttackMapper.Clone(PieceList);
@@ -136,7 +136,7 @@ namespace vergiBlue.BoardModel
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
-            MoveGenerator = new MoveGenerator(this, other.MoveGenerator);
+            MoveGenerator = MoveGeneratorFactory.Create(this, other.MoveGenerator);
             AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);

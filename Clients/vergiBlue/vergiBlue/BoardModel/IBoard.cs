@@ -52,7 +52,7 @@ namespace vergiBlue.BoardModel
         /// </summary>
         IList<IPiece> InterfacePieces { get; }
 
-        MoveGenerator MoveGenerator { get; }
+        MoveGeneratorV2 MoveGenerator { get; }
 
         /// <summary>
         /// Either run this or <see cref="UpdateAttackCache"/> before next move to refresh attack cache

@@ -1,13 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel.Subsystems.Attacking;
-using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
-    public class MoveGenerator
+    public static class MoveGeneratorFactory
+    {
+        public static MoveGeneratorV2 Create(IBoard board) => new MoveGeneratorV2(board);
+        public static MoveGeneratorV2 Create(IBoard board, MoveGeneratorV2 other) => new MoveGeneratorV2(board, other);
+    }
+
+    /// <summary>
+    /// Move generation based on previous turn attacks cached
+    /// </summary>
+    public class MoveGeneratorV2
     {
         private IBoard _board { get; }
 
@@ -18,7 +25,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// Pieces not known - no attack cache
         /// </summary>
         /// <param name="board"></param>
-        public MoveGenerator(IBoard board)
+        public MoveGeneratorV2(IBoard board)
         {
             _board = board;
 
@@ -31,7 +38,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// </summary>
         /// <param name="board"></param>
         /// <param name="other"></param>
-        public MoveGenerator(IBoard board, MoveGenerator other)
+        public MoveGeneratorV2(IBoard board, MoveGeneratorV2 other)
         {
             _board = board;
 
