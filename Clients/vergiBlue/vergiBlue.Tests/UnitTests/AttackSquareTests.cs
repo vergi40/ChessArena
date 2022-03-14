@@ -8,6 +8,17 @@ using vergiBlue.BoardModel.SubSystems;
 
 namespace UnitTests
 {
+    // Board template
+    // 8
+    // 7
+    // 6
+    // 5
+    // 4
+    // 3
+    // 2
+    // 1
+    //  A B C D E F G H
+
     [TestClass]
     public class AttackSquareTests
     {
@@ -359,6 +370,26 @@ namespace UnitTests
 
             var kingMoves = board.GenerateMovesAndUpdateCache(true).ToList();
             kingMoves.ShouldNotContain(m => m.NewPos.Equals("f2".ToTuple()));
+        }
+
+        [TestMethod]
+        public void Slider_AfterObstacleMovedAway_ShouldCheck()
+        {
+            // 8
+            // 7      x
+            // 6k     P   R
+            // 5   
+            // 4      x
+            // 3      P
+            // 2        B
+            // 1K
+            //  A B C D E F G H
+            var startBoard = BoardFactory.CreateFromPieces("a1K", "a6k", "d3P", "d6P", "e2B", "f6R");
+
+            var caseBishop = BoardFactory.CreateFromMove(startBoard, SingleMoveFactory.Create("d3d4"));
+
+            var moves = caseBishop.GenerateMovesAndUpdateCache(false);
+            moves.ShouldNotContain(m => m.NewPos.Equals("b5".ToTuple()));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace vergiBlue.BoardModel.Subsystems.Attacking
 {
@@ -65,6 +66,19 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
                     _guardedDict.Remove(guardedPosition);
                 }
             }
+        }
+
+        public GuardedMap Clone()
+        {
+            var map = new GuardedMap();
+            map._guardedDict = _guardedDict.ToDictionary(
+                item => item.Key,
+                item => new HashSet<(int column, int row)>(item.Value));
+
+            map._guardDict = _guardDict.ToDictionary(
+                item => item.Key,
+                item => new HashSet<(int column, int row)>(item.Value));
+            return map;
         }
     }
 }

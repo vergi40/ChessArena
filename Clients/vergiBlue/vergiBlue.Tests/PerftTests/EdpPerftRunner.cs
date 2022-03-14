@@ -25,7 +25,7 @@ namespace PerftTests
 
 
         [Test]
-        public void RunTestSuite([Range(0, 125)] int index, [Range(1,4)] int depth)
+        public void RunTestSuite([Range(0, 125)] int index, [Range(1,3)] int depth)
         {
             var testCase = ReadTestCase(index);
             var result = Perft.PerftRec(testCase.Board, depth, testCase.WhiteStarts);

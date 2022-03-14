@@ -188,5 +188,25 @@ namespace vergiBlue.BoardModel.Subsystems
                 }
             }
         }
+
+        public static ((int,int) rookPrev,(int,int) rookNew) GetRookPositionsFromMove(SingleMove moveExecuted)
+        {
+            if (!moveExecuted.Castling)
+                throw new ArgumentException("Cannot retrieve rook positions from non-castling move");
+
+            var rookRow = moveExecuted.NewPos.row;
+            if (moveExecuted.NewPos.column > moveExecuted.PrevPos.column)
+            {
+                var rookPrev = (7, rookRow);
+                var rookNew = (5, rookRow);
+                return (rookPrev, rookNew);
+            }
+            else
+            {
+                var rookPrev = (0, rookRow);
+                var rookNew = (3, rookRow);
+                return (rookPrev, rookNew);
+            }
+        }
     }
 }

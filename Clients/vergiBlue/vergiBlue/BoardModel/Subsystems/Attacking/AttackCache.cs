@@ -19,22 +19,22 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
         /// <summary>
         /// All direct captures excl. king attacks
         /// </summary>
-        private DirectAttackMap DirectAttackMap { get; } = new DirectAttackMap();
+        private DirectAttackMap DirectAttackMap { get; set; } = new DirectAttackMap();
 
         /// <summary>
         /// All direct king attacks
         /// </summary>
-        private DirectAttackMap KingDirectAttackMap { get; } = new DirectAttackMap();
+        private DirectAttackMap KingDirectAttackMap { get; set; } = new DirectAttackMap();
 
         /// <summary>
         /// All attacks or attack possibilities (with piece in the way) to king by sliding piece
         /// </summary>
-        private List<SliderAttack> KingSliderAttacks { get; } = new();
+        private List<SliderAttack> KingSliderAttacks { get; set; } = new();
 
         /// <summary>
         /// Own pieces that are guarded by other piece. Use for validating if king can capture
         /// </summary>
-        private GuardedMap Guarded { get; } = new();
+        private GuardedMap Guarded { get; set; } = new();
 
         /// <summary>
         /// All squares that had capture opportunity. Includes pawn attacks.
@@ -51,13 +51,34 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
 
         public AttackCache(List<SingleMove> pseudoAttackMoves, List<SliderAttack> kingSliderAttacks, (int column, int row) opponentKing)
         {
+            AddToCache(pseudoAttackMoves, kingSliderAttacks, opponentKing);
+        }
+
+        /// <summary>
+        /// Deep clone the cache
+        /// </summary>
+        public AttackCache Clone()
+        {
+            var cache = new AttackCache();
+            cache.DirectAttackMap = DirectAttackMap.Clone();
+            cache.KingDirectAttackMap = KingDirectAttackMap.Clone();
+            cache.Guarded = Guarded.Clone();
+            cache.KingSliderAttacks = new List<SliderAttack>(KingSliderAttacks);
+            cache.CaptureTargets = new HashSet<(int column, int row)>(CaptureTargets);
+            return cache;
+        }
+
+        private void AddToCache(List<SingleMove> pseudoAttackMoves, List<SliderAttack> sliderAttacks,
+            (int column, int row) opponentKing)
+        {
             foreach (var pseudoAttack in pseudoAttackMoves)
             {
                 if (pseudoAttack.SoftTarget)
                 {
                     Guarded.Add(pseudoAttack);
+                    continue;
                 }
-                else if (pseudoAttack.NewPos == opponentKing)
+                if (pseudoAttack.NewPos == opponentKing)
                 {
                     KingDirectAttackMap.Add(pseudoAttack);
                 }
@@ -68,8 +89,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
             }
 
             CaptureTargets = DirectAttackMap.AllTargets().Concat(KingDirectAttackMap.AllTargets()).ToHashSet();
-
-            KingSliderAttacks = kingSliderAttacks;
+            KingSliderAttacks.AddRange(sliderAttacks);
         }
 
         /// <summary>
@@ -224,53 +244,62 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
             return result;
         }
 
-        public void UpdateAfterMove(SingleMove move, PieceBase piece, MoveGeneratorV2 moveGenerator)
+        public void UpdateAfterMove(SingleMove moveExecuted, PieceBase piece, MoveGeneratorV2 moveGenerator)
         {
             // Move = already done move
+            var prevPos = moveExecuted.PrevPos;
+            var forWhite = piece.IsWhite;
 
-            // Remove old references
-
-            // private DirectAttackMap DirectAttackMap { get; } = new DirectAttackMap();
-            // private DirectAttackMap KingDirectAttackMap { get; } = new DirectAttackMap();
-            // private List<SliderAttack> KingSliderAttacks { get; } = new();
-            // private HashSet<(int column, int row)> GuardedMap { get; } = new();
-            // public HashSet<(int column, int row)> CaptureTargets { get; set; } = new();
-            var prevPos = move.PrevPos;
-
-            DirectAttackMap.Remove(move);
-            KingDirectAttackMap.Remove(move);
-            KingSliderAttacks.RemoveAll(a => a.Attacker.Equals(prevPos));
-
-            Guarded.Remove(prevPos);
-            CaptureTargets.Remove(move.NewPos);
-
-            // TODO inspect each slider attack if it needs updating
-            // TODO castling
-
-            // Now generate attacks from new position
-            var (pseudoAttackMoves, sliderAttack, opponentKing) = moveGenerator.AttacksAndSlidersForPiece(piece, move);
+            // Remove old references. From new move and all sliders it affects
+            var alteredSliderPaths = CollectAlteredSliders(moveExecuted);
+            var attackersToClear = alteredSliderPaths.Select(p => p.Attacker).ToList();
+            var attackersToRegenerate = attackersToClear.Where(a => !a.Equals(prevPos)).ToList();
             
-            
-            foreach (var pseudoAttack in pseudoAttackMoves)
+            attackersToClear.Add(prevPos);
+            attackersToRegenerate.Add(moveExecuted.NewPos);
+
+            if (moveExecuted.Castling)
             {
-                if (pseudoAttack.SoftTarget)
-                {
-                    Guarded.Add(pseudoAttack);
-                    continue;
-                }
-                if (pseudoAttack.NewPos == opponentKing)
-                {
-                    KingDirectAttackMap.Add(pseudoAttack);
-                }
-                else
-                {
-                    DirectAttackMap.Add(pseudoAttack);
-                }
-
-                CaptureTargets.Add(pseudoAttack.NewPos);
+                // If move was castling, rook should be reset and regenerated
+                var (rookPrev, rookNew) = Castling.GetRookPositionsFromMove(moveExecuted);
+                attackersToClear.Add(rookPrev);
+                attackersToRegenerate.Add(rookNew);
             }
 
-            if(sliderAttack != null) KingSliderAttacks.Add(sliderAttack);
+            // Guarded - should refresh?
+            // If bishop moved in front of pawn, is it guarded?
+            // En passant - ???
+
+            foreach (var attackerPosition in attackersToClear)
+            {
+                DirectAttackMap.Remove(attackerPosition);
+                KingDirectAttackMap.Remove(attackerPosition);
+                KingSliderAttacks.RemoveAll(a => a.Attacker.Equals(attackerPosition));
+                Guarded.Remove(attackerPosition);
+            }
+
+            CaptureTargets.Clear();
+            
+            // Now generate attacks from new position
+            var (pseudoAttackMoves, sliderAttacks, opponentKing) = 
+                moveGenerator.AttacksAndSlidersFromPositions(attackersToRegenerate, forWhite);
+            
+            // Add newly generated
+            AddToCache(pseudoAttackMoves, sliderAttacks, opponentKing);
+        }
+
+        private List<SliderAttack> CollectAlteredSliders(SingleMove moveExecuted)
+        {
+            var result = new List<SliderAttack>();
+            foreach (var sliderAttack in KingSliderAttacks)
+            {
+                if (sliderAttack.GuardPieces.Contains(moveExecuted.PrevPos) || sliderAttack.AttackLine.Contains(moveExecuted.NewPos))
+                {
+                    result.Add(sliderAttack);
+                }
+            }
+
+            return result;
         }
     }
 }

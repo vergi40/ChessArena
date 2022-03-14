@@ -47,8 +47,8 @@ namespace vergiBlue.BoardModel.Subsystems
             // E.g. d5 white generates moves -> white cache filled
             // d4 Black turn -> generates black cache
             // d3 White turn -> generates white cache -> substitutes old
-            WhiteAttackCache = other.WhiteAttackCache;
-            BlackAttackCache = other.BlackAttackCache;
+            WhiteAttackCache = other.WhiteAttackCache.Clone();
+            BlackAttackCache = other.BlackAttackCache.Clone();
         }
         
         public AttackCache GetAttacks(bool forWhite)
@@ -338,7 +338,8 @@ namespace vergiBlue.BoardModel.Subsystems
             cache.UpdateAfterMove(move, piece, this);
         }
 
-        public (List<SingleMove> attackMoves, SliderAttack? sliderAttack, (int column, int row) opponentKing) AttacksAndSlidersForPiece(PieceBase piece, SingleMove move)
+        public (List<SingleMove> attackMoves, SliderAttack? sliderAttack, (int column, int row) opponentKing) AttacksAndSlidersForPiece(
+            PieceBase piece, SingleMove move)
         {
             var forWhite = piece.IsWhite;
             var attackMoves = new List<SingleMove>();
@@ -381,6 +382,41 @@ namespace vergiBlue.BoardModel.Subsystems
 
             var opponentKing = GetKingLocationOrDefault(!forWhite);
             return (attackMoves, sliderAttack, opponentKing);
+        }
+
+        public (List<SingleMove> attackMoves, List<SliderAttack> sliderAttacks, (int column, int row) opponentKing) AttacksAndSlidersFromPositions(
+            List<(int column, int row)> attackerPositions, bool forWhite)
+        {
+            var attackMoves = new List<SingleMove>();
+            var sliderAttacks = new List<SliderAttack>();
+
+            foreach (var position in attackerPositions)
+            {
+                var piece = _board.ValueAtDefinitely(position);
+
+                if (piece.Identity == 'P')
+                {
+                    foreach (var captureMove in piece.PawnPseudoCaptureMoves(_board, true))
+                    {
+                        attackMoves.Add(captureMove);
+                    }
+                }
+                else
+                {
+                    if (piece.TryFindPseudoKingCapture(_board, out var sliderAttack))
+                    {
+                        sliderAttacks.Add(sliderAttack);
+                    }
+
+                    foreach (var singleMove in piece.Moves(_board, true))
+                    {
+                        attackMoves.Add(singleMove);
+                    }
+                }
+            }
+
+            var opponentKing = GetKingLocationOrDefault(!forWhite);
+            return (attackMoves, sliderAttacks, opponentKing);
         }
     }
 }
