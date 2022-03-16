@@ -10,7 +10,7 @@ namespace PerftTests
         {
             if (depth == 0) return 1;
 
-            var moves = newBoard.MoveGenerator.MovesQuick(forWhite, true).ToList();
+            var moves = newBoard.GenerateMovesAndUpdateCache(forWhite).ToList();
             if (!moves.Any())
             {
                 return 0;
@@ -29,7 +29,7 @@ namespace PerftTests
         public static long Divide(IBoard board, int depth, bool forWhite)
         {
             long nodes = 0;
-            foreach (var move in board.MoveGenerator.MovesQuick(forWhite, true))
+            foreach (var move in board.GenerateMovesAndUpdateCache(forWhite))
             {
                 var newBoard = BoardFactory.CreateFromMove(board, move);
                 var childNodes = PerftRec(newBoard, depth - 1, !forWhite);

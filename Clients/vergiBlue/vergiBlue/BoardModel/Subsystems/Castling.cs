@@ -102,7 +102,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return true;
         }
 
-        public static bool TryCreateLeftCastling(PieceBase king, HashSet<(int column, int row)> attackSquares, out SingleMove move)
+        public static bool TryCreateLeftCastling(PieceBase king, IReadOnlySet<(int column, int row)> attackSquares, out SingleMove move)
         {
             var row = GetRow(king.IsWhite);
             move = SingleMoveFactory.CreateCastling((4, row), (2, row));
@@ -115,7 +115,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return true;
         }
 
-        public static bool TryCreateRightCastling(PieceBase king, HashSet<(int column, int row)> attackSquares, out SingleMove move)
+        public static bool TryCreateRightCastling(PieceBase king, IReadOnlySet<(int column, int row)> attackSquares, out SingleMove move)
         {
             var row = GetRow(king.IsWhite);
             move = SingleMoveFactory.CreateCastling((4, row), (6, row));

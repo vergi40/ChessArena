@@ -6,6 +6,27 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems.Attacking
 {
+    // Since cloning is expensive operation, these interfaces help guide usage
+    // Example which phases need which cache reference
+    // 1. generate:   generate black moves&attacks from board A1
+    // 2. update:     update black attacks from updated board A2
+    // 3. read:       generate white moves&attacks from board A2. read black attacks
+    // 4. nop         update white attacks from updated board A3
+    // 5. generate:   generate black moves&attacks from board A3
+
+    public interface IAttackCache : IAttackCacheReadOnly
+    {
+        IAttackCache Clone();
+        void UpdateAfterMove(SingleMove moveExecuted, PieceBase piece, MoveGeneratorV2 moveGenerator);
+    }
+
+    public interface IAttackCacheReadOnly
+    {
+        IReadOnlySet<(int column, int row)> CaptureTargets { get; }
+        List<(int column, int row)> SlideTargets();
+        bool IsValidMove(SingleMove move, IBoard board);
+    }
+
     /// <summary>
     /// When moves are generated for A, cache capture moves. When moves are generated for B, use A cache as attack model.
     ///
@@ -14,7 +35,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
     /// * See "king-under-attack" squares. Dealt with either capturing attacker, moving piece on attack line or moving king away
     /// * See sliding attackers, that have line on king but pinned piece on the way. Deny moving pinned piece.
     /// </summary>
-    public class AttackCache
+    public class AttackCache : IAttackCache
     {
         /// <summary>
         /// All direct captures excl. king attacks
@@ -39,7 +60,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
         /// <summary>
         /// All squares that had capture opportunity. Includes pawn attacks.
         /// </summary>
-        public HashSet<(int column, int row)> CaptureTargets { get; set; } = new();
+        public IReadOnlySet<(int column, int row)> CaptureTargets { get; set; } = new HashSet<(int column, int row)>();
 
         /// <summary>
         /// Pre-game initialization
@@ -57,7 +78,7 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
         /// <summary>
         /// Deep clone the cache
         /// </summary>
-        public AttackCache Clone()
+        public IAttackCache Clone()
         {
             var cache = new AttackCache();
             cache.DirectAttackMap = DirectAttackMap.Clone();
@@ -88,8 +109,13 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
                 }
             }
 
-            CaptureTargets = DirectAttackMap.AllTargets().Concat(KingDirectAttackMap.AllTargets()).ToHashSet();
             KingSliderAttacks.AddRange(sliderAttacks);
+            RefreshCapturedTargets();
+        }
+
+        private void RefreshCapturedTargets()
+        {
+            CaptureTargets = DirectAttackMap.AllTargets().Concat(KingDirectAttackMap.AllTargets()).ToHashSet();
         }
 
         /// <summary>
@@ -278,14 +304,13 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
                 Guarded.Remove(attackerPosition);
             }
 
-            CaptureTargets.Clear();
-            
             // Now generate attacks from new position
             var (pseudoAttackMoves, sliderAttacks, opponentKing) = 
                 moveGenerator.AttacksAndSlidersFromPositions(attackersToRegenerate, forWhite);
             
             // Add newly generated
             AddToCache(pseudoAttackMoves, sliderAttacks, opponentKing);
+            RefreshCapturedTargets();
         }
 
         private List<SliderAttack> CollectAlteredSliders(SingleMove moveExecuted)

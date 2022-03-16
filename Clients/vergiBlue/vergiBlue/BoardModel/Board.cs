@@ -162,8 +162,7 @@ namespace vergiBlue.BoardModel
 
             AttackMapper = new AttackSquareMapper(this);
 
-            UpdateAttackCacheSlow(true);
-            UpdateAttackCacheSlow(false);
+            MoveGenerator.Initialize();
         }
 
         private void InitializeFromReference(IBoard previous)

@@ -75,6 +75,21 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
 
         public DirectAttackMap Clone()
         {
+            return ShallowCopy();
+        }
+
+        private DirectAttackMap ShallowCopy()
+        {
+            var map = new DirectAttackMap();
+            map.TargetAttackerDict =
+                new Dictionary<(int column, int row), HashSet<(int column, int row)>>(TargetAttackerDict);
+            map._attackerTargetDict =
+                new Dictionary<(int column, int row), HashSet<(int column, int row)>>(_attackerTargetDict);
+            return map;
+        }
+
+        private DirectAttackMap DeepCopy()
+        {
             var map = new DirectAttackMap();
             map.TargetAttackerDict = TargetAttackerDict.ToDictionary(
                 item => item.Key,
