@@ -102,7 +102,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return true;
         }
 
-        public static bool TryCreateLeftCastling(PieceBase king, HashSet<(int column, int row)> attackSquares, out SingleMove move)
+        public static bool TryCreateLeftCastling(PieceBase king, IReadOnlySet<(int column, int row)> attackSquares, out SingleMove move)
         {
             var row = GetRow(king.IsWhite);
             move = SingleMoveFactory.CreateCastling((4, row), (2, row));
@@ -115,7 +115,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return true;
         }
 
-        public static bool TryCreateRightCastling(PieceBase king, HashSet<(int column, int row)> attackSquares, out SingleMove move)
+        public static bool TryCreateRightCastling(PieceBase king, IReadOnlySet<(int column, int row)> attackSquares, out SingleMove move)
         {
             var row = GetRow(king.IsWhite);
             move = SingleMoveFactory.CreateCastling((4, row), (6, row));
@@ -186,6 +186,26 @@ namespace vergiBlue.BoardModel.Subsystems
                 {
                     strategic.RevokeCastlingFor(!isWhite, false, true);
                 }
+            }
+        }
+
+        public static ((int,int) rookPrev,(int,int) rookNew) GetRookPositionsFromMove(SingleMove moveExecuted)
+        {
+            if (!moveExecuted.Castling)
+                throw new ArgumentException("Cannot retrieve rook positions from non-castling move");
+
+            var rookRow = moveExecuted.NewPos.row;
+            if (moveExecuted.NewPos.column > moveExecuted.PrevPos.column)
+            {
+                var rookPrev = (7, rookRow);
+                var rookNew = (5, rookRow);
+                return (rookPrev, rookNew);
+            }
+            else
+            {
+                var rookPrev = (0, rookRow);
+                var rookNew = (3, rookRow);
+                return (rookPrev, rookNew);
             }
         }
     }

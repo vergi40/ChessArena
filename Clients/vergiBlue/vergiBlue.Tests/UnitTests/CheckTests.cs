@@ -287,7 +287,7 @@ namespace UnitTests
             board.Strategic.EnPassantPossibility = "d6".ToTuple();
 
             // Update since en passant wasn't used in attack cache yet
-            board.UpdateAttackCache(false);
+            board.UpdateAttackCacheSlow(false);
 
             var moves = board.MoveGenerator.MovesQuick(true, true).ToList();
             

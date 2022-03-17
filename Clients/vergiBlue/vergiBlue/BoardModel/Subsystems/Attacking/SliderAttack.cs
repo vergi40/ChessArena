@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace vergiBlue.BoardModel.Subsystems.Attacking
 {
@@ -20,23 +21,37 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
     /// </summary>
     public class SliderAttack
     {
+        /// <summary>
+        /// No direct line of sight to king
+        /// </summary>
         public bool IsGuarded
         {
             get
             {
-                if(GuardPiece != (-1, -1)) return true;
-                if (HasEnPassantPawnOpportunity) return true;
+                if(OpponentPiece != (-1, -1)) return true;
+                if(GuardPieces.Any()) return true;
                 return false;
             }
         }
 
         public bool WhiteAttacking { get; set; }
         public (int column, int row) Attacker { get; set; }
-        public (int column, int row) GuardPiece { get; set; } = (-1, -1);
+
+        /// <summary>
+        /// Own piece on the way
+        /// </summary>
+        public HashSet<(int column, int row)> GuardPieces { get; set; } = new();
+
+        /// <summary>
+        /// Opponent piece on the way
+        /// </summary>
+        public (int column, int row) OpponentPiece { get; set; } = (-1, -1);
+
+
         public (int column, int row) King { get; set; }
 
         /// <summary>
-        /// Only valid if attack row contains both: opponent enpassant pawn and next to it own pawn
+        /// Only valid if attack row contains own pawn open for en passant capture
         /// </summary>
         public bool HasEnPassantPawnOpportunity { get; set; }
 

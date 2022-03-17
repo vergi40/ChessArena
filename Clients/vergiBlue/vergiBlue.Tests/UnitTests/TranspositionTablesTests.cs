@@ -172,6 +172,9 @@ namespace UnitTests
             board1.AddNew(pieces);
             board2.AddNew(pieces);
 
+            board1.InitializeSubSystems();
+            board2.InitializeSubSystems();
+
             board1.ExecuteMove(new SingleMove("d3", "c4"));
             board1.ExecuteMove(new SingleMove("c4", "d5"));
             board2.ExecuteMove(new SingleMove("d3", "d4"));

@@ -2,6 +2,7 @@
 using System.Linq;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel.Subsystems.Attacking;
+using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
@@ -18,8 +19,7 @@ namespace vergiBlue.BoardModel.Subsystems
     {
         private IBoard _board { get; }
 
-        protected AttackCache WhiteAttackCache { get; private set; }
-        protected AttackCache BlackAttackCache { get; private set; }
+        protected CacheController Cache { get; private set; }
 
         /// <summary>
         /// Pieces not known - no attack cache
@@ -28,9 +28,9 @@ namespace vergiBlue.BoardModel.Subsystems
         public MoveGeneratorV2(IBoard board)
         {
             _board = board;
-
-            WhiteAttackCache = new AttackCache();
-            BlackAttackCache = new AttackCache();
+            
+            Cache = new CacheController();
+            Cache.InitializeEmpty();
         }
 
         /// <summary>
@@ -42,17 +42,24 @@ namespace vergiBlue.BoardModel.Subsystems
         {
             _board = board;
 
-            // Shallow clone - shouldn't matter. Caches are only read
-            // E.g. d5 white generates moves -> white cache filled
-            // d4 Black turn -> generates black cache
-            // d3 White turn -> generates white cache -> substitutes old
-            WhiteAttackCache = other.WhiteAttackCache;
-            BlackAttackCache = other.BlackAttackCache;
+            Cache = new CacheController();
+            Cache.InitializeFromTurnChange(other.Cache);
         }
-        
-        public AttackCache GetAttacks(bool forWhite)
+
+        /// <summary>
+        /// Initialize attack cache for both white and black
+        /// </summary>
+        public void Initialize()
         {
-            return forWhite ? WhiteAttackCache : BlackAttackCache;
+            Cache.IsInitializing = true;
+            UpdateAttackCacheSlow(true);
+            UpdateAttackCacheSlow(false);
+            Cache.IsInitializing = false;
+        }
+
+        public IAttackCacheReadOnly GetAttacks(bool forWhite)
+        {
+            return Cache.Read(forWhite);
         }
 
         /// <summary>
@@ -88,7 +95,7 @@ namespace vergiBlue.BoardModel.Subsystems
                 }
             }
 
-            var attacksModel = GetAttacks(!isWhite);
+            var attacksModel = Cache.Read(!isWhite);
             foreach (var singleMove in piece.Moves(_board))
             {
                 if (attacksModel.IsValidMove(singleMove, _board))
@@ -112,7 +119,7 @@ namespace vergiBlue.BoardModel.Subsystems
                 }
 
                 // Heavy validation (attack squares)
-                var attackModel = GetAttacks(!forWhite);
+                var attackModel = Cache.Read(!forWhite);
                 var attackSquares = attackModel.CaptureTargets;
                 if (leftOk && Castling.TryCreateLeftCastling(king, attackSquares, out var leftCastling))
                 {
@@ -148,7 +155,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <returns></returns>
         public IEnumerable<SingleMove> MovesQuickWithoutCastling(bool forWhite, bool kingInDanger = false)
         {
-            var attacksModel = GetAttacks(!forWhite);
+            var attacksModel = Cache.Read(!forWhite);
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
@@ -170,7 +177,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// Either run this or <see cref="GenerateMovesAndUpdateCache"/> before next move to refresh attack cache
         /// </summary>
         /// <param name="updateWhiteAttacks"></param>
-        public void UpdateAttackCache(bool updateWhiteAttacks)
+        public void UpdateAttackCacheSlow(bool updateWhiteAttacks)
         {
             // TODO simplify
             _ = GenerateMovesAndUpdateCache(updateWhiteAttacks).ToList();
@@ -202,7 +209,7 @@ namespace vergiBlue.BoardModel.Subsystems
             var sliderAttacks = new List<SliderAttack>();
             // TODO list version for main moves generation, ienumerable version for quick generation
 
-            var attacksModel = GetAttacks(!forWhite);
+            var opponentAttacks = Cache.Read(!forWhite);
 
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
@@ -210,7 +217,7 @@ namespace vergiBlue.BoardModel.Subsystems
                 {
                     foreach (var normalMove in piece.PawnNormalMoves(_board))
                     {
-                        if (attacksModel.IsValidMove(normalMove, _board))
+                        if (opponentAttacks.IsValidMove(normalMove, _board))
                         {
                             validMoves.Add(normalMove);
                         }
@@ -230,7 +237,7 @@ namespace vergiBlue.BoardModel.Subsystems
                         // Check pseudo moves that have valid capture
                         if (valueAt != null && valueAt.IsWhite != forWhite)
                         {
-                            if (attacksModel.IsValidMove(captureMove, _board))
+                            if (opponentAttacks.IsValidMove(captureMove, _board))
                             {
                                 validMoves.Add(captureMove);
                             }
@@ -252,7 +259,7 @@ namespace vergiBlue.BoardModel.Subsystems
                             attackMoves.Add(singleMove);
                             continue;
                         }
-                        if (attacksModel.IsValidMove(singleMove, _board))
+                        if (opponentAttacks.IsValidMove(singleMove, _board))
                         {
                             validMoves.Add(singleMove);
                         }
@@ -263,15 +270,7 @@ namespace vergiBlue.BoardModel.Subsystems
             }
 
             var opponentKing = GetKingLocationOrDefault(!forWhite);
-
-            if (forWhite)
-            {
-                WhiteAttackCache = new AttackCache(attackMoves, sliderAttacks, opponentKing);
-            }
-            else
-            {
-                BlackAttackCache = new AttackCache(attackMoves, sliderAttacks, opponentKing);
-            }
+            Cache.Write(forWhite, attackMoves, sliderAttacks, opponentKing);
 
             return validMoves;
         }
@@ -321,13 +320,91 @@ namespace vergiBlue.BoardModel.Subsystems
             return priorityList;
         }
 
-        /// <summary>
-        /// All possible capture positions (including pawn).
-        /// </summary>
-        public IEnumerable<(int column, int row)> AttackedPositions(bool forWhiteAttacker)
+        public void UpdateAttackCache(SingleMove move)
         {
-            var attackModel = GetAttacks(forWhiteAttacker);
-            return attackModel.CaptureTargets;
+            var piece = _board.ValueAtDefinitely(move.NewPos);
+            Cache.UpdateAfterMove(move, piece, this);
+        }
+
+        public (List<SingleMove> attackMoves, SliderAttack? sliderAttack, (int column, int row) opponentKing) AttacksAndSlidersForPiece(
+            PieceBase piece, SingleMove move)
+        {
+            var forWhite = piece.IsWhite;
+            var attackMoves = new List<SingleMove>();
+            SliderAttack? sliderAttack = null;
+
+            if (piece.Identity == 'P')
+            {
+                foreach (var captureMove in piece.PawnPseudoCaptureMoves(_board, true))
+                {
+                    attackMoves.Add(captureMove);
+                }
+            }
+            else
+            {
+                if (piece.TryFindPseudoKingCapture(_board, out var kingAttack))
+                {
+                    sliderAttack = kingAttack;
+                }
+
+                foreach (var singleMove in piece.Moves(_board, true))
+                {
+                    attackMoves.Add(singleMove);
+                }
+            }
+
+            if (move.Castling)
+            {
+                var (newColumn, newRow) = move.NewPos;
+                var rookColumn = newColumn + 1;
+                if (move.NewPos.column > move.PrevPos.column)
+                {
+                    rookColumn = newColumn - 1;
+                }
+
+                var rook = _board.ValueAtDefinitely((rookColumn, newRow));
+                var (rookMoves, rookSlider, _) = AttacksAndSlidersForPiece(rook, SingleMoveFactory.CreateEmpty());
+                attackMoves.AddRange(rookMoves);
+                sliderAttack = rookSlider;
+            }
+
+            var opponentKing = GetKingLocationOrDefault(!forWhite);
+            return (attackMoves, sliderAttack, opponentKing);
+        }
+
+        public (List<SingleMove> attackMoves, List<SliderAttack> sliderAttacks, (int column, int row) opponentKing) AttacksAndSlidersFromPositions(
+            List<(int column, int row)> attackerPositions, bool forWhite)
+        {
+            var attackMoves = new List<SingleMove>();
+            var sliderAttacks = new List<SliderAttack>();
+
+            foreach (var position in attackerPositions)
+            {
+                var piece = _board.ValueAtDefinitely(position);
+
+                if (piece.Identity == 'P')
+                {
+                    foreach (var captureMove in piece.PawnPseudoCaptureMoves(_board, true))
+                    {
+                        attackMoves.Add(captureMove);
+                    }
+                }
+                else
+                {
+                    if (piece.TryFindPseudoKingCapture(_board, out var sliderAttack))
+                    {
+                        sliderAttacks.Add(sliderAttack);
+                    }
+
+                    foreach (var singleMove in piece.Moves(_board, true))
+                    {
+                        attackMoves.Add(singleMove);
+                    }
+                }
+            }
+
+            var opponentKing = GetKingLocationOrDefault(!forWhite);
+            return (attackMoves, sliderAttacks, opponentKing);
         }
     }
 }

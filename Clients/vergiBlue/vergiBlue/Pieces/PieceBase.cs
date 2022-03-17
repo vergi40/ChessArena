@@ -318,7 +318,7 @@ namespace vergiBlue.Pieces
                 WhiteAttacking = IsWhite
             };
             var kingFound = false;
-            var guardPieceCount = 0;
+            var opponentPieceCount = 0;
 
             var attackHorizontalWithEnPassantPossibility = false;
             var enPassantTarget = (-1, -1);
@@ -357,24 +357,27 @@ namespace vergiBlue.Pieces
                     {
                         if (attackHorizontalWithEnPassantPossibility)
                         {
-                            // Vertical is fine
                             if (Math.Abs(directionUnit.column) == 1)
                             {
-                                attack.AttackLine.Add((nextColumn, nextRow));
                                 attack.HasEnPassantPawnOpportunity = true;
                             }
                             else
                             {
-                                // No worries about this line
-                                break;
+                                // Vertical is fine
                             }
                         }
                         else
                         {
                             // Any diagonal with enpassant captured is a risk
-                            attack.AttackLine.Add((nextColumn, nextRow));
                             attack.HasEnPassantPawnOpportunity = true;
                         }
+                        attack.AttackLine.Add((nextColumn, nextRow));
+                        attack.GuardPieces.Add((nextColumn, nextRow));
+                    }
+                    else if (attack.GuardPieces.Count < 2)
+                    {
+                        attack.AttackLine.Add((nextColumn, nextRow));
+                        attack.GuardPieces.Add((nextColumn, nextRow));
                     }
                     else
                     {
@@ -389,9 +392,9 @@ namespace vergiBlue.Pieces
                 }
                 else if (next == SquareTypes.OpponentPiece && !kingFound)
                 {
-                    guardPieceCount++;
                     attack.AttackLine.Add((nextColumn, nextRow));
-                    attack.GuardPiece = (nextColumn, nextRow);
+                    attack.OpponentPiece = (nextColumn, nextRow);
+                    opponentPieceCount++;
                 }
                 else
                 {
@@ -407,7 +410,7 @@ namespace vergiBlue.Pieces
             }
 
             if (!kingFound) return false;
-            if (guardPieceCount > 1) return false;
+            if (attack.GuardPieces.Count > 2 || opponentPieceCount > 1) return false;
             return true;
         }
 

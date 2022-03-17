@@ -126,41 +126,66 @@ namespace vergiBlue.Pieces
             }
         }
 
-        /// <summary>
-        /// Used for attack squares - use allPromotions switch to return all possibilities
-        /// </summary>
-        private IEnumerable<SingleMove> GetPseudoPromotionMoves(int column, int row, IBoard board, bool allPromotions = false, bool returnSoftTargets = false)
+        private enum SquareState
         {
-            var nextRow = row + Direction;
-            if (ValidPseudoCapturePosition(column - 1, nextRow, board))
+            Empty,
+            Own,
+            Opponent
+        }
+
+        private SquareState GetSquareState(int column, int row, IBoard board)
+        {
+            var piece = board.ValueAt((column, row));
+            if (piece == null) return SquareState.Empty;
+            if (piece.IsWhite == IsWhite) return SquareState.Own;
+            return SquareState.Opponent;
+        }
+
+        /// <summary>
+        /// Only pseudo attack moves (forward+left & forward+right)
+        /// Outside -> do nothing
+        /// Valid capture -> add as capture. allPromotions -> add all promotion types
+        /// Empty or own piece -> add single promotion as soft
+        /// </summary>
+        private IEnumerable<SingleMove> GetPseudoPromotionMoves(int prevColumn, int prevRow, IBoard board, bool allPromotions = false, bool returnSoftTargets = false)
+        {
+            var nextRow = prevRow + Direction;
+            if (prevColumn - 1 >= 0)
             {
-                yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Queen);
-                if (allPromotions)
+                var targetState = GetSquareState(prevColumn - 1, nextRow, board);
+                if (returnSoftTargets && (targetState is SquareState.Own or SquareState.Empty))
                 {
-                    yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Rook);
-                    yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Knight);
-                    yield return new SingleMove((column, row), (column - 1, nextRow), true, PromotionPieceType.Bishop);
+                    yield return SingleMoveFactory.CreateSoftTarget((prevColumn, prevRow), (prevColumn - 1, nextRow));
+                }
+                if (targetState is SquareState.Opponent or SquareState.Empty)
+                {
+                    yield return new SingleMove((prevColumn, prevRow), (prevColumn - 1, nextRow), true, PromotionPieceType.Queen);
+                    if (allPromotions)
+                    {
+                        yield return new SingleMove((prevColumn, prevRow), (prevColumn - 1, nextRow), true, PromotionPieceType.Rook);
+                        yield return new SingleMove((prevColumn, prevRow), (prevColumn - 1, nextRow), true, PromotionPieceType.Knight);
+                        yield return new SingleMove((prevColumn, prevRow), (prevColumn - 1, nextRow), true, PromotionPieceType.Bishop);
+                    }
                 }
             }
-            else if (ValidPseudoCapturePosition(column - 1, nextRow, board, true))
+
+            if (prevColumn + 1 < 8)
             {
-                // TODO efficiency improvements
-                yield return SingleMoveFactory.CreateSoftTarget((column, row), (column - 1, nextRow));
-            }
-            if (ValidPseudoCapturePosition(column + 1, nextRow, board))
-            {
-                yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Queen);
-                if (allPromotions)
+                var targetState = GetSquareState(prevColumn + 1, nextRow, board);
+                if (returnSoftTargets && (targetState is SquareState.Own or SquareState.Empty))
                 {
-                    yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Rook);
-                    yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Knight);
-                    yield return new SingleMove((column, row), (column + 1, nextRow), true, PromotionPieceType.Bishop);
+                    yield return SingleMoveFactory.CreateSoftTarget((prevColumn, prevRow), (prevColumn + 1, nextRow));
                 }
-            }
-            else if (ValidPseudoCapturePosition(column + 1, nextRow, board, true))
-            {
-                // TODO efficiency improvements
-                yield return SingleMoveFactory.CreateSoftTarget((column, row), (column + 1, nextRow));
+                if (targetState is SquareState.Opponent or SquareState.Empty)
+                {
+                    yield return new SingleMove((prevColumn, prevRow), (prevColumn + 1, nextRow), true, PromotionPieceType.Queen);
+                    if (allPromotions)
+                    {
+                        yield return new SingleMove((prevColumn, prevRow), (prevColumn + 1, nextRow), true, PromotionPieceType.Rook);
+                        yield return new SingleMove((prevColumn, prevRow), (prevColumn + 1, nextRow), true, PromotionPieceType.Knight);
+                        yield return new SingleMove((prevColumn, prevRow), (prevColumn + 1, nextRow), true, PromotionPieceType.Bishop);
+                    }
+                }
             }
         }
 
