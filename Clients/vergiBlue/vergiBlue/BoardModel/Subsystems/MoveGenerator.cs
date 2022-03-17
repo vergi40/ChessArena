@@ -44,6 +44,16 @@ namespace vergiBlue.BoardModel.Subsystems
             }
         }
 
+        /// <summary>
+        /// Should be merged with "movesquick"
+        /// </summary>
+        /// <param name="forWhite"></param>
+        /// <returns></returns>
+        public IEnumerable<SingleMove> ValidMovesQuick(bool forWhite)
+        {
+            return MovesQuick(forWhite, true);
+        }
+
         public IEnumerable<SingleMove> MovesForPiece((int column, int row) position)
         {
             var piece = _board.ValueAtDefinitely(position);
