@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommonNetStandard.Common;
+using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
 {
@@ -44,6 +46,56 @@ namespace vergiBlue.BoardModel
             if (target.Item1 < 0 || target.Item1 > 7 || target.Item2 < 0 || target.Item2 > 7)
                 return true;
             return false;
+        }
+
+        public static bool IsLegalMove(SingleMove move, IBoard board, PieceBase piece, (int column, int row) kingLocation)
+        {
+            // https://chess.stackexchange.com/a/16901
+            // Simple and neat steps
+
+            var forWhite = piece.IsWhite;
+            HashSet<(int column, int row)>? opponentCaptures = null;
+            
+            // TODO boardfactory light
+            var newBoard = BoardFactory.CreateFromMove(board, move);
+
+            // Modern engines
+            // en passant tricky. test whether king is attacked after move made
+            if (move.EnPassant)
+            {
+                opponentCaptures = GenerateOpponentCaptures(!forWhite, newBoard, move);
+                if (opponentCaptures.Contains(kingLocation)) return false;
+            }
+            
+            // king: test if king is attacked after move is made
+            if (piece.Identity == 'K')
+            {
+                opponentCaptures ??= GenerateOpponentCaptures(!forWhite, newBoard, move);
+
+                if (opponentCaptures.Contains(move.NewPos)) return false;
+            }
+
+            // others: if not pinned -> move ok. if pinned -> if it's moving along the attack ray, ok
+            foreach (var slider in board.MoveGenerator.GenerateSliders(!forWhite, newBoard))
+            {
+                if (slider.AttackLine.Contains(move.PrevPos))
+                {
+                    // pinned found
+                    if (!slider.AttackLine.Contains(move.NewPos) && move.NewPos != slider.Attacker)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static HashSet<(int column, int row)> GenerateOpponentCaptures(bool opponentWhite, IBoard opponentBoard,
+            SingleMove move)
+        {
+            // TODO boardfactory light
+            return opponentBoard.MoveGenerator.AttackMoves(opponentWhite).Select(m => m.NewPos).ToHashSet();
         }
     }
 }

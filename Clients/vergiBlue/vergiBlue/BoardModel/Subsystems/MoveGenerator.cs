@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using vergiBlue.Algorithms;
+using vergiBlue.BoardModel.Subsystems.Attacking;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems
@@ -13,6 +14,13 @@ namespace vergiBlue.BoardModel.Subsystems
         public MoveGenerator(IBoard board)
         {
             _board = board;
+        }
+
+        private (int column, int row) GetKingLocationOrDefault(bool whiteKing)
+        {
+            var opponentKing = _board.KingLocation(whiteKing);
+            var position = opponentKing != null ? opponentKing.CurrentPosition : (-1, -1);
+            return position;
         }
 
         /// <summary>
@@ -51,7 +59,23 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <returns></returns>
         public IEnumerable<SingleMove> ValidMovesQuick(bool forWhite)
         {
-            return MovesQuick(forWhite, true);
+            foreach (var castlingMove in CastlingMoves(forWhite))
+            {
+                yield return castlingMove;
+            }
+
+            var ownKing = GetKingLocationOrDefault(forWhite);
+
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves(_board))
+                {
+                    if (Validator.IsLegalMove(singleMove, _board, piece, ownKing))
+                    {
+                        yield return singleMove;
+                    }
+                }
+            }
         }
 
         public IEnumerable<SingleMove> MovesForPiece((int column, int row) position)
@@ -215,6 +239,24 @@ namespace vergiBlue.BoardModel.Subsystems
                     yield return singleMove;
                 }
             }
+        }
+
+        public IEnumerable<SingleMove> GetOrCreateAttackMoves(bool forWhiteAttacker)
+        {
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhiteAttacker))
+            {
+                foreach (var singleMove in piece.PseudoCaptureMoves(_board))
+                {
+                    yield return singleMove;
+                }
+            }
+        }
+
+
+
+        public IEnumerable<SliderAttack> GenerateSliders(bool opponentWhite, IBoard opponentBoard)
+        {
+            // TODO
         }
     }
 }
