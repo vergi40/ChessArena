@@ -252,11 +252,18 @@ namespace vergiBlue.BoardModel.Subsystems
             }
         }
 
-
-
-        public IEnumerable<SliderAttack> GenerateSliders(bool opponentWhite, IBoard opponentBoard)
+        public IEnumerable<SliderAttack> GenerateSliders(bool forWhite, IBoard board)
         {
-            // TODO
+            var king = GetKingLocationOrDefault(!forWhite);
+            if (king.Equals((-1, -1))) yield break;
+
+            foreach (var piece in board.PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                if (piece.TryCreateSliderAttack(board, king, out var sliderAttack))
+                {
+                    yield return sliderAttack;
+                }
+            }
         }
     }
 }

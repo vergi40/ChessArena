@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems.Attacking;
 
 namespace vergiBlue.Pieces
 {
@@ -48,6 +49,39 @@ namespace vergiBlue.Pieces
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
             return Moves(board);
+        }
+
+        public override bool TryCreateSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
+        {
+            sliderAttack = new SliderAttack();
+            if (TryCreateRookDirectionVector(CurrentPosition, opponentKing, out var direction))
+            {
+                sliderAttack.Attacker = CurrentPosition;
+                sliderAttack.WhiteAttacking = IsWhite;
+                sliderAttack.King = opponentKing;
+                for (int i = 1; i < 8; i++)
+                {
+                    var nextX = CurrentPosition.column + i * direction.x;
+                    var nextY = CurrentPosition.row + i * direction.y;
+                    sliderAttack.AttackLine.Add((nextX, nextY));
+                    if (opponentKing.Equals((nextX, nextY))) break;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryCreateRookDirectionDistanceVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) dirAndDistance)
+        {
+            // e.g. piece (4,0), king (2,0). (2,0) - (4,0) = (-2,0) -> two steps left
+            dirAndDistance = (pos2.x - pos1.x, pos2.y - pos1.y);
+            if (dirAndDistance.x * dirAndDistance.y == 0)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

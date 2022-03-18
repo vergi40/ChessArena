@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems.Attacking;
 
 namespace vergiBlue.Pieces
 {
@@ -47,6 +48,40 @@ namespace vergiBlue.Pieces
         {
             var moves = BishopMoves(board, true);
             return moves.Concat(RookMoves(board));
+        }
+
+        public override bool TryCreateSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
+        {
+            sliderAttack = new SliderAttack();
+            if (TryCreateBishopDirectionVector(CurrentPosition, opponentKing, out var bDir))
+            {
+                sliderAttack.Attacker = CurrentPosition;
+                sliderAttack.WhiteAttacking = IsWhite;
+                sliderAttack.King = opponentKing;
+                for (int i = 1; i < 8; i++)
+                {
+                    var nextX = CurrentPosition.column + i * bDir.x;
+                    var nextY = CurrentPosition.row + i * bDir.y;
+                    sliderAttack.AttackLine.Add((nextX, nextY));
+                    if (opponentKing.Equals((nextX, nextY))) break;
+                }
+                return true;
+            }
+            if (TryCreateRookDirectionVector(CurrentPosition, opponentKing, out var rDir))
+            {
+                sliderAttack.Attacker = CurrentPosition;
+                sliderAttack.WhiteAttacking = IsWhite;
+                sliderAttack.King = opponentKing;
+                for (int i = 1; i < 8; i++)
+                {
+                    var nextX = CurrentPosition.column + i * rDir.x;
+                    var nextY = CurrentPosition.row + i * rDir.y;
+                    sliderAttack.AttackLine.Add((nextX, nextY));
+                    if (opponentKing.Equals((nextX, nextY))) break;
+                }
+                return true;
+            }
+            return false;
         }
     }
 }

@@ -68,6 +68,7 @@ namespace vergiBlue.BoardModel
             }
             
             // king: test if king is attacked after move is made
+            // TODO benchmark if just using yield return in captures quicker
             if (piece.Identity == 'K')
             {
                 opponentCaptures ??= GenerateOpponentCaptures(!forWhite, newBoard, move);
@@ -95,6 +96,7 @@ namespace vergiBlue.BoardModel
             SingleMove move)
         {
             // TODO boardfactory light
+            // TODO which is quicker: definitely check once each piece (hashset) vs yield return? create benchmark
             return opponentBoard.MoveGenerator.AttackMoves(opponentWhite).Select(m => m.NewPos).ToHashSet();
         }
     }

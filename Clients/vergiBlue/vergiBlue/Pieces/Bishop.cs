@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems.Attacking;
 
 
 namespace vergiBlue.Pieces
@@ -46,6 +47,26 @@ namespace vergiBlue.Pieces
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
             return BishopMoves(board, true);
+        }
+
+        public override bool TryCreateSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
+        {
+            sliderAttack = new SliderAttack();
+            if (TryCreateBishopDirectionVector(CurrentPosition, opponentKing, out var direction))
+            {
+                sliderAttack.Attacker = CurrentPosition;
+                sliderAttack.WhiteAttacking = IsWhite;
+                sliderAttack.King = opponentKing;
+                for (int i = 1; i < 8; i++)
+                {
+                    var nextX = CurrentPosition.column + i * direction.x;
+                    var nextY = CurrentPosition.row + i * direction.y;
+                    sliderAttack.AttackLine.Add((nextX, nextY));
+                    if (opponentKing.Equals((nextX, nextY))) break;
+                }
+                return true;
+            }
+            return false;
         }
     }
 }

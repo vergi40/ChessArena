@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems.Attacking;
 
 
 namespace vergiBlue.Pieces
@@ -218,6 +219,37 @@ namespace vergiBlue.Pieces
             // Probably should have individual override for each function. 
             // Now only for pawn
             return Moves(board);
+        }
+
+        public virtual bool TryCreateSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
+        {
+            sliderAttack = new SliderAttack();
+            return false;
+        }
+
+        protected bool TryCreateRookDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
+        {
+            // e.g. piece (4,0), king (2,0). (2,0) - (4,0) = (-2,0) -> two steps left
+            direction = (pos2.x - pos1.x, pos2.y - pos1.y);
+            if (direction.x * direction.y == 0)
+            {
+                direction = (Math.Sign(direction.x), Math.Sign(direction.y));
+                return true;
+            }
+            return false;
+        }
+
+        protected bool TryCreateBishopDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
+        {
+            // e.g. piece (4,4), king (2,2). (2,2) - (4,4) = (-2,-2) -> two steps sw
+            // e.g. piece (0,4), king (4,0). (4,0) - (0,4) = (4, -4) -> two steps sw
+            direction = (pos2.x - pos1.x, pos2.y - pos1.y);
+            if (Math.Abs(direction.x) == Math.Abs(direction.y))
+            {
+                direction = (Math.Sign(direction.x), Math.Sign(direction.y));
+                return true;
+            }
+            return false;
         }
     }
 }
