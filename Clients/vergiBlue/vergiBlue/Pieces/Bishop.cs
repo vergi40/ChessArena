@@ -51,21 +51,11 @@ namespace vergiBlue.Pieces
 
         public override bool TryCreateSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
         {
-            sliderAttack = new SliderAttack();
-            if (TryCreateBishopDirectionVector(CurrentPosition, opponentKing, out var direction))
+            if (TryCreateBishopSliderAttack(board, opponentKing, out sliderAttack))
             {
-                sliderAttack.Attacker = CurrentPosition;
-                sliderAttack.WhiteAttacking = IsWhite;
-                sliderAttack.King = opponentKing;
-                for (int i = 1; i < 8; i++)
-                {
-                    var nextX = CurrentPosition.column + i * direction.x;
-                    var nextY = CurrentPosition.row + i * direction.y;
-                    sliderAttack.AttackLine.Add((nextX, nextY));
-                    if (opponentKing.Equals((nextX, nextY))) break;
-                }
                 return true;
             }
+
             return false;
         }
 

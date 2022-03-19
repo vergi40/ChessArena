@@ -4,7 +4,7 @@ using System.Linq;
 namespace vergiBlue.BoardModel.Subsystems.Attacking
 {
     /// <summary>
-    /// Slider attack to targeting king
+    /// Slider attack to targeting king. Only valid if single pin piece found
     /// 
     /// If not guarded, resolved by:
     /// 1. Move king out of AttackLine
@@ -23,6 +23,11 @@ namespace vergiBlue.BoardModel.Subsystems.Attacking
 
 
         public (int column, int row) King { get; set; }
+
+        /// <summary>
+        /// Piece between attacker and king
+        /// </summary>
+        public (int column, int row) Pin { get; set; }
 
         /// <summary>
         /// All squares leading to king, including king

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using CommonNetStandard.Common;
 using vergiBlue.Pieces;
 
@@ -69,8 +70,9 @@ namespace vergiBlue.BoardModel
             }
             
             // king: test if king is attacked after move is made
-            if (piece.Identity == 'K' && !move.Castling)
+            if (piece.Identity == 'K')
             {
+                if (move.Castling) throw new ArgumentException("Logical error: Castling moves are generated elsewhere");
                 if (newBoard.MoveGenerator.IsSquareCurrentlyAttacked(!forWhite, move.NewPos))
                 {
                     return false;
@@ -80,11 +82,20 @@ namespace vergiBlue.BoardModel
             }
 
             // others: if not pinned -> move ok. if pinned -> if it's moving along the attack ray, ok
-            foreach (var slider in board.MoveGenerator.EnumerateSliders(!forWhite, newBoard))
+            foreach (var slider in board.MoveGenerator.GetOrCreateSliders(!forWhite))
             {
                 if (slider.AttackLine.Contains(move.PrevPos))
                 {
                     // pinned found
+                    if (!slider.Pin.Equals(move.PrevPos))
+                    {
+                        // Assert
+                        throw new ArgumentException(
+                            $"Logical error: slider had wrong pinned piece. " +
+                            $"Slider pin at {slider.Pin.ToAlgebraic()}. Move prevpos at {move.PrevPos.ToAlgebraic()}");
+                    }
+
+                    // Ok only if moving along slider or capturing attacker
                     if (!slider.AttackLine.Contains(move.NewPos) && move.NewPos != slider.Attacker)
                     {
                         return false;

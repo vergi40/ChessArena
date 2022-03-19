@@ -250,7 +250,7 @@ namespace vergiBlue.BoardModel.Subsystems
         }
 
         private IList<SliderAttack>? _sliderAttacks { get; set; } = null;
-        public IList<SliderAttack> GetOrCreateSliders(bool forWhite, IBoard board)
+        public IList<SliderAttack> GetOrCreateSliders(bool forWhite)
         {
             if (_sliderAttacks != null) return _sliderAttacks;
 
@@ -262,9 +262,9 @@ namespace vergiBlue.BoardModel.Subsystems
                 return list;
             }
 
-            foreach (var piece in board.PieceList.Where(p => p.IsWhite == forWhite))
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
-                if (piece.TryCreateSliderAttack(board, king, out var sliderAttack))
+                if (piece.TryCreateSliderAttack(_board, king, out var sliderAttack))
                 {
                     list.Add(sliderAttack);
                 }
@@ -274,14 +274,14 @@ namespace vergiBlue.BoardModel.Subsystems
             return list;
         }
 
-        public IEnumerable<SliderAttack> EnumerateSliders(bool forWhite, IBoard board)
+        public IEnumerable<SliderAttack> EnumerateSliders(bool forWhite)
         {
             var king = GetKingLocationOrDefault(!forWhite);
             if (king.Equals((-1, -1))) yield break;
 
-            foreach (var piece in board.PieceList.Where(p => p.IsWhite == forWhite))
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
-                if (piece.TryCreateSliderAttack(board, king, out var sliderAttack))
+                if (piece.TryCreateSliderAttack(_board, king, out var sliderAttack))
                 {
                     yield return sliderAttack;
                 }
