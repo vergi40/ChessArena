@@ -59,20 +59,37 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <returns></returns>
         public IEnumerable<SingleMove> ValidMovesQuick(bool forWhite)
         {
-            foreach (var castlingMove in CastlingMoves(forWhite))
-            {
-                yield return castlingMove;
-            }
-
             var ownKing = GetKingLocationOrDefault(forWhite);
+            var isCheck = IsKingCurrentlyAttacked(forWhite);
+            if (!isCheck)
+            {
+                // Allowed only if not currently not in check
+                foreach (var castlingMove in CastlingMoves(forWhite))
+                {
+                    yield return castlingMove;
+                }
+            }
 
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
                 {
-                    if (Validator.IsLegalMove(singleMove, _board, piece, ownKing))
+                    if (isCheck)
                     {
-                        yield return singleMove;
+                        // Only allow moves that don't result in check
+                        // TODO most probably here is lot's to improve
+                        var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
+                        if (!newBoard.IsCheck(!forWhite))
+                        {
+                            yield return singleMove;
+                        }
+                    }
+                    else
+                    {
+                        if (Validator.IsLegalMove(singleMove, _board, piece, ownKing))
+                        {
+                            yield return singleMove;
+                        }
                     }
                 }
             }
@@ -243,6 +260,7 @@ namespace vergiBlue.BoardModel.Subsystems
 
         public IEnumerable<SingleMove> GetOrCreateAttackMoves(bool forWhiteAttacker)
         {
+            // TODO cache
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhiteAttacker))
             {
                 foreach (var singleMove in piece.PseudoCaptureMoves(_board))
@@ -250,6 +268,37 @@ namespace vergiBlue.BoardModel.Subsystems
                     yield return singleMove;
                 }
             }
+        }
+
+        public bool IsKingCurrentlyAttacked(bool whiteKing)
+        {
+            var king = GetKingLocationOrDefault(whiteKing);
+
+            // Testing
+            if (king.Equals((-1, -1))) return false;
+
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite != whiteKing))
+            {
+                if (piece.CanAttackQuick(king, _board))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool IsSquareCurrentlyAttacked(bool whiteAttacker, (int column, int row) target)
+        {
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == whiteAttacker))
+            {
+                if (piece.CanAttackQuick(target, _board))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public IEnumerable<SliderAttack> GenerateSliders(bool forWhite, IBoard board)

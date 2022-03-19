@@ -48,13 +48,15 @@ namespace vergiBlue.BoardModel
             return false;
         }
 
+        /// <summary>
+        /// Prerequisite: King not in check
+        /// </summary>
         public static bool IsLegalMove(SingleMove move, IBoard board, PieceBase piece, (int column, int row) kingLocation)
         {
             // https://chess.stackexchange.com/a/16901
             // Simple and neat steps
 
             var forWhite = piece.IsWhite;
-            HashSet<(int column, int row)>? opponentCaptures = null;
             
             // TODO boardfactory light
             var newBoard = BoardFactory.CreateFromMove(board, move);
@@ -63,17 +65,23 @@ namespace vergiBlue.BoardModel
             // en passant tricky. test whether king is attacked after move made
             if (move.EnPassant)
             {
-                opponentCaptures = GenerateOpponentCaptures(!forWhite, newBoard, move);
-                if (opponentCaptures.Contains(kingLocation)) return false;
+                if (newBoard.MoveGenerator.IsSquareCurrentlyAttacked(!forWhite, kingLocation))
+                {
+                    return false;
+                }
+
+                return true;
             }
             
             // king: test if king is attacked after move is made
-            // TODO benchmark if just using yield return in captures quicker
             if (piece.Identity == 'K')
             {
-                opponentCaptures ??= GenerateOpponentCaptures(!forWhite, newBoard, move);
+                if (newBoard.MoveGenerator.IsSquareCurrentlyAttacked(!forWhite, move.NewPos))
+                {
+                    return false;
+                }
 
-                if (opponentCaptures.Contains(move.NewPos)) return false;
+                return true;
             }
 
             // others: if not pinned -> move ok. if pinned -> if it's moving along the attack ray, ok

@@ -254,5 +254,20 @@ namespace vergiBlue.Pieces
                 }
             }
         }
+
+        public override bool CanAttackQuick((int column, int row) target, IBoard board)
+        {
+            //k   k
+            //  P
+            if (target.row == CurrentPosition.row + Direction)
+            {
+                if (target.column == CurrentPosition.column - 1 || target.column == CurrentPosition.column + 1)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

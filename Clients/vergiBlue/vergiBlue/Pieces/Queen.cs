@@ -83,5 +83,31 @@ namespace vergiBlue.Pieces
             }
             return false;
         }
+
+        public override bool CanAttackQuick((int column, int row) target, IBoard board)
+        {
+            if (TryCreateBishopDirectionVector(CurrentPosition, target, out var bDir))
+            {
+                for (int i = 1; i < 8; i++)
+                {
+                    var nextX = CurrentPosition.column + i * bDir.x;
+                    var nextY = CurrentPosition.row + i * bDir.y;
+                    if (target.Equals((nextX, nextY))) return true;
+                    if (board.ValueAt((nextX, nextY)) != null) return false;
+                }
+            }
+            if (TryCreateRookDirectionVector(CurrentPosition, target, out var rDir))
+            {
+                for (int i = 1; i < 8; i++)
+                {
+                    var nextX = CurrentPosition.column + i * rDir.x;
+                    var nextY = CurrentPosition.row + i * rDir.y;
+                    if (target.Equals((nextX, nextY))) return true;
+                    if (board.ValueAt((nextX, nextY)) != null) return false;
+                }
+            }
+
+            return false;
+        }
     }
 }

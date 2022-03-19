@@ -239,11 +239,19 @@ namespace vergiBlue.Pieces
             return false;
         }
 
+        /// <summary>
+        /// E.g. pos1 (4,4), pos2 (2,2). (2,2) - (4,4) = (-2,-2) -> two steps sw
+        /// </summary>
+        protected (int x, int y) GetTransformation((int x, int y) pos1, (int x, int y) pos2)
+        {
+            return (pos2.x - pos1.x, pos2.y - pos1.y);
+        }
+
         protected bool TryCreateBishopDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
         {
             // e.g. piece (4,4), king (2,2). (2,2) - (4,4) = (-2,-2) -> two steps sw
             // e.g. piece (0,4), king (4,0). (4,0) - (0,4) = (4, -4) -> two steps sw
-            direction = (pos2.x - pos1.x, pos2.y - pos1.y);
+            direction = GetTransformation(pos1, pos2);
             if (Math.Abs(direction.x) == Math.Abs(direction.y))
             {
                 direction = (Math.Sign(direction.x), Math.Sign(direction.y));
@@ -251,5 +259,10 @@ namespace vergiBlue.Pieces
             }
             return false;
         }
+
+        /// <summary>
+        /// Lightweight validation if piece in current position can attack target (king)
+        /// </summary>
+        public abstract bool CanAttackQuick((int column, int row) target, IBoard board);
     }
 }

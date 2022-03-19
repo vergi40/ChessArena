@@ -524,31 +524,14 @@ namespace vergiBlue.BoardModel
             {
                 return true;
             }
-            
-            var opponentKing = KingLocation(!isWhiteOffensive);
-            if (opponentKing == null)
-            {
-                DebugPostCheckMate = true;
-                return false; // Test override, don't always have kings on board
-            }
 
-            if (Shared.UseCachedAttackSquares)
-            {
-                var isAttacked = AttackMapper.IsPositionAttacked(opponentKing.CurrentPosition, isWhiteOffensive);
-                _isCheckForOffensivePrecalculated = true;
-                return isAttacked;
-            }
-
-            foreach (var attackMove in GetAttackSquares(isWhiteOffensive))
+            if(MoveGenerator.IsKingCurrentlyAttacked(!isWhiteOffensive))
             {
                 Diagnostics.IncrementCheckCount();
-                if (attackMove == opponentKing.CurrentPosition)
-                {
-                    _isCheckForOffensivePrecalculated = true;
-                    return true;
-                }
+                _isCheckForOffensivePrecalculated = true;
+                return true;
             }
-            
+
             return false;
         }
 
