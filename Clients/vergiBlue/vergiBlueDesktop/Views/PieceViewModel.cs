@@ -32,7 +32,7 @@ namespace vergiBlueDesktop.Views
         {
             ClearPossibleTiles();
 
-            var moves = _gameModel.Model.Session.Board.MoveGenerator.MovesForPiece(PieceModel.CurrentPosition);
+            var moves = _gameModel.Model.Session.Board.MoveGenerator.ValidMovesForPiece(PieceModel.CurrentPosition);
             //var detailedMoves = _gameModel.Model.Session.Board.CollectMoveProperties(moves);
 
             var basicColor = GraphicConstants.PlayerMoveColor;

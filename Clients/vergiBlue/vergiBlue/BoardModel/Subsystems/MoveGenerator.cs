@@ -1,9 +1,8 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel.Subsystems.Attacking;
-using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
@@ -29,31 +28,14 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <param name="forWhite"></param>
         /// <param name="kingInDanger">Validate check for each move</param>
         /// <returns></returns>
+        [Obsolete("Use ValidMovesQuick or MovesWithOrdering. The kingInDanger option is dropped")]
         public IEnumerable<SingleMove> MovesQuick(bool forWhite, bool kingInDanger = false)
         {
-            foreach (var castlingMove in CastlingMoves(forWhite))
-            {
-                yield return castlingMove;
-            }
-
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
-            {
-                foreach (var singleMove in piece.Moves(_board))
-                {
-                    if (kingInDanger)
-                    {
-                        // Only allow moves that don't result in check
-                        var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
-                        if (newBoard.IsCheck(!forWhite)) continue;
-                    }
-
-                    yield return singleMove;
-                }
-            }
+            return ValidMovesQuick(forWhite);
         }
 
         /// <summary>
-        /// Should be merged with "movesquick"
+        /// All valid, legal moves. IEnumerable pattern can be utilized to stop calculation early
         /// </summary>
         /// <param name="forWhite"></param>
         /// <returns></returns>
@@ -61,15 +43,47 @@ namespace vergiBlue.BoardModel.Subsystems
         {
             var ownKing = GetKingLocationOrDefault(forWhite);
             var isCheck = IsKingCurrentlyAttacked(forWhite);
+            
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves(_board))
+                {
+                    if (isCheck)
+                    {
+                        // Only allow moves that don't result in check
+                        // TODO most probably here is lot's to improve
+                        var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
+                        if (!newBoard.IsCheck(!forWhite))
+                        {
+                            yield return singleMove;
+                        }
+                    }
+                    else
+                    {
+                        if (Validator.IsLegalMove(singleMove, _board, piece, ownKing))
+                        {
+                            yield return singleMove;
+                        }
+                    }
+                }
+            }
+
             if (!isCheck)
             {
+                // See castling last, as there might be cutoffs earlier
                 // Allowed only if not currently not in check
                 foreach (var castlingMove in CastlingMoves(forWhite))
                 {
                     yield return castlingMove;
                 }
             }
+        }
 
+        public IEnumerable<SingleMove> ValidMovesQuickWithoutCastling(bool forWhite)
+        {
+            var ownKing = GetKingLocationOrDefault(forWhite);
+            var isCheck = IsKingCurrentlyAttacked(forWhite);
+            
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
@@ -95,26 +109,41 @@ namespace vergiBlue.BoardModel.Subsystems
             }
         }
 
-        public IEnumerable<SingleMove> MovesForPiece((int column, int row) position)
+        public IEnumerable<SingleMove> ValidMovesForPiece((int column, int row) position)
         {
             var piece = _board.ValueAtDefinitely(position);
-            var isWhite = piece.IsWhite;
-
-            if(piece.Identity == 'K')
+            var forWhite = piece.IsWhite;
+            var ownKing = GetKingLocationOrDefault(forWhite);
+            var isCheck = IsKingCurrentlyAttacked(forWhite);
+            
+            foreach (var singleMove in piece.Moves(_board))
             {
-                foreach (var castlingMove in CastlingMoves(isWhite))
+                if (isCheck)
                 {
-                    yield return castlingMove;
+                    // Only allow moves that don't result in check
+                    var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
+                    if (!newBoard.IsCheck(!forWhite))
+                    {
+                        yield return singleMove;
+                    }
+                }
+                else
+                {
+                    if (Validator.IsLegalMove(singleMove, _board, piece, ownKing))
+                    {
+                        yield return singleMove;
+                    }
                 }
             }
 
-            foreach (var singleMove in piece.Moves(_board))
+            if (piece.Identity == 'K' && !isCheck)
             {
-                // Only allow moves that don't result in check
-                var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
-                if (newBoard.IsCheck(!isWhite)) continue;
-
-                yield return singleMove;
+                // See castling last, as there might be cutoffs earlier
+                // Allowed only if not currently not in check
+                foreach (var castlingMove in CastlingMoves(forWhite))
+                {
+                    yield return castlingMove;
+                }
             }
         }
 
@@ -154,93 +183,12 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <returns></returns>
         public IList<SingleMove> MovesWithOrdering(bool forWhite, bool heavyOrdering, bool kingInDanger = false)
         {
-            IList<SingleMove> list = new List<SingleMove>();
-            foreach (var castlingMove in CastlingMoves(forWhite))
-            {
-                list.Add(castlingMove);
-            }
-
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
-            {
-                foreach (var singleMove in piece.Moves(_board))
-                {
-                    if (kingInDanger)
-                    {
-                        // Only allow moves that don't result in check
-                        var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
-                        if (newBoard.IsCheck(!forWhite)) continue;
-                    }
-
-                    list.Add(singleMove);
-                }
-            }
+            IList<SingleMove> list = ValidMovesQuick(forWhite).ToList();
 
             if (heavyOrdering) return MoveOrdering.SortMovesByEvaluation(list, _board, forWhite);
             return MoveOrdering.SortMovesByGuessWeight(list, _board, forWhite);
         }
-
-        /// <summary>
-        /// Find every possible move for every piece for given color. IEnumerable should be utilized when there are cutoff etc changes.
-        /// </summary>
-        /// <param name="forWhite"></param>
-        /// <param name="kingInDanger">Validate check for each move</param>
-        /// <returns></returns>
-        public IEnumerable<SingleMove> MovesQuickWithoutCastling(bool forWhite, bool kingInDanger = false)
-        {
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
-            {
-                foreach (var singleMove in piece.Moves(_board))
-                {
-                    if (kingInDanger)
-                    {
-                        // Only allow moves that don't result in check
-                        var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
-                        if (newBoard.IsCheck(!forWhite)) continue;
-                    }
-
-                    yield return singleMove;
-                }
-            }
-        }
-
-        public IList<SingleMove> MovesWithTranspositionOrder(bool forWhite, bool kingInDanger = false)
-        {
-            // Priority moves like known cutoffs
-            var priorityList = new List<SingleMove>();
-            var otherList = new List<SingleMove>();
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
-            {
-                foreach (var singleMove in piece.Moves(_board))
-                {
-                    if (kingInDanger)
-                    {
-                        // Only allow moves that don't result in check
-                        var newBoard = BoardFactory.CreateFromMove(_board, singleMove);
-                        if (newBoard.IsCheck(!forWhite)) continue;
-                    }
-
-                    // Check if move has transposition data
-                    // Maximizing player needs lower bound moves
-                    // Minimizing player needs upper bound moves
-                    var transposition = _board.Shared.Transpositions.GetTranspositionForMove(_board, singleMove);
-                    if (transposition != null)
-                    {
-                        if ((forWhite && transposition.Type == NodeType.LowerBound) ||
-                            (!forWhite && transposition.Type == NodeType.UpperBound))
-                        {
-                            Diagnostics.IncrementPriorityMoves();
-                            priorityList.Add(singleMove);
-                            continue;
-                        }
-                    }
-                    otherList.Add(singleMove);
-                }
-            }
-
-            priorityList.AddRange(MoveOrdering.SortMovesByGuessWeight(otherList, _board, forWhite));
-            return priorityList;
-        }
-
+        
         /// <summary>
         /// All possible capture positions (including pawn).
         /// No need to validate check (atm)
@@ -260,7 +208,7 @@ namespace vergiBlue.BoardModel.Subsystems
 
         public IEnumerable<SingleMove> GetOrCreateAttackMoves(bool forWhiteAttacker)
         {
-            // TODO cache
+            // TODO cache attack moves or cache each attack square to dictionary
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhiteAttacker))
             {
                 foreach (var singleMove in piece.PseudoCaptureMoves(_board))
@@ -301,7 +249,32 @@ namespace vergiBlue.BoardModel.Subsystems
             return false;
         }
 
-        public IEnumerable<SliderAttack> GenerateSliders(bool forWhite, IBoard board)
+        private IList<SliderAttack>? _sliderAttacks { get; set; } = null;
+        public IList<SliderAttack> GetOrCreateSliders(bool forWhite, IBoard board)
+        {
+            if (_sliderAttacks != null) return _sliderAttacks;
+
+            IList<SliderAttack> list = new List<SliderAttack>();
+            var king = GetKingLocationOrDefault(!forWhite);
+            if (king.Equals((-1, -1)))
+            {
+                _sliderAttacks = list;
+                return list;
+            }
+
+            foreach (var piece in board.PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                if (piece.TryCreateSliderAttack(board, king, out var sliderAttack))
+                {
+                    list.Add(sliderAttack);
+                }
+            }
+
+            _sliderAttacks = list;
+            return list;
+        }
+
+        public IEnumerable<SliderAttack> EnumerateSliders(bool forWhite, IBoard board)
         {
             var king = GetKingLocationOrDefault(!forWhite);
             if (king.Equals((-1, -1))) yield break;

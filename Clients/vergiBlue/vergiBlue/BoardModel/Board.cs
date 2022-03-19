@@ -492,12 +492,13 @@ namespace vergiBlue.BoardModel
         {
             if(!currentBoardKnownToBeInCheck)
             {
+                // Not even check currently - cancel
                 if (!IsCheck(isWhiteOffensive)) return false;
             }
 
             // Iterate all opponent moves and check is there any that doesn't have check when next player moves
-            // TODO double-check that castling moves not needed to validate
-            var opponentMoves = MoveGenerator.MovesQuickWithoutCastling(!isWhiteOffensive, false);
+            // No need to include castling as checked king cannot castle
+            var opponentMoves = MoveGenerator.ValidMovesQuickWithoutCastling(!isWhiteOffensive);
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = BoardFactory.CreateFromMove(this, singleMove);
@@ -520,9 +521,9 @@ namespace vergiBlue.BoardModel
         /// <returns></returns>
         public bool IsCheck(bool isWhiteOffensive)
         {
-            if (_isCheckForOffensivePrecalculated == true)
+            if (_isCheckForOffensivePrecalculated != null)
             {
-                return true;
+                return _isCheckForOffensivePrecalculated.Value;
             }
 
             if(MoveGenerator.IsKingCurrentlyAttacked(!isWhiteOffensive))
@@ -532,6 +533,7 @@ namespace vergiBlue.BoardModel
                 return true;
             }
 
+            _isCheckForOffensivePrecalculated = false;
             return false;
         }
 
@@ -620,7 +622,7 @@ namespace vergiBlue.BoardModel
 
         public IEnumerable<SingleMove> FilterOutIllegalMoves(IEnumerable<SingleMove> moves, bool isWhite)
         {
-            var legalMoves = MoveGenerator.MovesQuick(isWhite, true).ToList();
+            var legalMoves = MoveGenerator.ValidMovesQuick(isWhite).ToList();
             foreach (var singleMove in moves)
             {
                 var isLegal =
@@ -641,83 +643,5 @@ namespace vergiBlue.BoardModel
                 yield return move.NewPos;
             }
         }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToLeft(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteLeftCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackLeftCastlingValid) return false;
-                row = 7;
-            }
-            
-            // Castling pieces are intact
-            var rook = ValueAt((0, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-            
-            // No other pieces on the way
-            if (ValueAt((1, row)) != null) return false;
-            if (ValueAt((2, row)) != null) return false;
-            if (ValueAt((3, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> {(2, row), (3, row), (4, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToRight(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteRightCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackRightCastlingValid) return false;
-                row = 7;
-            }
-
-            // Castling pieces are intact
-            var rook = ValueAt((7, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-
-            // No other pieces on the way
-            if (ValueAt((5, row)) != null) return false;
-            if (ValueAt((6, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> { (4, row), (5, row), (6, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
     }
 }

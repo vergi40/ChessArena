@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using CommonNetStandard.Common;
 using vergiBlue.Pieces;
 
@@ -32,7 +27,7 @@ namespace vergiBlue.BoardModel
 
             // Check that is really valid move for current player
             var piece = board.ValueAtDefinitely(move.PrevPos);
-            var validMoves = board.MoveGenerator.MovesQuick(piece.IsWhite, true);
+            var validMoves = board.MoveGenerator.ValidMovesQuick(piece.IsWhite);
             if (!validMoves.Any(m => m.EqualPositions(move)))
             {
                 throw new InvalidMoveException(
@@ -74,7 +69,7 @@ namespace vergiBlue.BoardModel
             }
             
             // king: test if king is attacked after move is made
-            if (piece.Identity == 'K')
+            if (piece.Identity == 'K' && !move.Castling)
             {
                 if (newBoard.MoveGenerator.IsSquareCurrentlyAttacked(!forWhite, move.NewPos))
                 {
@@ -85,7 +80,7 @@ namespace vergiBlue.BoardModel
             }
 
             // others: if not pinned -> move ok. if pinned -> if it's moving along the attack ray, ok
-            foreach (var slider in board.MoveGenerator.GenerateSliders(!forWhite, newBoard))
+            foreach (var slider in board.MoveGenerator.EnumerateSliders(!forWhite, newBoard))
             {
                 if (slider.AttackLine.Contains(move.PrevPos))
                 {
@@ -98,14 +93,6 @@ namespace vergiBlue.BoardModel
             }
 
             return true;
-        }
-
-        private static HashSet<(int column, int row)> GenerateOpponentCaptures(bool opponentWhite, IBoard opponentBoard,
-            SingleMove move)
-        {
-            // TODO boardfactory light
-            // TODO which is quicker: definitely check once each piece (hashset) vs yield return? create benchmark
-            return opponentBoard.MoveGenerator.AttackMoves(opponentWhite).Select(m => m.NewPos).ToHashSet();
         }
     }
 }

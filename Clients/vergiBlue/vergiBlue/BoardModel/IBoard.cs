@@ -167,7 +167,5 @@ namespace vergiBlue.BoardModel
         /// WARNING: Performance-heavy
         /// </summary>
         IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker);
-        bool CanCastleToLeft(bool white);
-        bool CanCastleToRight(bool white);
     }
 }
