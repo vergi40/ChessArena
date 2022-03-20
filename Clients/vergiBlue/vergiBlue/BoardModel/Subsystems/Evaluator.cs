@@ -54,6 +54,7 @@ namespace vergiBlue.BoardModel.Subsystems
 
             if (board.Strategic.EndGameWeight > 0.50)
             {
+                // TODO disabled until GetEvaluationStrength with single king fixed
                 evalScore += EndGameKingToCornerEvaluation(board, isMaximizing);
             }
 
@@ -67,6 +68,8 @@ namespace vergiBlue.BoardModel.Subsystems
             var ownPieces = board.PieceList.Where(p => p.IsWhite == isWhite).ToList();
             if (ownPieces.Count == 1)
             {
+                // TODO if e.g. only opponent king, this returns 200000 
+                return 0.0;
                 return ownPieces.First().GetEvaluationStrength(-1);
             }
 

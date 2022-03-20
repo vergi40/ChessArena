@@ -249,16 +249,16 @@ namespace vergiBlue.BoardModel.Subsystems
             return false;
         }
 
-        private IList<SliderAttack>? _sliderAttacks { get; set; } = null;
+        public IList<SliderAttack>? SliderAttacksCached { get; set; } = null;
         public IList<SliderAttack> GetOrCreateSliders(bool forWhite)
         {
-            if (_sliderAttacks != null) return _sliderAttacks;
+            if (SliderAttacksCached != null) return SliderAttacksCached;
 
             IList<SliderAttack> list = new List<SliderAttack>();
             var king = GetKingLocationOrDefault(!forWhite);
             if (king.Equals((-1, -1)))
             {
-                _sliderAttacks = list;
+                SliderAttacksCached = list;
                 return list;
             }
 
@@ -270,7 +270,7 @@ namespace vergiBlue.BoardModel.Subsystems
                 }
             }
 
-            _sliderAttacks = list;
+            SliderAttacksCached = list;
             return list;
         }
 

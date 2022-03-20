@@ -69,10 +69,14 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// Is check = true. Not calculated = null.
-        /// Save some time if already calculated checkmate
+        /// bool: whiteInCheck,
+        /// bool?: null - not calculated / false - no / true - yes]
         /// </summary>
-        private bool? _isCheckForOffensivePrecalculated { get; set; } = null;
+        private Dictionary<bool, bool?> _isCheck { get; } = new()
+        {
+            { false, null },
+            { true, null }
+        };
 
         /// <summary>
         /// Board that was in checkmate was continued
@@ -263,6 +267,10 @@ namespace vergiBlue.BoardModel
                     UpdatePosition(piece, move);
                     DebugPostCheckMate = true;
                     Strategic.EnPassantPossibility = null;
+
+                    MoveGenerator.SliderAttacksCached = null;
+                    _isCheck[false] = null;
+                    _isCheck[true] = null;
                     return;
                 }
                 else
@@ -283,7 +291,12 @@ namespace vergiBlue.BoardModel
             }
 
             UpdatePosition(piece, move);
-            
+
+            // Initialize cache values that depend on board setup
+            MoveGenerator.SliderAttacksCached = null;
+            _isCheck[false] = null;
+            _isCheck[true] = null;
+
             // General every turn processes
             UpdateEndGameWeight();
             Strategic.TurnCountInCurrentDepth++;
@@ -521,19 +534,20 @@ namespace vergiBlue.BoardModel
         /// <returns></returns>
         public bool IsCheck(bool isWhiteOffensive)
         {
-            if (_isCheckForOffensivePrecalculated != null)
+            var preCalculated = _isCheck[!isWhiteOffensive];
+            if (preCalculated != null)
             {
-                return _isCheckForOffensivePrecalculated.Value;
+                return preCalculated.Value;
             }
 
             if(MoveGenerator.IsKingCurrentlyAttacked(!isWhiteOffensive))
             {
                 Diagnostics.IncrementCheckCount();
-                _isCheckForOffensivePrecalculated = true;
+                _isCheck[!isWhiteOffensive] = true;
                 return true;
             }
 
-            _isCheckForOffensivePrecalculated = false;
+            _isCheck[!isWhiteOffensive] = false;
             return false;
         }
 
@@ -553,8 +567,6 @@ namespace vergiBlue.BoardModel
             var ownPiece = ValueAtDefinitely(from);
             var isWhite = ownPiece.IsWhite;
 
-
-            _isCheckForOffensivePrecalculated = null;
             var move = new SingleMove(from, to);
             
             if (initialMove.Capture)
