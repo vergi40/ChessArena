@@ -14,6 +14,11 @@ namespace vergiBlue.BoardModel
         public int GameTurnCount { get; set; } = 0;
 
         /// <summary>
+        /// Board can be invalid, e.g. has no king
+        /// </summary>
+        public bool Testing { get; set; } = false;
+
+        /// <summary>
         /// Disabled until
         /// * Working correctly
         /// Speed boost is considerable

@@ -125,7 +125,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Checkmate or stalemate
         /// </summary>
-        double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null);
+        double EvaluateNoMoves(bool noMovesForWhite, bool simpleEvaluation, int? currentSearchDepth = null);
 
 
         /// <summary>

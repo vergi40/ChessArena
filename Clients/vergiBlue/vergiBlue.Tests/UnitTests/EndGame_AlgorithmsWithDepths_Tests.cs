@@ -38,7 +38,7 @@ namespace UnitTests
             result.ToString().ShouldBe(expected.ToString());
         }
 
-        private BoardContext DoubleRookPreMoveContext(int depth)
+        internal static BoardContext DoubleRookPreMoveContext(int depth)
         {
             // Start situation
             // 8  r    k  

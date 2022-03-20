@@ -261,17 +261,7 @@ namespace vergiBlue.BoardModel
                 }
                 else if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
-                    // TODO continuing after this makes logic really unstable
-                    // Ensure validation ends if king is eaten
-                    RemovePieces(!isWhite);
-                    UpdatePosition(piece, move);
-                    DebugPostCheckMate = true;
-                    Strategic.EnPassantPossibility = null;
-
-                    MoveGenerator.SliderAttacksCached = null;
-                    _isCheck[false] = null;
-                    _isCheck[true] = null;
-                    return;
+                    throw new ArgumentException("Logical error: king was captured");
                 }
                 else
                 {
@@ -477,10 +467,9 @@ namespace vergiBlue.BoardModel
             return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
         }
 
-        public double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
+        public double EvaluateNoMoves(bool noMovesForWhite, bool simpleEvaluation, int? currentSearchDepth = null)
         {
-            // TODO more logic
-            return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
+            return Evaluator.EvaluateNoMoves(this, noMovesForWhite, simpleEvaluation, currentSearchDepth);
         }
         
         /// <summary>

@@ -42,8 +42,16 @@ namespace vergiBlue.BoardModel.Subsystems
         public IEnumerable<SingleMove> ValidMovesQuick(bool forWhite)
         {
             var ownKing = GetKingLocationOrDefault(forWhite);
+            if (ownKing.Equals((-1, -1)))
+            {
+                if (_board.Shared.Testing)
+                {
+                    foreach (var pseudo in PseudoMoves(forWhite, false)) yield return pseudo;
+                }
+                else throw new ArgumentException("Cannot generate valid moves without own king");
+            }
+
             var isCheck = IsKingCurrentlyAttacked(forWhite);
-            
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
@@ -82,8 +90,16 @@ namespace vergiBlue.BoardModel.Subsystems
         public IEnumerable<SingleMove> ValidMovesQuickWithoutCastling(bool forWhite)
         {
             var ownKing = GetKingLocationOrDefault(forWhite);
+            if (ownKing.Equals((-1, -1)))
+            {
+                if (_board.Shared.Testing)
+                {
+                    foreach (var pseudo in PseudoMoves(forWhite, false)) yield return pseudo;
+                }
+                else throw new ArgumentException("Cannot generate valid moves without own king");
+            }
+
             var isCheck = IsKingCurrentlyAttacked(forWhite);
-            
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
@@ -109,8 +125,12 @@ namespace vergiBlue.BoardModel.Subsystems
             }
         }
 
+        /// <summary>
+        /// Only called from UI
+        /// </summary>
         public IEnumerable<SingleMove> ValidMovesForPiece((int column, int row) position)
         {
+            // TODO testing version, if no king
             var piece = _board.ValueAtDefinitely(position);
             var forWhite = piece.IsWhite;
             var ownKing = GetKingLocationOrDefault(forWhite);
@@ -140,6 +160,28 @@ namespace vergiBlue.BoardModel.Subsystems
             {
                 // See castling last, as there might be cutoffs earlier
                 // Allowed only if not currently not in check
+                foreach (var castlingMove in CastlingMoves(forWhite))
+                {
+                    yield return castlingMove;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Generate all available moves without any validation
+        /// </summary>
+        private IEnumerable<SingleMove> PseudoMoves(bool forWhite, bool includeCastling)
+        {
+            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            {
+                foreach (var singleMove in piece.Moves(_board))
+                {
+                    yield return singleMove;
+                }
+            }
+
+            if(includeCastling)
+            {
                 foreach (var castlingMove in CastlingMoves(forWhite))
                 {
                     yield return castlingMove;
@@ -223,7 +265,7 @@ namespace vergiBlue.BoardModel.Subsystems
             var king = GetKingLocationOrDefault(whiteKing);
 
             // Testing
-            if (king.Equals((-1, -1))) return false;
+            if (king.Equals((-1, -1))) return true;
 
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite != whiteKing))
             {

@@ -384,5 +384,43 @@ namespace UnitTests
             var moves = caseBishop.MoveGenerator.ValidMovesQuick(false);
             moves.ShouldNotContain(m => m.NewPos.Equals("b5".ToTuple()));
         }
+
+        [TestMethod]
+        public void KingThreatened_CantCaptureGuarded()
+        {
+            // Board template
+            // 8k
+            // 7
+            // 6
+            // 5
+            // 4
+            // 3    p
+            // 2  p  
+            // 1K
+            //  A B C D E F G H
+            var board = BoardFactory.CreateFromPieces("a1K", "a8k", "b2p", "c3p");
+            var moves = board.MoveGenerator.ValidMovesQuick(true).ToList();
+
+            moves.ShouldNotContain(m => m.NewPos.Equals("b2".ToTuple()));
+        }
+
+        [TestMethod]
+        public void KingNotThreatened_CantCaptureGuarded()
+        {
+            // Board template
+            // 8k
+            // 7
+            // 6
+            // 5
+            // 4
+            // 3    p
+            // 2  p  
+            // 1  K
+            //  A B C D E F G H
+            var board = BoardFactory.CreateFromPieces("b1K", "a8k", "b2p", "c3p");
+            var moves = board.MoveGenerator.ValidMovesQuick(true).ToList();
+
+            moves.ShouldNotContain(m => m.NewPos.Equals("b2".ToTuple()));
+        }
     }
 }

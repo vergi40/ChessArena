@@ -45,6 +45,7 @@ namespace vergiBlue.Logic
         {
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             Board = BoardFactory.CreateClone(board);
+            Board.Shared.Testing = true;
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
