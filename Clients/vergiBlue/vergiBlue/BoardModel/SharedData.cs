@@ -17,13 +17,6 @@ namespace vergiBlue.BoardModel
         /// Board can be invalid, e.g. has no king
         /// </summary>
         public bool Testing { get; set; } = false;
-
-        /// <summary>
-        /// Disabled until
-        /// * Working correctly
-        /// Speed boost is considerable
-        /// </summary>
-        public bool UseCachedAttackSquares { get; set; } = false;
         
         public TranspositionTables Transpositions { get; }
         

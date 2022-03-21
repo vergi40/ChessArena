@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
-using vergiBlue.BoardModel.Subsystems.Attacking;
+using vergiBlue.BoardModel.Subsystems;
 
 
 namespace vergiBlue.Pieces

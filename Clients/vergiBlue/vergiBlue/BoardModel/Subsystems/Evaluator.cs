@@ -165,7 +165,7 @@ namespace vergiBlue.BoardModel.Subsystems
             }
             else
             {
-                var isCheckMate = board.MoveGenerator.IsSquareCurrentlyAttacked(!noMovesForWhite, king.CurrentPosition);
+                var isCheckMate = board.IsCheck(!noMovesForWhite);
                 if (!isCheckMate)
                 {
                     evalScore = EvalConstants.STALEMATE;

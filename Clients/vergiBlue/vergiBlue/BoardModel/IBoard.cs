@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel.Subsystems;
-using vergiBlue.BoardModel.SubSystems;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
@@ -32,11 +31,6 @@ namespace vergiBlue.BoardModel
         ulong BoardHash { get; set; }
 
         /// <summary>
-        /// Board that was in checkmate was continued
-        /// </summary>
-        bool DebugPostCheckMate { get; }
-
-        /// <summary>
         /// Data reference where all transposition tables etc. should be fetched. Same data shared between all board instances.
         /// </summary>
         SharedData Shared { get; }
@@ -53,8 +47,6 @@ namespace vergiBlue.BoardModel
         IList<IPiece> InterfacePieces { get; }
 
         MoveGenerator MoveGenerator { get; }
-        AttackSquareMapper AttackMapper { get; }
-
 
         // Functionality
 

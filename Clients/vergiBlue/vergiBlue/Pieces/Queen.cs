@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
-using vergiBlue.BoardModel.Subsystems.Attacking;
+using vergiBlue.BoardModel.Subsystems;
 
 namespace vergiBlue.Pieces
 {

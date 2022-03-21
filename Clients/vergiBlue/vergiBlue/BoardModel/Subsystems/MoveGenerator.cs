@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using vergiBlue.Algorithms;
-using vergiBlue.BoardModel.Subsystems.Attacking;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
@@ -51,7 +50,7 @@ namespace vergiBlue.BoardModel.Subsystems
                 else throw new ArgumentException("Cannot generate valid moves without own king");
             }
 
-            var isCheck = IsKingCurrentlyAttacked(forWhite);
+            var isCheck = _board.IsCheck(!forWhite);
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
@@ -99,7 +98,7 @@ namespace vergiBlue.BoardModel.Subsystems
                 else throw new ArgumentException("Cannot generate valid moves without own king");
             }
 
-            var isCheck = IsKingCurrentlyAttacked(forWhite);
+            var isCheck = _board.IsCheck(!forWhite);
             foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
@@ -134,8 +133,8 @@ namespace vergiBlue.BoardModel.Subsystems
             var piece = _board.ValueAtDefinitely(position);
             var forWhite = piece.IsWhite;
             var ownKing = GetKingLocationOrDefault(forWhite);
-            var isCheck = IsKingCurrentlyAttacked(forWhite);
-            
+            var isCheck = _board.IsCheck(!forWhite);
+
             foreach (var singleMove in piece.Moves(_board))
             {
                 if (isCheck)

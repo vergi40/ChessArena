@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
-namespace vergiBlue.BoardModel.Subsystems.Attacking
+namespace vergiBlue.BoardModel.Subsystems
 {
     /// <summary>
     /// Slider attack to targeting king. Only valid if single pin piece found

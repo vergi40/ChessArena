@@ -6,7 +6,6 @@ using CommonNetStandard.Interface;
 using log4net;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel.Subsystems;
-using vergiBlue.BoardModel.SubSystems;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
@@ -78,13 +77,7 @@ namespace vergiBlue.BoardModel
             { true, null }
         };
 
-        /// <summary>
-        /// Board that was in checkmate was continued
-        /// </summary>
-        public bool DebugPostCheckMate { get; set; }
-
         public MoveGenerator MoveGenerator { get; }
-        public AttackSquareMapper AttackMapper { get; private set; }
 
         /// <summary>
         /// Start game initialization
@@ -94,7 +87,6 @@ namespace vergiBlue.BoardModel
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
-            AttackMapper = new AttackSquareMapper();
 
             Shared = new SharedData();
             Strategic = new StrategicData();
@@ -108,7 +100,6 @@ namespace vergiBlue.BoardModel
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
-            AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);
 
@@ -118,10 +109,6 @@ namespace vergiBlue.BoardModel
             if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
-                if(Shared.UseCachedAttackSquares)
-                {
-                    AttackMapper = other.AttackMapper.Clone(PieceList);
-                }
             }
             else
             {
@@ -139,16 +126,10 @@ namespace vergiBlue.BoardModel
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
-            AttackMapper = new AttackSquareMapper();
 
             InitializeFromReference(other);
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
-
-            if (Shared.UseCachedAttackSquares)
-            {
-                AttackMapper = other.AttackMapper.Clone(PieceList);
-            }
             BoardHash = other.BoardHash;
 
             ExecuteMove(move);
@@ -161,8 +142,6 @@ namespace vergiBlue.BoardModel
         {
             Shared.Transpositions.Initialize();
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
-
-            AttackMapper = new AttackSquareMapper(this);
         }
 
         private void InitializeFromReference(IBoard previous)
@@ -244,10 +223,6 @@ namespace vergiBlue.BoardModel
         public void ExecuteMove(SingleMove move)
         {
             BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
-            if(Shared.UseCachedAttackSquares)
-            {
-                AttackMapper.Update(this, move);
-            }
 
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
@@ -392,15 +367,6 @@ namespace vergiBlue.BoardModel
             }
         }
         
-        private void RemovePieces(bool isWhite)
-        {
-            var toBeRemoved = PieceList.Where(p => p.IsWhite == isWhite).ToList();
-            foreach (var piece in toBeRemoved)
-            {
-                RemovePiece(piece.CurrentPosition);
-            }
-        }
-        
         private void UpdateKingReference(PieceBase king)
         {
             if (king.IsWhite)
@@ -526,6 +492,7 @@ namespace vergiBlue.BoardModel
             var preCalculated = _isCheck[!isWhiteOffensive];
             if (preCalculated != null)
             {
+                // TODO Add diagnostics counter
                 return preCalculated.Value;
             }
 
