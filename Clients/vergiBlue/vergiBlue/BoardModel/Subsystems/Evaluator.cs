@@ -3,6 +3,30 @@ using System.Linq;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
+    /// <summary>
+    /// All for white side, do negating if needed
+    /// </summary>
+    public static class EvalConstants
+    {
+        /// <summary>
+        /// Board score if white king in checkmate
+        /// </summary>
+        public static double CHECKMATE => PieceBaseStrength.King * -1;
+        public static double CHECKMATE_THRESHOLD => CHECKMATE * 0.5;
+
+        /// <summary>
+        /// Board score if white king in stalemate
+        /// </summary>
+        public static double STALEMATE => 0.0;
+
+        public static double CASTLING_BONUS => PieceBaseStrength.Pawn;
+
+        /// <summary>
+        /// Bonus if white attacker has black king in check
+        /// </summary>
+        public static double CHECKING_BONUS => PieceBaseStrength.Pawn;
+    }
+
     internal static class Evaluator
     {
         public static double Evaluate(IBoard board, bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
@@ -54,6 +78,7 @@ namespace vergiBlue.BoardModel.Subsystems
 
             if (board.Strategic.EndGameWeight > 0.50)
             {
+                // TODO disabled until GetEvaluationStrength with single king fixed
                 evalScore += EndGameKingToCornerEvaluation(board, isMaximizing);
             }
 
@@ -67,6 +92,8 @@ namespace vergiBlue.BoardModel.Subsystems
             var ownPieces = board.PieceList.Where(p => p.IsWhite == isWhite).ToList();
             if (ownPieces.Count == 1)
             {
+                // TODO if e.g. only opponent king, this returns 200000 
+                return 0.0;
                 return ownPieces.First().GetEvaluationStrength(-1);
             }
 
@@ -123,6 +150,34 @@ namespace vergiBlue.BoardModel.Subsystems
             }
 
             return evalScore;
+        }
+
+        /// <summary>
+        /// Checkmate or stalemate
+        /// </summary>
+        public static double EvaluateNoMoves(Board board, bool noMovesForWhite, bool simpleEvaluation, int? currentSearchDepth)
+        {
+            var evalScore = EvalConstants.CHECKMATE;
+            var king = board.KingLocation(noMovesForWhite);
+            if (king == null)
+            {
+                // Testing. Or old "delete pieces" logic 
+            }
+            else
+            {
+                var isCheckMate = board.MoveGenerator.IsSquareCurrentlyAttacked(!noMovesForWhite, king.CurrentPosition);
+                if (!isCheckMate)
+                {
+                    evalScore = EvalConstants.STALEMATE;
+                    if (!noMovesForWhite) evalScore *= -1;
+                    return evalScore;
+                }
+            }
+
+            if (!noMovesForWhite) evalScore *= -1;
+            var depth = 0;
+            if (currentSearchDepth != null) depth = currentSearchDepth.Value;
+            return CheckMateScoreAdjustToDepthFixed(evalScore, depth);
         }
     }
 }

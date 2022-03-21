@@ -35,11 +35,17 @@ namespace vergiBlue.Algorithms
         /// <returns></returns>
         public static double ToDepth(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
         {
-            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, depth);
+            if (depth == 0)
+            {
+                return newBoard.Evaluate(maximizingPlayer, false, depth);
+            }
             var allMoves = newBoard.MoveGenerator.MovesWithOrdering(maximizingPlayer, false);
 
             // Checkmate or stalemate
-            if (!allMoves.Any()) return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
+            if (!allMoves.Any())
+            {
+                return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
+            }
             if (maximizingPlayer)
             {
                 var value = -1000000.0;

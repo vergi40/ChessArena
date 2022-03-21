@@ -15,7 +15,7 @@ namespace UnitTests
     class EndGame_AlgorithmsWithDepths_Tests
     {
         [Test]
-        public void DoubleRook_MiniMaxBasic_ShouldCheckMate([Range(1, 4)] int depth)
+        public void DoubleRook_MiniMaxBasic_ShouldCheckMate([Range(2, 4)] int depth)
         {
             var preMoveContext = DoubleRookPreMoveContext(depth);
             var algo = new MiniMaxBasic();
@@ -27,7 +27,7 @@ namespace UnitTests
         }
 
         [Test]
-        public void DoubleRook_IDBasic_ShouldCheckMate([Range(1, 4)] int depth)
+        public void DoubleRook_IDBasic_ShouldCheckMate([Range(2, 4)] int depth)
         {
             var preMoveContext = DoubleRookPreMoveContext(depth);
             var algo = new IDBasic();
@@ -38,7 +38,7 @@ namespace UnitTests
             result.ToString().ShouldBe(expected.ToString());
         }
 
-        private BoardContext DoubleRookPreMoveContext(int depth)
+        internal static BoardContext DoubleRookPreMoveContext(int depth)
         {
             // Start situation
             // 8  r    k  

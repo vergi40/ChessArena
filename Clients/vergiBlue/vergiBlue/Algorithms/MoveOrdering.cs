@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.Algorithms
@@ -85,12 +86,15 @@ namespace vergiBlue.Algorithms
 
                 if (singleMove.Castling)
                 {
-                    if (isMaximizing) scoreGuess += PieceBaseStrength.Pawn;
-                    else scoreGuess -= PieceBaseStrength.Pawn;
+                    var bonus = EvalConstants.CASTLING_BONUS;
+                    if (!isMaximizing) bonus *= -1;
+                    scoreGuess += bonus;
                 }
                 
                 // Penalize moving to position where opponent pawn is attacking
                 // TODO
+
+                // Add some extra for check
                 
                 list.Add((scoreGuess, singleMove));
             }

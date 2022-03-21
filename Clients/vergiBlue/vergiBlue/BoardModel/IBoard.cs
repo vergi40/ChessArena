@@ -125,7 +125,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Checkmate or stalemate
         /// </summary>
-        double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null);
+        double EvaluateNoMoves(bool noMovesForWhite, bool simpleEvaluation, int? currentSearchDepth = null);
 
 
         /// <summary>
@@ -167,7 +167,5 @@ namespace vergiBlue.BoardModel
         /// WARNING: Performance-heavy
         /// </summary>
         IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker);
-        bool CanCastleToLeft(bool white);
-        bool CanCastleToRight(bool white);
     }
 }

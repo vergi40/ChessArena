@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
+using Math = System.Math;
 
 
 namespace vergiBlue.Pieces
@@ -83,6 +84,17 @@ namespace vergiBlue.Pieces
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
             return Moves(board);
+        }
+
+        public override bool CanAttackQuick((int column, int row) target, IBoard board)
+        {
+            // Target is in vicinity
+            if (Math.Abs(target.row - CurrentPosition.row) <= 1 && Math.Abs(target.column - CurrentPosition.column) <= 1)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems.Attacking;
 
 
 namespace vergiBlue.Pieces
@@ -218,6 +219,112 @@ namespace vergiBlue.Pieces
             // Probably should have individual override for each function. 
             // Now only for pawn
             return Moves(board);
+        }
+
+        public virtual bool TryCreateSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
+        {
+            sliderAttack = new SliderAttack();
+            return false;
+        }
+
+        protected bool TryCreateRookDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
+        {
+            // e.g. piece (4,0), king (2,0). (2,0) - (4,0) = (-2,0) -> two steps left
+            direction = (pos2.x - pos1.x, pos2.y - pos1.y);
+            if (direction.x * direction.y == 0)
+            {
+                direction = (Math.Sign(direction.x), Math.Sign(direction.y));
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// E.g. pos1 (4,4), pos2 (2,2). (2,2) - (4,4) = (-2,-2) -> two steps sw
+        /// </summary>
+        protected (int x, int y) GetTransformation((int x, int y) pos1, (int x, int y) pos2)
+        {
+            return (pos2.x - pos1.x, pos2.y - pos1.y);
+        }
+
+        protected bool TryCreateBishopDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
+        {
+            // e.g. piece (4,4), king (2,2). (2,2) - (4,4) = (-2,-2) -> two steps sw
+            // e.g. piece (0,4), king (4,0). (4,0) - (0,4) = (4, -4) -> two steps sw
+            direction = GetTransformation(pos1, pos2);
+            if (Math.Abs(direction.x) == Math.Abs(direction.y))
+            {
+                direction = (Math.Sign(direction.x), Math.Sign(direction.y));
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Lightweight validation if piece in current position can attack target (king)
+        /// </summary>
+        public abstract bool CanAttackQuick((int column, int row) target, IBoard board);
+
+        protected bool TryCreateBishopSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
+        {
+            sliderAttack = new SliderAttack();
+            if (TryCreateBishopDirectionVector(CurrentPosition, opponentKing, out var direction))
+            {
+                sliderAttack.Attacker = CurrentPosition;
+                sliderAttack.WhiteAttacking = IsWhite;
+                sliderAttack.King = opponentKing;
+                var pinCount = 0;
+                for (int i = 1; i < 8; i++)
+                {
+                    var nextX = CurrentPosition.column + i * direction.x;
+                    var nextY = CurrentPosition.row + i * direction.y;
+                    sliderAttack.AttackLine.Add((nextX, nextY));
+                    if (opponentKing.Equals((nextX, nextY))) break;
+
+                    var pin = board.ValueAt((nextX, nextY));
+                    if (pin != null && pin.IsWhite != IsWhite)
+                    {
+                        sliderAttack.Pin = ((nextX, nextY));
+                        pinCount++;
+                    }
+
+                    if (pinCount > 1) return false;
+
+                }
+                return true;
+            }
+            return false;
+        }
+        protected bool TryCreateRookSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
+        {
+            sliderAttack = new SliderAttack();
+            if (TryCreateRookDirectionVector(CurrentPosition, opponentKing, out var direction))
+            {
+                sliderAttack.Attacker = CurrentPosition;
+                sliderAttack.WhiteAttacking = IsWhite;
+                sliderAttack.King = opponentKing;
+                var pinCount = 0;
+                for (int i = 1; i < 8; i++)
+                {
+                    var nextX = CurrentPosition.column + i * direction.x;
+                    var nextY = CurrentPosition.row + i * direction.y;
+                    sliderAttack.AttackLine.Add((nextX, nextY));
+                    if (opponentKing.Equals((nextX, nextY))) break;
+
+                    var pin = board.ValueAt((nextX, nextY));
+                    if (pin != null && pin.IsWhite != IsWhite)
+                    {
+                        sliderAttack.Pin = ((nextX, nextY));
+                        pinCount++;
+                    }
+
+                    if (pinCount > 1) return false;
+                }
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

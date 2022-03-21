@@ -69,10 +69,14 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// Is check = true. Not calculated = null.
-        /// Save some time if already calculated checkmate
+        /// bool: whiteInCheck,
+        /// bool?: null - not calculated / false - no / true - yes]
         /// </summary>
-        private bool? _isCheckForOffensivePrecalculated { get; set; } = null;
+        private Dictionary<bool, bool?> _isCheck { get; } = new()
+        {
+            { false, null },
+            { true, null }
+        };
 
         /// <summary>
         /// Board that was in checkmate was continued
@@ -257,13 +261,7 @@ namespace vergiBlue.BoardModel
                 }
                 else if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
-                    // TODO continuing after this makes logic really unstable
-                    // Ensure validation ends if king is eaten
-                    RemovePieces(!isWhite);
-                    UpdatePosition(piece, move);
-                    DebugPostCheckMate = true;
-                    Strategic.EnPassantPossibility = null;
-                    return;
+                    throw new ArgumentException("Logical error: king was captured");
                 }
                 else
                 {
@@ -283,7 +281,12 @@ namespace vergiBlue.BoardModel
             }
 
             UpdatePosition(piece, move);
-            
+
+            // Initialize cache values that depend on board setup
+            MoveGenerator.SliderAttacksCached = null;
+            _isCheck[false] = null;
+            _isCheck[true] = null;
+
             // General every turn processes
             UpdateEndGameWeight();
             Strategic.TurnCountInCurrentDepth++;
@@ -464,10 +467,9 @@ namespace vergiBlue.BoardModel
             return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
         }
 
-        public double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
+        public double EvaluateNoMoves(bool noMovesForWhite, bool simpleEvaluation, int? currentSearchDepth = null)
         {
-            // TODO more logic
-            return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
+            return Evaluator.EvaluateNoMoves(this, noMovesForWhite, simpleEvaluation, currentSearchDepth);
         }
         
         /// <summary>
@@ -492,12 +494,13 @@ namespace vergiBlue.BoardModel
         {
             if(!currentBoardKnownToBeInCheck)
             {
+                // Not even check currently - cancel
                 if (!IsCheck(isWhiteOffensive)) return false;
             }
 
             // Iterate all opponent moves and check is there any that doesn't have check when next player moves
-            // TODO double-check that castling moves not needed to validate
-            var opponentMoves = MoveGenerator.MovesQuickWithoutCastling(!isWhiteOffensive, false);
+            // No need to include castling as checked king cannot castle
+            var opponentMoves = MoveGenerator.ValidMovesQuickWithoutCastling(!isWhiteOffensive);
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = BoardFactory.CreateFromMove(this, singleMove);
@@ -520,35 +523,20 @@ namespace vergiBlue.BoardModel
         /// <returns></returns>
         public bool IsCheck(bool isWhiteOffensive)
         {
-            if (_isCheckForOffensivePrecalculated == true)
+            var preCalculated = _isCheck[!isWhiteOffensive];
+            if (preCalculated != null)
             {
-                return true;
-            }
-            
-            var opponentKing = KingLocation(!isWhiteOffensive);
-            if (opponentKing == null)
-            {
-                DebugPostCheckMate = true;
-                return false; // Test override, don't always have kings on board
+                return preCalculated.Value;
             }
 
-            if (Shared.UseCachedAttackSquares)
-            {
-                var isAttacked = AttackMapper.IsPositionAttacked(opponentKing.CurrentPosition, isWhiteOffensive);
-                _isCheckForOffensivePrecalculated = true;
-                return isAttacked;
-            }
-
-            foreach (var attackMove in GetAttackSquares(isWhiteOffensive))
+            if(MoveGenerator.IsKingCurrentlyAttacked(!isWhiteOffensive))
             {
                 Diagnostics.IncrementCheckCount();
-                if (attackMove == opponentKing.CurrentPosition)
-                {
-                    _isCheckForOffensivePrecalculated = true;
-                    return true;
-                }
+                _isCheck[!isWhiteOffensive] = true;
+                return true;
             }
-            
+
+            _isCheck[!isWhiteOffensive] = false;
             return false;
         }
 
@@ -568,8 +556,6 @@ namespace vergiBlue.BoardModel
             var ownPiece = ValueAtDefinitely(from);
             var isWhite = ownPiece.IsWhite;
 
-
-            _isCheckForOffensivePrecalculated = null;
             var move = new SingleMove(from, to);
             
             if (initialMove.Capture)
@@ -637,7 +623,7 @@ namespace vergiBlue.BoardModel
 
         public IEnumerable<SingleMove> FilterOutIllegalMoves(IEnumerable<SingleMove> moves, bool isWhite)
         {
-            var legalMoves = MoveGenerator.MovesQuick(isWhite, true).ToList();
+            var legalMoves = MoveGenerator.ValidMovesQuick(isWhite).ToList();
             foreach (var singleMove in moves)
             {
                 var isLegal =
@@ -658,83 +644,5 @@ namespace vergiBlue.BoardModel
                 yield return move.NewPos;
             }
         }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToLeft(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteLeftCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackLeftCastlingValid) return false;
-                row = 7;
-            }
-            
-            // Castling pieces are intact
-            var rook = ValueAt((0, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-            
-            // No other pieces on the way
-            if (ValueAt((1, row)) != null) return false;
-            if (ValueAt((2, row)) != null) return false;
-            if (ValueAt((3, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> {(2, row), (3, row), (4, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToRight(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteRightCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackRightCastlingValid) return false;
-                row = 7;
-            }
-
-            // Castling pieces are intact
-            var rook = ValueAt((7, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-
-            // No other pieces on the way
-            if (ValueAt((5, row)) != null) return false;
-            if (ValueAt((6, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> { (4, row), (5, row), (6, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
     }
 }
