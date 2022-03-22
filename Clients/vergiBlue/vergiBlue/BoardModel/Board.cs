@@ -5,6 +5,7 @@ using CommonNetStandard;
 using CommonNetStandard.Interface;
 using log4net;
 using vergiBlue.Algorithms;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel.Subsystems;
 using vergiBlue.Pieces;
 
@@ -492,13 +493,13 @@ namespace vergiBlue.BoardModel
             var preCalculated = _isCheck[!isWhiteOffensive];
             if (preCalculated != null)
             {
-                // TODO Add diagnostics counter
+                Collector.IncreaseOperationCount(OperationsKeys.CacheCheckUtilized);
                 return preCalculated.Value;
             }
 
+            Collector.IncreaseOperationCount(OperationsKeys.CheckEvaluationDone);
             if(MoveGenerator.IsKingCurrentlyAttacked(!isWhiteOffensive))
             {
-                Diagnostics.IncrementCheckCount();
                 _isCheck[!isWhiteOffensive] = true;
                 return true;
             }

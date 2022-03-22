@@ -137,8 +137,8 @@ namespace vergiBlue.Logic
                 NominalSearchDepth = depthResult.depth,
                 MaxTimeMs = _turnInfo.settings.TimeLimitInMs
             };
-            
-            Diagnostics.AddMessage($"Algo: {_algorithm.GetType().Name}");
+
+            Collector.AddCustomMessage($"Algorithm: {_algorithm.GetType().Name}");
             return _algorithm.CalculateBestMove(context);
         }
 

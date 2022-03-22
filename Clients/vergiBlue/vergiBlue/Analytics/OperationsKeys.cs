@@ -9,6 +9,6 @@
         public static string Beta => "BetaCutoffCount";
         public static string PriorityMoveFound => "PriorityMoveCount";
         public static string TranspositionUsed => "TranspositionsUsedCount";
-        public static string TimeElapsed => "TimeElapsed";
+        public static string TimeElapsedMs => "TimeElapsedMs";
     }
 }

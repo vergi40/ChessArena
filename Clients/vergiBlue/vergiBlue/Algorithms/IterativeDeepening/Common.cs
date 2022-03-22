@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 
 namespace vergiBlue.Algorithms.IterativeDeepening
@@ -13,13 +9,13 @@ namespace vergiBlue.Algorithms.IterativeDeepening
         {
             if (searchMoveCount < totalMoveCount)
             {
-                Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed - 1} [partial {depthUsed}: ({searchMoveCount}/{totalMoveCount})].");
+                Collector.AddCustomMessage($" Iterative deepening search depth was {depthUsed - 1} [partial {depthUsed}: ({searchMoveCount}/{totalMoveCount})].");
             }
             else
             {
-                Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed} ({searchMoveCount}/{totalMoveCount}).");
+                Collector.AddCustomMessage($" Iterative deepening search depth was {depthUsed} ({searchMoveCount}/{totalMoveCount}).");
             }
-            Diagnostics.AddMessage($" Move evaluation: {evaluation}.");
+            Collector.AddCustomMessage($" Move evaluation: {evaluation}.");
 
             // DEBUG
             //if (move != null && board != null && board.Strategic.EndGameWeight > 0.50)

@@ -24,12 +24,12 @@ namespace vergiBlue.Analytics
         {
             { OperationsKeys.EvaluationDone, "Board evaluations: " },
             { OperationsKeys.CheckEvaluationDone, "Check evaluations: " },
+            { OperationsKeys.TimeElapsedMs, "Time elapsed (ms): " },
             { OperationsKeys.Alpha, "Alpha cutoffs: " },
             { OperationsKeys.Beta, "Beta cutoffs: " },
             { OperationsKeys.PriorityMoveFound, "Priority moves found: " },
             { OperationsKeys.TranspositionUsed, "Transpositions used: " },
-            { OperationsKeys.CacheCheckUtilized, "Chech cache utilized count: " },
-            { OperationsKeys.TimeElapsed, "Time elapsed: " },
+            { OperationsKeys.CacheCheckUtilized, "Check cache utilized count: " },
         };
     }
 }
