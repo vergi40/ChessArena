@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using vergiBlue.Analytics;
 
 namespace vergiBlue.BoardModel.Subsystems
 {
@@ -31,6 +32,7 @@ namespace vergiBlue.BoardModel.Subsystems
     {
         public static double Evaluate(IBoard board, bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
         {
+            Collector.IncrementEvaluationCount();
             if (simpleEvaluation) return EvaluateSimple(board, isMaximizing, currentSearchDepth);
             return EvaluateIntelligent(board, isMaximizing, currentSearchDepth);
         }
@@ -38,7 +40,6 @@ namespace vergiBlue.BoardModel.Subsystems
 
         private static double EvaluateSimple(IBoard board, bool isMaximizing, int? currentSearchDepth = null)
         {
-            Diagnostics.IncrementEvalCount();
             var evalScore = board.PieceList.Sum(p => p.RelativeStrength);
 
             return evalScore;
@@ -46,7 +47,6 @@ namespace vergiBlue.BoardModel.Subsystems
 
         private static double EvaluateIntelligent(IBoard board, bool isMaximizing, int? currentSearchDepth = null)
         {
-            Diagnostics.IncrementEvalCount();
             var evalScore = board.PieceList.Sum(p => p.GetEvaluationStrength(board.Strategic.EndGameWeight));
 
             // Checkmate override
@@ -157,6 +157,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// </summary>
         public static double EvaluateNoMoves(Board board, bool noMovesForWhite, bool simpleEvaluation, int? currentSearchDepth)
         {
+            Collector.IncrementEvaluationCount();
             var evalScore = EvalConstants.CHECKMATE;
             var king = board.KingLocation(noMovesForWhite);
             if (king == null)

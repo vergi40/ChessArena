@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
 
@@ -58,7 +59,7 @@ namespace vergiBlue.Algorithms
                     {
                         // Prune. Alpha is better than previous level beta. Don't want to use moves from this board set.
                         // Saved some time by noticing this branch is a dead end
-                        Diagnostics.IncrementAlpha();
+                        Collector.IncreaseOperationCount(OperationsKeys.Alpha);
                         break;
                     }
                 }
@@ -75,7 +76,7 @@ namespace vergiBlue.Algorithms
                     if (beta <= alpha)
                     {
                         // Prune. Beta is smaller than previous level alpha. Don't want to use moves from this board set.
-                        Diagnostics.IncrementBeta();
+                        Collector.IncreaseOperationCount(OperationsKeys.Beta);
                         break;
                     }
                 }
@@ -123,7 +124,7 @@ namespace vergiBlue.Algorithms
             var transposition = newBoard.Shared.Transpositions.GetTranspositionForBoard(newBoard.BoardHash);
             if (transposition != null && transposition.Depth >= depth)
             {
-                Diagnostics.IncrementTranspositionsFound();
+                Collector.IncreaseOperationCount(OperationsKeys.TranspositionUsed);
                 var transpositionEval = Evaluator.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
                 
                 if (transposition.Type == NodeType.Exact) return transpositionEval;
@@ -171,7 +172,7 @@ namespace vergiBlue.Algorithms
                             nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
                                 NodeType.LowerBound, nextBoard.Shared.GameTurnCount);
                         }
-                        Diagnostics.IncrementBeta();
+                        Collector.IncreaseOperationCount(OperationsKeys.Beta);
                         break;
                     }
 
@@ -205,7 +206,7 @@ namespace vergiBlue.Algorithms
                             nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
                                 NodeType.UpperBound, nextBoard.Shared.GameTurnCount);
                         }
-                        Diagnostics.IncrementAlpha();
+                        Collector.IncreaseOperationCount(OperationsKeys.Alpha);
                         break;
                     }
 

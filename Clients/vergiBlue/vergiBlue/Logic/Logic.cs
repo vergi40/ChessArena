@@ -4,6 +4,7 @@ using System.Linq;
 using CommonNetStandard.Client;
 using CommonNetStandard.Interface;
 using vergiBlue.Algorithms;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 
 namespace vergiBlue.Logic
@@ -82,7 +83,7 @@ namespace vergiBlue.Logic
         private IPlayerMove CreateNewMove(int? overrideSearchDepth = null)
         {
             var isMaximizing = IsPlayerWhite;
-            Diagnostics.StartMoveCalculations();
+            Collector.Instance.StartMoveCalculationTimer();
 
             var startInfo = new TurnStartInfo(isMaximizing, GameHistory.ToList(), Settings, PreviousData,
                 overrideSearchDepth);
@@ -115,8 +116,8 @@ namespace vergiBlue.Logic
                     
                     if(Settings.UseFullDiagnostics)
                     {
-                        if(toBeDeleted.Any()) Diagnostics.AddMessage($"Deleted {toBeDeleted.Count} old transposition entries.");
-                        Diagnostics.AddMessage($"Total transpositions: {transpositions.Count}.");
+                        if(toBeDeleted.Any()) Collector.AddCustomMessage($"Deleted {toBeDeleted.Count} old transposition entries.");
+                        Collector.AddCustomMessage($"Total transpositions: {transpositions.Count}.");
                     }
                 }
             }
@@ -143,7 +144,7 @@ namespace vergiBlue.Logic
                     $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
             }
 
-            Diagnostics.AddMessage($"Available moves found: {validMoves.Count}. ");
+            Collector.AddCustomMessage($"Available moves found: {validMoves.Count}. ");
             
             // Use controller - WIP
             var aiMove = _algorithmController.GetBestMove(Board, validMoves);
@@ -153,17 +154,18 @@ namespace vergiBlue.Logic
                     $"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
 
             if (Board.Shared.Transpositions.Tables.Count > 0)
-                Diagnostics.AddMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
+                Collector.AddCustomMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
 
             // Update local
             var moveWithData = Board.CollectMoveProperties(aiMove);
             Board.ExecuteMoveWithValidation(moveWithData);
             Board.Shared.GameTurnCount++;
             
-            PreviousData = Diagnostics.CollectAndClear(Settings.UseFullDiagnostics);
+            var (analyticsOutput, previousData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
+            PreviousData = previousData;
 
             var move = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
-                PreviousData.ToString());
+                analyticsOutput);
             GameHistory.Add(move.Move);
             return move;
         }

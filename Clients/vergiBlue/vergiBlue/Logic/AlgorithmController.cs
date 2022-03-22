@@ -9,6 +9,7 @@ using vergiBlue.Algorithms.Basic;
 using vergiBlue.Algorithms.IterativeDeepening;
 using vergiBlue.Algorithms.Parallel;
 using vergiBlue.Algorithms.PreMove;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 
 namespace vergiBlue.Logic
@@ -136,8 +137,8 @@ namespace vergiBlue.Logic
                 NominalSearchDepth = depthResult.depth,
                 MaxTimeMs = _turnInfo.settings.TimeLimitInMs
             };
-            
-            Diagnostics.AddMessage($"Algo: {_algorithm.GetType().Name}");
+
+            Collector.AddCustomMessage($"Algorithm: {_algorithm.GetType().Name}");
             return _algorithm.CalculateBestMove(context);
         }
 
