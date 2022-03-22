@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 

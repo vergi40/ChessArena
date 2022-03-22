@@ -9,6 +9,7 @@ using vergiBlue.Algorithms.Basic;
 using vergiBlue.Algorithms.IterativeDeepening;
 using vergiBlue.Algorithms.Parallel;
 using vergiBlue.Algorithms.PreMove;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 
 namespace vergiBlue.Logic

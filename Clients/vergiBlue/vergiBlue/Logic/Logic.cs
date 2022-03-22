@@ -4,6 +4,7 @@ using System.Linq;
 using CommonNetStandard.Client;
 using CommonNetStandard.Interface;
 using vergiBlue.Algorithms;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 
 namespace vergiBlue.Logic
