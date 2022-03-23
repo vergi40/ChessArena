@@ -87,5 +87,23 @@ namespace vergiBlue.Pieces
             }
             return false;
         }
+
+        public IReadOnlyList<(int column, int row)> MovesValidatedToDirection((int x, int y) direction)
+        {
+            var result = new List<(int column, int row)>();
+            for (int i = 1; i < 8; i++)
+            {
+                var nextX = CurrentPosition.column + i * direction.x;
+                var nextY = CurrentPosition.row + i * direction.y;
+
+                if (Validator.IsOutside((nextX, nextY))) break;
+                else
+                {
+                    result.Add((nextX, nextY));
+                }
+            }
+
+            return result;
+        }
     }
 }

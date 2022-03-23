@@ -95,13 +95,9 @@ namespace vergiBlue.Pieces
 
         protected IEnumerable<SingleMove> RookMoves(IBoard board)
         {
-            var column = CurrentPosition.column;
-            var row = CurrentPosition.row;
-
-            // Up
-            for (int i = row + 1; i < 8; i++)
+            foreach(var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, Directions.N))
             {
-                var move = CanMoveTo((column, i), board);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -109,11 +105,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // Down
-            for (int i = row - 1; i >= 0; i--)
+            foreach (var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, Directions.E))
             {
-                var move = CanMoveTo((column, i), board);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -121,11 +115,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // Right
-            for (int i = column + 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, Directions.S))
             {
-                var move = CanMoveTo((i, row), board);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -133,11 +125,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // Left
-            for (int i = column - 1; i >= 0; i--)
+            foreach (var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, Directions.W))
             {
-                var move = CanMoveTo((i, row), board);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -146,7 +136,7 @@ namespace vergiBlue.Pieces
                 else break;
             }
         }
-
+        
         protected IEnumerable<SingleMove> BishopMoves(IBoard board, bool returnSoftTargets = false)
         {
             var column = CurrentPosition.column;

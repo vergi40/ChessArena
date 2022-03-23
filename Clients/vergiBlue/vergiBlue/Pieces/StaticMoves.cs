@@ -18,7 +18,7 @@ namespace vergiBlue.Pieces
         // 1D array used instead of 2D, remember to transform tuples
         public IReadOnlyList<(int column, int row)>[] Knight { get; private set; } = Array.Empty<IReadOnlyList<(int column, int row)>>();
         public IReadOnlyList<(int column, int row)>[] King { get; private set; } = Array.Empty<IReadOnlyList<(int column, int row)>>();
-
+        private Dictionary<int, DirectionMoves> Rook { get; set; } = new();
 
         public void Initialize()
         {
@@ -31,6 +31,7 @@ namespace vergiBlue.Pieces
                 {
                     GenerateKnightRawMovesToPosition((i, j));
                     GenerateKingRawMovesToPosition((i, j));
+                    GenerateRookRawMovesToPosition((i, j));
                 }
             }
         }
@@ -38,6 +39,11 @@ namespace vergiBlue.Pieces
         public IReadOnlyList<(int column, int row)> RookRawMoves((int column, int row) currentPosition)
         {
             throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<(int column, int row)> RookRawMovesToDirection((int column, int row) currentPosition, Directions direction)
+        {
+            return Rook[currentPosition.To1DimensionArray()].Moves[direction];
         }
 
         public IReadOnlyList<(int column, int row)> RookRawMovesToDirection((int column, int row) currentPosition, (int x, int y) direction)
@@ -74,10 +80,18 @@ namespace vergiBlue.Pieces
             var moves = king.MovesValidated(board).Select(m => m.NewPos).ToList();
             King[position.To1DimensionArray()] = moves;
         }
-
+        
         private void GenerateRookRawMovesToPosition((int column, int row) position)
         {
-            // TODO
+            var rook = new Rook(true, position);
+
+            var allMoves = new DirectionMoves();
+            allMoves.Moves[Directions.N] = rook.MovesValidatedToDirection((0, 1));
+            allMoves.Moves[Directions.E] = rook.MovesValidatedToDirection((1, 0));
+            allMoves.Moves[Directions.S] = rook.MovesValidatedToDirection((0, -1));
+            allMoves.Moves[Directions.W] = rook.MovesValidatedToDirection((-1, 0));
+
+            Rook.Add(position.To1DimensionArray(), allMoves);
         }
 
         private void GenerateBishopRawMovesToPosition((int column, int row) position)
@@ -86,16 +100,16 @@ namespace vergiBlue.Pieces
         }
 
 
-        
+
 
 
         //private DirectionMoves[,] Rook { get; set; } = new DirectionMoves[8, 8];
         //private DirectionMoves[,] Bishop { get; set; } = new DirectionMoves[8, 8];
 
-        //class DirectionMoves
-        //{
-        //    public Dictionary<Directions, List<(int column, int row)>> Moves { get; set; }
-        //}
+        class DirectionMoves
+        {
+            public Dictionary<Directions, IReadOnlyList<(int column, int row)>> Moves { get; } = new();
+        }
 
     }
 }
