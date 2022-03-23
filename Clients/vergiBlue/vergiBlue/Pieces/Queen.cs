@@ -46,7 +46,7 @@ namespace vergiBlue.Pieces
 
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
-            var moves = BishopMoves(board, true);
+            var moves = BishopMoves(board);
             return moves.Concat(RookMoves(board));
         }
 

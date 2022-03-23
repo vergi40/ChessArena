@@ -35,7 +35,7 @@ namespace vergiBlue.Pieces
             return RelativeStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board)
         {
             return RookMoves(board);
         }
@@ -86,24 +86,6 @@ namespace vergiBlue.Pieces
                 return true;
             }
             return false;
-        }
-
-        public IReadOnlyList<(int column, int row)> MovesValidatedToDirection((int x, int y) direction)
-        {
-            var result = new List<(int column, int row)>();
-            for (int i = 1; i < 8; i++)
-            {
-                var nextX = CurrentPosition.column + i * direction.x;
-                var nextY = CurrentPosition.row + i * direction.y;
-
-                if (Validator.IsOutside((nextX, nextY))) break;
-                else
-                {
-                    result.Add((nextX, nextY));
-                }
-            }
-
-            return result;
         }
     }
 }

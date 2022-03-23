@@ -136,16 +136,12 @@ namespace vergiBlue.Pieces
                 else break;
             }
         }
-        
-        protected IEnumerable<SingleMove> BishopMoves(IBoard board, bool returnSoftTargets = false)
+
+        protected IEnumerable<SingleMove> BishopMoves(IBoard board)
         {
-            var column = CurrentPosition.column;
-            var row = CurrentPosition.row;
-
-            // NE
-            for (int i = 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, Directions.NE))
             {
-                var move = CanMoveTo((column + i, row + i), board, true, returnSoftTargets);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -153,11 +149,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // SE
-            for (int i = 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, Directions.SE))
             {
-                var move = CanMoveTo((column + i, row - i), board, true, returnSoftTargets);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -165,11 +159,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // SW
-            for (int i = 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, Directions.SW))
             {
-                var move = CanMoveTo((column - i, row - i), board, true, returnSoftTargets);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -177,11 +169,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // NW
-            for (int i = 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, Directions.NW))
             {
-                var move = CanMoveTo((column - i, row + i), board, true, returnSoftTargets);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -190,7 +180,7 @@ namespace vergiBlue.Pieces
                 else break;
             }
         }
-
+        
         /// <summary>
         /// In addition to all valid moves, return soft targets (captures on own pieces)
         /// </summary>
@@ -315,6 +305,24 @@ namespace vergiBlue.Pieces
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Slider move to one direction, Rook, bishop, queen
+        /// </summary>
+        public IReadOnlyList<(int column, int row)> MovesValidatedToDirection((int x, int y) direction)
+        {
+            var result = new List<(int column, int row)>();
+            for (int i = 1; i < 8; i++)
+            {
+                var nextX = CurrentPosition.column + i * direction.x;
+                var nextY = CurrentPosition.row + i * direction.y;
+
+                if (Validator.IsOutside((nextX, nextY))) break;
+                result.Add((nextX, nextY));
+            }
+
+            return result;
         }
     }
 }

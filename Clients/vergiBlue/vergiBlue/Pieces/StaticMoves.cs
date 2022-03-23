@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using vergiBlue.BoardModel;
 
 namespace vergiBlue.Pieces
@@ -18,7 +16,8 @@ namespace vergiBlue.Pieces
         // 1D array used instead of 2D, remember to transform tuples
         public IReadOnlyList<(int column, int row)>[] Knight { get; private set; } = Array.Empty<IReadOnlyList<(int column, int row)>>();
         public IReadOnlyList<(int column, int row)>[] King { get; private set; } = Array.Empty<IReadOnlyList<(int column, int row)>>();
-        private Dictionary<int, DirectionMoves> Rook { get; set; } = new();
+        private Dictionary<int, DirectionMoves> Rook { get; } = new();
+        private Dictionary<int, DirectionMoves> Bishop { get; } = new();
 
         public void Initialize()
         {
@@ -32,33 +31,19 @@ namespace vergiBlue.Pieces
                     GenerateKnightRawMovesToPosition((i, j));
                     GenerateKingRawMovesToPosition((i, j));
                     GenerateRookRawMovesToPosition((i, j));
+                    GenerateBishopRawMovesToPosition((i,j));
                 }
             }
-        }
-
-        public IReadOnlyList<(int column, int row)> RookRawMoves((int column, int row) currentPosition)
-        {
-            throw new NotImplementedException();
         }
 
         public IReadOnlyList<(int column, int row)> RookRawMovesToDirection((int column, int row) currentPosition, Directions direction)
         {
             return Rook[currentPosition.To1DimensionArray()].Moves[direction];
         }
-
-        public IReadOnlyList<(int column, int row)> RookRawMovesToDirection((int column, int row) currentPosition, (int x, int y) direction)
+        
+        public IReadOnlyList<(int column, int row)> BishopRawMovesToDirection((int column, int row) currentPosition, Directions direction)
         {
-            throw new NotImplementedException();
-        }
-
-        public IReadOnlyList<(int column, int row)> BishopRawMoves((int column, int row) currentPosition)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IReadOnlyList<(int column, int row)> BishopRawMovesToDirection((int column, int row) currentPosition, (int x, int y) direction)
-        {
-            throw new NotImplementedException();
+            return Bishop[currentPosition.To1DimensionArray()].Moves[direction];
         }
         
         private void GenerateKnightRawMovesToPosition((int column, int row) position)
@@ -96,20 +81,20 @@ namespace vergiBlue.Pieces
 
         private void GenerateBishopRawMovesToPosition((int column, int row) position)
         {
-            // TODO
+            var bishop = new Bishop(true, position);
+
+            var allMoves = new DirectionMoves();
+            allMoves.Moves[Directions.NE] = bishop.MovesValidatedToDirection((1, 1));
+            allMoves.Moves[Directions.SE] = bishop.MovesValidatedToDirection((1, -1));
+            allMoves.Moves[Directions.SW] = bishop.MovesValidatedToDirection((-1, -1));
+            allMoves.Moves[Directions.NW] = bishop.MovesValidatedToDirection((-1, 1));
+
+            Bishop.Add(position.To1DimensionArray(), allMoves);
         }
-
-
-
-
-
-        //private DirectionMoves[,] Rook { get; set; } = new DirectionMoves[8, 8];
-        //private DirectionMoves[,] Bishop { get; set; } = new DirectionMoves[8, 8];
-
+        
         class DirectionMoves
         {
             public Dictionary<Directions, IReadOnlyList<(int column, int row)>> Moves { get; } = new();
         }
-
     }
 }
