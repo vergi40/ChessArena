@@ -35,7 +35,7 @@ namespace vergiBlue.Pieces
 
         public override IEnumerable<SingleMove> Moves(IBoard board)
         {
-            foreach (var newPosition in board.Shared.RawMoves.KnightRawMoves(CurrentPosition))
+            foreach (var newPosition in board.Shared.RawMoves.Knight[CurrentPosition.To1DimensionArray()])
             {
                 var validMove = CanMoveTo(newPosition, board, false);
                 if (validMove != null) yield return validMove;
