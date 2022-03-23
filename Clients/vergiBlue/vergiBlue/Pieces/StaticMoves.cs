@@ -36,16 +36,44 @@ namespace vergiBlue.Pieces
             }
         }
 
+        private Directions ToEnumDirection((int x, int y) unitDirection)
+        {
+            return unitDirection switch
+            {
+                (0, 1) => Directions.N,
+                (1, 1) => Directions.NE,
+                (1, 0) => Directions.E,
+                (1, -1) => Directions.SE,
+                (0, -1) => Directions.S,
+                (-1, -1) => Directions.SW,
+                (-1, 0) => Directions.W,
+                (-1, 1) => Directions.NW,
+                (_,_) => throw new ArgumentException($"{unitDirection} not a valid xy direction unit")
+            };
+        }
+
         public IReadOnlyList<(int column, int row)> RookRawMovesToDirection((int column, int row) currentPosition, Directions direction)
         {
             return Rook[currentPosition.To1DimensionArray()].Moves[direction];
         }
-        
+
+        public IReadOnlyList<(int column, int row)> RookRawMovesToDirection((int column, int row) currentPosition, (int x, int y) unitDirection)
+        {
+            var dir = ToEnumDirection(unitDirection);
+            return Rook[currentPosition.To1DimensionArray()].Moves[dir];
+        }
+
         public IReadOnlyList<(int column, int row)> BishopRawMovesToDirection((int column, int row) currentPosition, Directions direction)
         {
             return Bishop[currentPosition.To1DimensionArray()].Moves[direction];
         }
-        
+
+        public IReadOnlyList<(int column, int row)> BishopRawMovesToDirection((int column, int row) currentPosition, (int x, int y) unitDirection)
+        {
+            var dir = ToEnumDirection(unitDirection);
+            return Bishop[currentPosition.To1DimensionArray()].Moves[dir];
+        }
+
         private void GenerateKnightRawMovesToPosition((int column, int row) position)
         {
             // Improvement: Skip the SingleMove phase by generating positions here
