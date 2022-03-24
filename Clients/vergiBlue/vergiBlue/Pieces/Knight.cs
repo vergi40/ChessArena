@@ -33,7 +33,16 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board)
+        {
+            foreach (var newPosition in board.Shared.RawMoves.Knight[CurrentPosition.To1DimensionArray()])
+            {
+                var validMove = CanMoveTo(newPosition, board, false);
+                if (validMove != null) yield return validMove;
+            }
+        }
+
+        public IEnumerable<SingleMove> MovesValidated(IBoard board)
         {
             var cur = CurrentPosition;
 

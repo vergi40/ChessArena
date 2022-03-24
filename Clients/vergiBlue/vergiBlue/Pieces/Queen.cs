@@ -46,7 +46,7 @@ namespace vergiBlue.Pieces
 
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
-            var moves = BishopMoves(board, true);
+            var moves = BishopMoves(board);
             return moves.Concat(RookMoves(board));
         }
 
@@ -66,24 +66,20 @@ namespace vergiBlue.Pieces
 
         public override bool CanAttackQuick((int column, int row) target, IBoard board)
         {
-            if (TryCreateBishopDirectionVector(CurrentPosition, target, out var bDir))
+            if (TryCreateRookDirectionUInitVector(CurrentPosition, target, out var unitDirectionR))
             {
-                for (int i = 1; i < 8; i++)
+                foreach (var next in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, unitDirectionR))
                 {
-                    var nextX = CurrentPosition.column + i * bDir.x;
-                    var nextY = CurrentPosition.row + i * bDir.y;
-                    if (target.Equals((nextX, nextY))) return true;
-                    if (board.ValueAt((nextX, nextY)) != null) return false;
+                    if (target.Equals(next)) return true;
+                    if (board.ValueAt(next) != null) return false;
                 }
             }
-            if (TryCreateRookDirectionVector(CurrentPosition, target, out var rDir))
+            if (TryCreateBishopDirectionUnitVector(CurrentPosition, target, out var unitDirectionB))
             {
-                for (int i = 1; i < 8; i++)
+                foreach (var next in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, unitDirectionB))
                 {
-                    var nextX = CurrentPosition.column + i * rDir.x;
-                    var nextY = CurrentPosition.row + i * rDir.y;
-                    if (target.Equals((nextX, nextY))) return true;
-                    if (board.ValueAt((nextX, nextY)) != null) return false;
+                    if (target.Equals(next)) return true;
+                    if (board.ValueAt(next) != null) return false;
                 }
             }
 

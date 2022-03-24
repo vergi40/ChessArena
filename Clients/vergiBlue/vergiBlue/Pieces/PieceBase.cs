@@ -95,13 +95,9 @@ namespace vergiBlue.Pieces
 
         protected IEnumerable<SingleMove> RookMoves(IBoard board)
         {
-            var column = CurrentPosition.column;
-            var row = CurrentPosition.row;
-
-            // Up
-            for (int i = row + 1; i < 8; i++)
+            foreach(var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, Directions.N))
             {
-                var move = CanMoveTo((column, i), board);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -109,11 +105,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // Down
-            for (int i = row - 1; i >= 0; i--)
+            foreach (var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, Directions.E))
             {
-                var move = CanMoveTo((column, i), board);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -121,11 +115,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // Right
-            for (int i = column + 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, Directions.S))
             {
-                var move = CanMoveTo((i, row), board);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -133,11 +125,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // Left
-            for (int i = column - 1; i >= 0; i--)
+            foreach (var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, Directions.W))
             {
-                var move = CanMoveTo((i, row), board);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -147,15 +137,11 @@ namespace vergiBlue.Pieces
             }
         }
 
-        protected IEnumerable<SingleMove> BishopMoves(IBoard board, bool returnSoftTargets = false)
+        protected IEnumerable<SingleMove> BishopMoves(IBoard board)
         {
-            var column = CurrentPosition.column;
-            var row = CurrentPosition.row;
-
-            // NE
-            for (int i = 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, Directions.NE))
             {
-                var move = CanMoveTo((column + i, row + i), board, true, returnSoftTargets);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -163,11 +149,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // SE
-            for (int i = 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, Directions.SE))
             {
-                var move = CanMoveTo((column + i, row - i), board, true, returnSoftTargets);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -175,11 +159,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // SW
-            for (int i = 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, Directions.SW))
             {
-                var move = CanMoveTo((column - i, row - i), board, true, returnSoftTargets);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -187,11 +169,9 @@ namespace vergiBlue.Pieces
                 }
                 else break;
             }
-
-            // NW
-            for (int i = 1; i < 8; i++)
+            foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, Directions.NW))
             {
-                var move = CanMoveTo((column - i, row + i), board, true, returnSoftTargets);
+                var move = CanMoveTo(rawMove, board, false);
                 if (move != null)
                 {
                     yield return move;
@@ -200,7 +180,7 @@ namespace vergiBlue.Pieces
                 else break;
             }
         }
-
+        
         /// <summary>
         /// In addition to all valid moves, return soft targets (captures on own pieces)
         /// </summary>
@@ -227,7 +207,7 @@ namespace vergiBlue.Pieces
             return false;
         }
 
-        protected bool TryCreateRookDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
+        protected bool TryCreateRookDirectionUInitVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
         {
             // e.g. piece (4,0), king (2,0). (2,0) - (4,0) = (-2,0) -> two steps left
             direction = (pos2.x - pos1.x, pos2.y - pos1.y);
@@ -247,7 +227,7 @@ namespace vergiBlue.Pieces
             return (pos2.x - pos1.x, pos2.y - pos1.y);
         }
 
-        protected bool TryCreateBishopDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
+        protected bool TryCreateBishopDirectionUnitVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
         {
             // e.g. piece (4,4), king (2,2). (2,2) - (4,4) = (-2,-2) -> two steps sw
             // e.g. piece (0,4), king (4,0). (4,0) - (0,4) = (4, -4) -> two steps sw
@@ -268,63 +248,92 @@ namespace vergiBlue.Pieces
         protected bool TryCreateBishopSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
         {
             sliderAttack = new SliderAttack();
-            if (TryCreateBishopDirectionVector(CurrentPosition, opponentKing, out var direction))
+            if (TryCreateBishopDirectionUnitVector(CurrentPosition, opponentKing, out var unitDirection))
             {
                 sliderAttack.Attacker = CurrentPosition;
                 sliderAttack.WhiteAttacking = IsWhite;
                 sliderAttack.King = opponentKing;
-                var pinCount = 0;
-                for (int i = 1; i < 8; i++)
+                var pinFound = false;
+                foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, unitDirection))
                 {
-                    var nextX = CurrentPosition.column + i * direction.x;
-                    var nextY = CurrentPosition.row + i * direction.y;
-                    sliderAttack.AttackLine.Add((nextX, nextY));
-                    if (opponentKing.Equals((nextX, nextY))) break;
-
-                    var pin = board.ValueAt((nextX, nextY));
-                    if (pin != null && pin.IsWhite != IsWhite)
+                    sliderAttack.AttackLine.Add(rawMove);
+                    if (opponentKing.Equals(rawMove))
                     {
-                        sliderAttack.Pin = ((nextX, nextY));
-                        pinCount++;
+                        // Everything good
+                        return true;
                     }
 
-                    if (pinCount > 1) return false;
-
+                    var pin = board.ValueAt(rawMove);
+                    if (pin != null)
+                    {
+                        if (pin.IsWhite != IsWhite && !pinFound)
+                        {
+                            // Found opponent pinned piece
+                            sliderAttack.Pin = rawMove;
+                            pinFound = true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
                 }
-                return true;
             }
             return false;
         }
         protected bool TryCreateRookSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
         {
             sliderAttack = new SliderAttack();
-            if (TryCreateRookDirectionVector(CurrentPosition, opponentKing, out var direction))
+            if (TryCreateRookDirectionUInitVector(CurrentPosition, opponentKing, out var unitDirection))
             {
                 sliderAttack.Attacker = CurrentPosition;
                 sliderAttack.WhiteAttacking = IsWhite;
                 sliderAttack.King = opponentKing;
-                var pinCount = 0;
-                for (int i = 1; i < 8; i++)
+                var pinFound = false;
+                foreach (var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, unitDirection))
                 {
-                    var nextX = CurrentPosition.column + i * direction.x;
-                    var nextY = CurrentPosition.row + i * direction.y;
-                    sliderAttack.AttackLine.Add((nextX, nextY));
-                    if (opponentKing.Equals((nextX, nextY))) break;
-
-                    var pin = board.ValueAt((nextX, nextY));
-                    if (pin != null && pin.IsWhite != IsWhite)
+                    sliderAttack.AttackLine.Add(rawMove);
+                    if (opponentKing.Equals(rawMove))
                     {
-                        sliderAttack.Pin = ((nextX, nextY));
-                        pinCount++;
+                        // Everything good
+                        return true;
                     }
 
-                    if (pinCount > 1) return false;
+                    var pin = board.ValueAt(rawMove);
+                    if (pin != null)
+                    {
+                        if (pin.IsWhite != IsWhite && !pinFound)
+                        {
+                            // Found opponent pinned piece
+                            sliderAttack.Pin = rawMove;
+                            pinFound = true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
                 }
+            }
+            return false;
+        }
 
-                return true;
+        /// <summary>
+        /// Slider move to one direction, Rook, bishop, queen
+        /// </summary>
+        public IReadOnlyList<(int column, int row)> MovesValidatedToDirection((int x, int y) direction)
+        {
+            var result = new List<(int column, int row)>();
+            for (int i = 1; i < 8; i++)
+            {
+                var nextX = CurrentPosition.column + i * direction.x;
+                var nextY = CurrentPosition.row + i * direction.y;
+
+                if (Validator.IsOutside((nextX, nextY))) break;
+                result.Add((nextX, nextY));
             }
 
-            return false;
+            return result;
         }
     }
 }

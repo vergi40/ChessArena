@@ -83,13 +83,13 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Start game initialization
         /// </summary>
-        public Board()
+        public Board(bool initializeShared = true)
         {
             BoardArray = new PieceBase[8,8];
             PieceList = new List<PieceBase>();
             MoveGenerator = new MoveGenerator(this);
 
-            Shared = new SharedData();
+            Shared = new SharedData(initializeShared);
             Strategic = new StrategicData();
         }
 

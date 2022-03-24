@@ -35,7 +35,7 @@ namespace vergiBlue.Pieces
             return RelativeStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board)
         {
             return RookMoves(board);
         }
@@ -61,16 +61,17 @@ namespace vergiBlue.Pieces
             return false;
         }
 
+        /// <summary>
+        /// If target is found first in direction, true. If some other piece or nothing, false
+        /// </summary>
         public override bool CanAttackQuick((int column, int row) target, IBoard board)
         {
-            if (TryCreateRookDirectionVector(CurrentPosition, target, out var direction))
+            if (TryCreateRookDirectionUInitVector(CurrentPosition, target, out var unitDirection))
             {
-                for (int i = 1; i < 8; i++)
+                foreach (var next in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, unitDirection))
                 {
-                    var nextX = CurrentPosition.column + i * direction.x;
-                    var nextY = CurrentPosition.row + i * direction.y;
-                    if (target.Equals((nextX, nextY))) return true;
-                    if (board.ValueAt((nextX, nextY)) != null) return false;
+                    if (target.Equals(next)) return true;
+                    if (board.ValueAt(next) != null) return false;
                 }
             }
 

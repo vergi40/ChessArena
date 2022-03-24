@@ -1,5 +1,6 @@
 ﻿using vergiBlue.Algorithms;
 using vergiBlue.BoardModel.Subsystems;
+using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
 {
@@ -19,11 +20,22 @@ namespace vergiBlue.BoardModel
         public bool Testing { get; set; } = false;
         
         public TranspositionTables Transpositions { get; }
+
+        /// <summary>
+        /// Query all raw moves when position known. No need for border check.
+        /// </summary>
+        public StaticMoves RawMoves { get; }
         
-        public SharedData()
+        public SharedData(bool initialize = true)
         {
             Transpositions = new TranspositionTables();
-            Transpositions.Initialize();
+            RawMoves = new StaticMoves();
+
+            if (initialize)
+            {
+                Transpositions.Initialize();
+                RawMoves.Initialize();
+            }
         }
     }
 }
