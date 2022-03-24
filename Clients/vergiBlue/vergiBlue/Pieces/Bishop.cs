@@ -64,7 +64,7 @@ namespace vergiBlue.Pieces
         /// </summary>
         public override bool CanAttackQuick((int column, int row) target, IBoard board)
         {
-            if (TryCreateBishopDirectionVector(CurrentPosition, target, out var unitDirection))
+            if (TryCreateBishopDirectionUnitVector(CurrentPosition, target, out var unitDirection))
             {
                 foreach (var next in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, unitDirection))
                 {

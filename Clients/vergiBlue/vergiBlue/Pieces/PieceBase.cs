@@ -207,7 +207,7 @@ namespace vergiBlue.Pieces
             return false;
         }
 
-        protected bool TryCreateRookDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
+        protected bool TryCreateRookDirectionUInitVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
         {
             // e.g. piece (4,0), king (2,0). (2,0) - (4,0) = (-2,0) -> two steps left
             direction = (pos2.x - pos1.x, pos2.y - pos1.y);
@@ -227,7 +227,7 @@ namespace vergiBlue.Pieces
             return (pos2.x - pos1.x, pos2.y - pos1.y);
         }
 
-        protected bool TryCreateBishopDirectionVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
+        protected bool TryCreateBishopDirectionUnitVector((int x, int y) pos1, (int x, int y) pos2, out (int x, int y) direction)
         {
             // e.g. piece (4,4), king (2,2). (2,2) - (4,4) = (-2,-2) -> two steps sw
             // e.g. piece (0,4), king (4,0). (4,0) - (0,4) = (4, -4) -> two steps sw
@@ -248,62 +248,73 @@ namespace vergiBlue.Pieces
         protected bool TryCreateBishopSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
         {
             sliderAttack = new SliderAttack();
-            if (TryCreateBishopDirectionVector(CurrentPosition, opponentKing, out var direction))
+            if (TryCreateBishopDirectionUnitVector(CurrentPosition, opponentKing, out var unitDirection))
             {
                 sliderAttack.Attacker = CurrentPosition;
                 sliderAttack.WhiteAttacking = IsWhite;
                 sliderAttack.King = opponentKing;
-                var pinCount = 0;
-                for (int i = 1; i < 8; i++)
+                var pinFound = false;
+                foreach (var rawMove in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, unitDirection))
                 {
-                    var nextX = CurrentPosition.column + i * direction.x;
-                    var nextY = CurrentPosition.row + i * direction.y;
-                    sliderAttack.AttackLine.Add((nextX, nextY));
-                    if (opponentKing.Equals((nextX, nextY))) break;
-
-                    var pin = board.ValueAt((nextX, nextY));
-                    if (pin != null && pin.IsWhite != IsWhite)
+                    sliderAttack.AttackLine.Add(rawMove);
+                    if (opponentKing.Equals(rawMove))
                     {
-                        sliderAttack.Pin = ((nextX, nextY));
-                        pinCount++;
+                        // Everything good
+                        return true;
                     }
 
-                    if (pinCount > 1) return false;
-
+                    var pin = board.ValueAt(rawMove);
+                    if (pin != null)
+                    {
+                        if (pin.IsWhite != IsWhite && !pinFound)
+                        {
+                            // Found opponent pinned piece
+                            sliderAttack.Pin = rawMove;
+                            pinFound = true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
                 }
-                return true;
             }
             return false;
         }
         protected bool TryCreateRookSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
         {
             sliderAttack = new SliderAttack();
-            if (TryCreateRookDirectionVector(CurrentPosition, opponentKing, out var direction))
+            if (TryCreateRookDirectionUInitVector(CurrentPosition, opponentKing, out var unitDirection))
             {
                 sliderAttack.Attacker = CurrentPosition;
                 sliderAttack.WhiteAttacking = IsWhite;
                 sliderAttack.King = opponentKing;
-                var pinCount = 0;
-                for (int i = 1; i < 8; i++)
+                var pinFound = false;
+                foreach (var rawMove in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, unitDirection))
                 {
-                    var nextX = CurrentPosition.column + i * direction.x;
-                    var nextY = CurrentPosition.row + i * direction.y;
-                    sliderAttack.AttackLine.Add((nextX, nextY));
-                    if (opponentKing.Equals((nextX, nextY))) break;
-
-                    var pin = board.ValueAt((nextX, nextY));
-                    if (pin != null && pin.IsWhite != IsWhite)
+                    sliderAttack.AttackLine.Add(rawMove);
+                    if (opponentKing.Equals(rawMove))
                     {
-                        sliderAttack.Pin = ((nextX, nextY));
-                        pinCount++;
+                        // Everything good
+                        return true;
                     }
 
-                    if (pinCount > 1) return false;
+                    var pin = board.ValueAt(rawMove);
+                    if (pin != null)
+                    {
+                        if (pin.IsWhite != IsWhite && !pinFound)
+                        {
+                            // Found opponent pinned piece
+                            sliderAttack.Pin = rawMove;
+                            pinFound = true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
                 }
-
-                return true;
             }
-
             return false;
         }
 

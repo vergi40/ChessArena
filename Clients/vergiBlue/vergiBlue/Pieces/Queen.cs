@@ -66,7 +66,7 @@ namespace vergiBlue.Pieces
 
         public override bool CanAttackQuick((int column, int row) target, IBoard board)
         {
-            if (TryCreateRookDirectionVector(CurrentPosition, target, out var unitDirectionR))
+            if (TryCreateRookDirectionUInitVector(CurrentPosition, target, out var unitDirectionR))
             {
                 foreach (var next in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, unitDirectionR))
                 {
@@ -74,7 +74,7 @@ namespace vergiBlue.Pieces
                     if (board.ValueAt(next) != null) return false;
                 }
             }
-            if (TryCreateBishopDirectionVector(CurrentPosition, target, out var unitDirectionB))
+            if (TryCreateBishopDirectionUnitVector(CurrentPosition, target, out var unitDirectionB))
             {
                 foreach (var next in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, unitDirectionB))
                 {
