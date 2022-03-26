@@ -58,7 +58,7 @@ namespace vergiBlue.BoardModel
         }
 
 
-        public void UpdateCastlingStatusFromMove(SingleMove move)
+        public void UpdateCastlingStatusFromMove(in ISingleMove move)
         {
             if (move.NewPos.row == 0)
             {
@@ -112,7 +112,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Update after each executed move
         /// </summary>
-        public void UpdateEnPassantStatus(SingleMove move, PieceBase piece)
+        public void UpdateEnPassantStatus(in ISingleMove move, PieceBase piece)
         {
             EnPassantPossibility = null;
             if (piece.Identity != 'P') return;

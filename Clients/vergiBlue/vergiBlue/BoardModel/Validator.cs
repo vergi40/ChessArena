@@ -11,7 +11,7 @@ namespace vergiBlue.BoardModel
         /// 
         /// </summary>
         /// <exception cref="InvalidMoveException"></exception>
-        public static void ValidateMove(IBoard board, SingleMove move)
+        public static void ValidateMove(IBoard board, ISingleMove move)
         {
             if (IsOutside(move.PrevPos))
             {

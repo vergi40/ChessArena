@@ -229,7 +229,51 @@ namespace vergiBlue.BoardModel.Subsystems
             if (heavyOrdering) return MoveOrdering.SortMovesByEvaluation(list, _board, forWhite);
             return MoveOrdering.SortMovesByGuessWeight(list, _board, forWhite);
         }
+
+        /// <summary>
+        /// Find every possible move for every piece for given color.
+        /// Because sorting, full list returned.
+        /// </summary>
+        /// <param name="forWhite"></param>
+        /// <param name="heavyOrdering">Sort by light guess weight vs evaluate each new position.</param>
+        /// <returns></returns>
+        public void MovesWithOrderingSpan(bool forWhite, bool heavyOrdering, Span<MoveStruct> span, out int spanLength)
+        {
+            IList<SingleMove> initialMoveList = ValidMovesQuick(forWhite).ToList();
+            spanLength = initialMoveList.Count;
+
+            var orderedList = MoveOrdering.SortMovesByGuessWeight(initialMoveList, _board, forWhite);
+            FillMoveSpan(span, orderedList);
+        }
         
+        public static void FillSpan<T>(Span<T> span, IList<T> list)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                span[i] = list[i];
+            }
+        }
+
+        public static void FillMoveSpan(Span<MoveStruct> span, IList<SingleMove> list)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                var data = list[i];
+
+                // TODO ref struct factory
+                span[i] = new MoveStruct()
+                {
+                    PrevPos = data.PrevPos,
+                    NewPos = data.NewPos,
+                    Capture = data.Capture,
+                    Castling = data.Castling,
+                    Check = data.Check,
+                    EnPassant = data.EnPassant,
+                    PromotionType = data.PromotionType
+                };
+            }
+        }
+
         /// <summary>
         /// All possible capture positions (including pawn).
         /// No need to validate check (atm)

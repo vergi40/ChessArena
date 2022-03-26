@@ -132,7 +132,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// Do during each move execution.
         /// Check if castling pieces are still in place
         /// </summary>
-        public static void UpdateStatusForNonCastling(IBoard board, PieceBase pieceMoving, SingleMove move)
+        public static void UpdateStatusForNonCastling(IBoard board, PieceBase pieceMoving, in ISingleMove move)
         {
             // If moving rook or king, update strategic
             // If capturing opponent rook, update opponent

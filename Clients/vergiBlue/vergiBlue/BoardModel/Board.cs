@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using CommonNetStandard;
 using CommonNetStandard.Interface;
 using log4net;
-using vergiBlue.Algorithms;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel.Subsystems;
 using vergiBlue.Pieces;
@@ -135,7 +133,21 @@ namespace vergiBlue.BoardModel
 
             ExecuteMove(move);
         }
-        
+
+        public Board(IBoard other, in ISingleMove move)
+        {
+            BoardArray = new PieceBase[8, 8];
+            PieceList = new List<PieceBase>();
+            MoveGenerator = new MoveGenerator(this);
+
+            InitializeFromReference(other);
+            Shared = other.Shared;
+            Strategic = new StrategicData(other.Strategic);
+            BoardHash = other.BoardHash;
+
+            ExecuteMove(move);
+        }
+
         /// <summary>
         /// Prerequisite: Pieces are set. Castling rights and en passant set.
         /// </summary>
@@ -215,13 +227,13 @@ namespace vergiBlue.BoardModel
             InitializeSubSystems();
         }
 
-        public void ExecuteMoveWithValidation(SingleMove move)
+        public void ExecuteMoveWithValidation(in ISingleMove move)
         {
             Validator.ValidateMove(this, move);
             ExecuteMove(move);
         }
         
-        public void ExecuteMove(SingleMove move)
+        public void ExecuteMove(in ISingleMove move)
         {
             BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
 
@@ -285,9 +297,9 @@ namespace vergiBlue.BoardModel
             return powerPieces / 16.0;
         }
 
-        private void UpdatePosition(PieceBase piece, SingleMove move)
+        private void UpdatePosition(PieceBase piece, in ISingleMove move)
         {
-            if (move.Promotion)
+            if (move.PromotionType != PromotionPieceType.NoPromotion)
             {
                 RemovePiece(piece.CurrentPosition);
                 piece = move.PromotionType switch

@@ -65,7 +65,7 @@ namespace vergiBlue.BoardModel
         /// </summary>
         /// <param name="move"></param>
         /// <exception cref="InvalidMoveException"></exception>
-        void ExecuteMoveWithValidation(SingleMove move);
+        void ExecuteMoveWithValidation(in ISingleMove move);
 
         /// <summary>
         /// Apply single move to board. Most important function to keep consistent and error free.
@@ -88,7 +88,7 @@ namespace vergiBlue.BoardModel
         /// * (In desktop) UpdateGraphics()
         /// </summary>
         /// <param name="move"></param>
-        void ExecuteMove(SingleMove move);
+        void ExecuteMove(in ISingleMove move);
         
         /// <summary>
         /// King location should be known at all times

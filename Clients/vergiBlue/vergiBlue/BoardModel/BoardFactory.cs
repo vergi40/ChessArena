@@ -54,6 +54,11 @@ namespace vergiBlue.BoardModel
             return new Board(previous, move);
         }
 
+        public static IBoard CreateFromMoveStruct(IBoard previous, in MoveStruct move)
+        {
+            return new Board(previous, move);
+        }
+
         public static IBoard CreateDefault()
         {
             var board = CreateEmptyBoard();

@@ -141,7 +141,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <summary>
         /// Get board hash for given move (with pre-move board reference and it's hash)
         /// </summary>
-        public ulong GetNewBoardHash(SingleMove move, IBoard oldBoard, ulong hash)
+        public ulong GetNewBoardHash(in ISingleMove move, IBoard oldBoard, ulong hash)
         {
             // Change side to move
             hash = ChangeSideToMove(hash);
@@ -201,7 +201,7 @@ namespace vergiBlue.BoardModel.Subsystems
             hash = hash ^ GetPieceHash(piece, move.PrevPos);
 
             // Add new position
-            if (move.Promotion)
+            if (move.PromotionType != PromotionPieceType.NoPromotion)
             {
                 var identity = move.PromotionType switch
                 {

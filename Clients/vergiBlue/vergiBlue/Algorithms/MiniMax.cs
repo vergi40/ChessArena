@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
@@ -40,19 +41,25 @@ namespace vergiBlue.Algorithms
             {
                 return newBoard.Evaluate(maximizingPlayer, false, depth);
             }
-            var allMoves = newBoard.MoveGenerator.MovesWithOrdering(maximizingPlayer, false);
+
+            // Allocating move memory to stack instead of heap
+            // https://www.codeproject.com/Articles/5269747/Using-Span-T-to-Improve-Performance-of-Csharp-Code
+            Span<MoveStruct> allMoves = stackalloc MoveStruct[128];
+            newBoard.MoveGenerator.MovesWithOrderingSpan(maximizingPlayer, false, allMoves, out var length);
 
             // Checkmate or stalemate
-            if (!allMoves.Any())
+            if (length == 0)
             {
                 return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
             }
             if (maximizingPlayer)
             {
                 var value = -1000000.0;
-                foreach (var move in allMoves)
+                for (int i = 0; i < length; i++)
                 {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
+                    //var move = allMoves[i];
+                    //var move = allMoves[i];
+                    var nextBoard = BoardFactory.CreateFromMoveStruct(newBoard, allMoves[i]);
                     value = Math.Max(value, ToDepth(nextBoard, depth - 1, alpha, beta, false));
                     alpha = Math.Max(alpha, value);
                     if (alpha >= beta)
@@ -68,9 +75,9 @@ namespace vergiBlue.Algorithms
             else
             {
                 var value = 1000000.0;
-                foreach (var move in allMoves)
+                for (int i = 0; i < length; i++)
                 {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMoveStruct(newBoard, allMoves[i]);
                     value = Math.Min(value, ToDepth(nextBoard, depth - 1, alpha, beta, true));
                     beta = Math.Min(beta, value);
                     if (beta <= alpha)
