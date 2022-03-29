@@ -43,5 +43,19 @@ namespace vergiBlue
 
             return new SingleMove(prev, next, capture);
         }
+
+        public static MoveStruct Create(in SingleMove moveReference)
+        {
+            return new MoveStruct()
+            {
+                PrevPos = moveReference.PrevPos,
+                NewPos = moveReference.NewPos,
+                Capture = moveReference.Capture,
+                Castling = moveReference.Castling,
+                Check = moveReference.Check,
+                EnPassant = moveReference.EnPassant,
+                PromotionType = moveReference.PromotionType
+            };
+        }
     }
 }

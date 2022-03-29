@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace vergiBlue.Algorithms
+﻿namespace vergiBlue.Algorithms
 {
-    internal class MiniMaxGeneral
+    internal static class MiniMaxGeneral
     {
+        /// <summary>
+        /// -1000000
+        /// </summary>
         public static double DefaultAlpha => -1000000;
+        /// <summary>
+        /// 1000000
+        /// </summary>
         public static double DefaultBeta => 1000000;
     }
 }

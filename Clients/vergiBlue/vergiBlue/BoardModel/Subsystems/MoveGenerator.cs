@@ -237,13 +237,15 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <param name="forWhite"></param>
         /// <param name="heavyOrdering">Sort by light guess weight vs evaluate each new position.</param>
         /// <returns></returns>
-        public void MovesWithOrderingSpan(bool forWhite, bool heavyOrdering, Span<MoveStruct> span, out int spanLength)
+        public void MovesWithOrderingSpan(bool forWhite, bool heavyOrdering, Span<MoveStruct> moveSpan, out int spanLength)
         {
-            IList<SingleMove> initialMoveList = ValidMovesQuick(forWhite).ToList();
-            spanLength = initialMoveList.Count;
+            IList<SingleMove> moveList = ValidMovesQuick(forWhite).ToList();
+            spanLength = moveList.Count;
 
-            var orderedList = MoveOrdering.SortMovesByGuessWeight(initialMoveList, _board, forWhite);
-            FillMoveSpan(span, orderedList);
+            if (heavyOrdering) moveList = MoveOrdering.SortMovesByEvaluation(moveList, _board, forWhite);
+            else moveList = MoveOrdering.SortMovesByGuessWeight(moveList, _board, forWhite);
+
+            FillMoveSpan(moveSpan, moveList);
         }
         
         public static void FillSpan<T>(Span<T> span, IList<T> list)
@@ -258,19 +260,7 @@ namespace vergiBlue.BoardModel.Subsystems
         {
             for (int i = 0; i < list.Count; i++)
             {
-                var data = list[i];
-
-                // TODO ref struct factory
-                span[i] = new MoveStruct()
-                {
-                    PrevPos = data.PrevPos,
-                    NewPos = data.NewPos,
-                    Capture = data.Capture,
-                    Castling = data.Castling,
-                    Check = data.Check,
-                    EnPassant = data.EnPassant,
-                    PromotionType = data.PromotionType
-                };
+                span[i] = SingleMoveFactory.Create(list[i]);
             }
         }
 
