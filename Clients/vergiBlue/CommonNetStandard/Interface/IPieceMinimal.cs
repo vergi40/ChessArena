@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CommonNetStandard.Interface
+﻿namespace CommonNetStandard.Interface
 {
-    public interface IPiece
+    public interface IPieceMinimal
     {
         bool IsWhite { get; }
         /// <summary>
@@ -13,5 +9,4 @@ namespace CommonNetStandard.Interface
         char Identity { get; }
         (int column, int row) CurrentPosition { get; set; }
     }
-
 }

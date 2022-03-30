@@ -14,7 +14,7 @@ namespace CommonNetStandard.Common
 
         public string[,] Tiles { get; set; }
 
-        public BoardPrinter(IEnumerable<IPiece> pieces, bool isWindows = false)
+        public BoardPrinter(IEnumerable<IPieceMinimal> pieces, bool isWindows = false)
         {
             Colors = new ConsoleColors(isWindows);
             Tiles = new string[8, 8];

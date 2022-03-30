@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using CommonNetStandard.Interface;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
 
