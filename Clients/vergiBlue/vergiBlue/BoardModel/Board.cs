@@ -26,7 +26,7 @@ namespace vergiBlue.BoardModel
         /// Sum all pieces
         /// https://stackoverflow.com/questions/454916/performance-of-arrays-vs-lists
         /// </summary>
-        public List<IPiece> PieceList { get; set; }
+        public List<IPiece> PieceList { get; }
 
         /// <summary>
         /// Track kings at all times
@@ -52,7 +52,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Return pieces in the <see cref="IPiece"/> format
         /// </summary>
-        public IReadOnlyList<IPiece> InterfacePieces
+        public IReadOnlyList<IPieceMinimal> InterfacePieces
         {
             get
             {
@@ -86,7 +86,6 @@ namespace vergiBlue.BoardModel
             BoardArray = new IPiece[8,8];
             PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
-
             Shared = new SharedData(initializeShared);
             Strategic = new StrategicData();
         }
@@ -101,12 +100,11 @@ namespace vergiBlue.BoardModel
 
             BoardArray = new IPiece[8,8];
             MoveGenerator = new MoveGenerator(this);
+            Shared = other.Shared;
 
             InitializeFromReference(other);
 
-            Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
-
             if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
@@ -129,9 +127,9 @@ namespace vergiBlue.BoardModel
 
             BoardArray = new IPiece[8,8];
             MoveGenerator = new MoveGenerator(this);
+            Shared = other.Shared;
 
             InitializeFromReference(other);
-            Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
             BoardHash = other.BoardHash;
 
@@ -143,9 +141,9 @@ namespace vergiBlue.BoardModel
             BoardArray = new IPiece[8, 8];
             PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
+            Shared = other.Shared;
 
             InitializeFromReference(other);
-            Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
             BoardHash = other.BoardHash;
 
@@ -167,11 +165,6 @@ namespace vergiBlue.BoardModel
             {
                 var newPiece = Shared.PieceCache.Get(piece.CurrentPosition, piece.Identity, piece.IsWhite);
                 AddNew(newPiece);
-
-                if (newPiece.Identity == 'K')
-                {
-                    UpdateKingReference(newPiece);
-                }
             }
         }
 
@@ -226,7 +219,6 @@ namespace vergiBlue.BoardModel
 
             var blackKing = new King(false, "e8");
             AddNew(blackKing);
-            Kings = (whiteKing, blackKing);
 
             InitializeSubSystems();
         }
@@ -351,8 +343,7 @@ namespace vergiBlue.BoardModel
                 }
             }
 
-            PieceList.Add(newPiece);
-            BoardArray[move.NewPos.column, move.NewPos.row] = newPiece;
+            AddNew(newPiece);
         }
 
         /// <summary>
@@ -429,6 +420,10 @@ namespace vergiBlue.BoardModel
             return piece;
         }
 
+        /// <summary>
+        /// Add piece to array and PieceList. Update king references
+        /// </summary>
+        /// <param name="piece"></param>
         public void AddNew(IPiece piece)
         {
             PieceList.Add(piece);

@@ -38,7 +38,7 @@ namespace vergiBlueDesktop
         void UpdateInternalLocation(int column, int row);
     }
 
-    public interface IPieceWithUiControl : IPiece
+    public interface IPieceWithUiControl : IPieceUi
     {
         MainViewModel Main { get; }
         void VisualizePossibleTiles();
@@ -47,7 +47,7 @@ namespace vergiBlueDesktop
         void SandboxTurnFinished(Position previousPosition, Position currentPosition);
     }
 
-    public interface IPiece
+    public interface IPieceUi
     {
         bool IsWhite { get; }
         

@@ -23,7 +23,6 @@ namespace UnitTests
 
             var board = BoardFactory.CreateEmptyBoard();
             board.AddNew(white, black);
-            board.Kings = (white, black);
 
             var move = new SingleMove("a1", "a2");
             //player1.Board.ExecuteMove(move);

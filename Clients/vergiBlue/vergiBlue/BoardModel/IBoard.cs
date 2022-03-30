@@ -18,7 +18,7 @@ namespace vergiBlue.BoardModel
         /// Sum all pieces
         /// https://stackoverflow.com/questions/454916/performance-of-arrays-vs-lists
         /// </summary>
-        List<IPiece> PieceList { get; set; }
+        List<IPiece> PieceList { get; }
 
         /// <summary>
         /// Track kings at all times
@@ -42,9 +42,9 @@ namespace vergiBlue.BoardModel
         StrategicData Strategic { get; }
 
         /// <summary>
-        /// Return pieces in the <see cref="IPiece"/> format
+        /// Return pieces in the <see cref="IPieceMinimal"/> format
         /// </summary>
-        IReadOnlyList<IPiece> InterfacePieces { get; }
+        IReadOnlyList<IPieceMinimal> InterfacePieces { get; }
 
         MoveGenerator MoveGenerator { get; }
 

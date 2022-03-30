@@ -1,5 +1,8 @@
 ﻿namespace CommonNetStandard.Interface
 {
+    /// <summary>
+    /// General piece information without logic
+    /// </summary>
     public interface IPieceMinimal
     {
         bool IsWhite { get; }
