@@ -7,6 +7,6 @@
         /// Upper case K, Q, R, N, B, P
         /// </summary>
         char Identity { get; }
-        (int column, int row) CurrentPosition { get; set; }
+        (int column, int row) CurrentPosition { get; }
     }
 }

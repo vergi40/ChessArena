@@ -177,7 +177,7 @@ namespace vergiBlue.BoardModel.Subsystems
 
             if (move.Capture)
             {
-                PieceBase captured;
+                IPiece captured;
                 (int column, int row) targetPosition;
                 if (move.EnPassant)
                 {
@@ -223,7 +223,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <summary>
         /// Hash that results from simple piece move
         /// </summary>
-        private ulong ExecuteMoveHash(ulong hash, PieceBase piece, (int column, int row) prev, (int column, int row) next)
+        private ulong ExecuteMoveHash(ulong hash, IPiece piece, (int column, int row) prev, (int column, int row) next)
         {
             // Remove old
             hash = hash ^ GetPieceHash(piece, prev);
@@ -233,7 +233,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return hash;
         }
 
-        private ulong GetPieceHash(PieceBase piece, (int column, int row) position)
+        private ulong GetPieceHash(IPiece piece, (int column, int row) position)
         {
             var pieceIndex = GetPieceCustomIndex(piece.IsWhite, piece.Identity);
             return _hashTable[position.To1DimensionArray(), pieceIndex];

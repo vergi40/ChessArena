@@ -9,7 +9,7 @@ namespace vergiBlue.BoardModel.Subsystems
 {
     public static class Castling
     {
-        public static (bool leftOk, bool rightOk) PreValidation(IBoard board, PieceBase king)
+        public static (bool leftOk, bool rightOk) PreValidation(IBoard board, IPiece king)
         {
             var left = false;
             var right = false;
@@ -63,7 +63,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return isWhite ? 0 : 7;
         }
 
-        private static bool PreValidationLeft(IBoard board, PieceBase king)
+        private static bool PreValidationLeft(IBoard board, IPiece king)
         {
             var row = GetRow(king.IsWhite);
 
@@ -83,7 +83,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return true;
         }
 
-        private static bool PreValidationRight(IBoard board, PieceBase king)
+        private static bool PreValidationRight(IBoard board, IPiece king)
         {
             var row = GetRow(king.IsWhite);
 
@@ -102,7 +102,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return true;
         }
 
-        public static bool TryCreateLeftCastling(PieceBase king, HashSet<(int column, int row)> attackSquares, out SingleMove move)
+        public static bool TryCreateLeftCastling(IPiece king, HashSet<(int column, int row)> attackSquares, out SingleMove move)
         {
             var row = GetRow(king.IsWhite);
             move = SingleMoveFactory.CreateCastling((4, row), (2, row));
@@ -115,7 +115,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return true;
         }
 
-        public static bool TryCreateRightCastling(PieceBase king, HashSet<(int column, int row)> attackSquares, out SingleMove move)
+        public static bool TryCreateRightCastling(IPiece king, HashSet<(int column, int row)> attackSquares, out SingleMove move)
         {
             var row = GetRow(king.IsWhite);
             move = SingleMoveFactory.CreateCastling((4, row), (6, row));
@@ -132,7 +132,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// Do during each move execution.
         /// Check if castling pieces are still in place
         /// </summary>
-        public static void UpdateStatusForNonCastling(IBoard board, PieceBase pieceMoving, in ISingleMove move)
+        public static void UpdateStatusForNonCastling(IBoard board, IPiece pieceMoving, in ISingleMove move)
         {
             // If moving rook or king, update strategic
             // If capturing opponent rook, update opponent

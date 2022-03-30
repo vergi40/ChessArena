@@ -112,7 +112,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Update after each executed move
         /// </summary>
-        public void UpdateEnPassantStatus(in ISingleMove move, PieceBase piece)
+        public void UpdateEnPassantStatus(in ISingleMove move, IPiece piece)
         {
             EnPassantPossibility = null;
             if (piece.Identity != 'P') return;

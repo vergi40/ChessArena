@@ -47,7 +47,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Prerequisite: King not in check
         /// </summary>
-        public static bool IsLegalMove(SingleMove move, IBoard board, PieceBase piece, (int column, int row) kingLocation)
+        public static bool IsLegalMove(SingleMove move, IBoard board, IPiece piece, (int column, int row) kingLocation)
         {
             // https://chess.stackexchange.com/a/16901
             // Simple and neat steps

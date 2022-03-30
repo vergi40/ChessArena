@@ -37,7 +37,7 @@ namespace vergiBlue.Pieces
             }
         }
 
-        public (int column, int row) CurrentPosition { get; set; }
+        public (int column, int row) CurrentPosition { get; }
         
         protected PieceBase(bool isWhite, (int column, int row) position)
         {

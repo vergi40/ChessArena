@@ -15,7 +15,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// [column,row}
         /// </summary>
-        private PieceBase?[,] BoardArray { get; }
+        private IPiece?[,] BoardArray { get; }
 
         /// <summary>
         /// All pieces.
@@ -26,12 +26,12 @@ namespace vergiBlue.BoardModel
         /// Sum all pieces
         /// https://stackoverflow.com/questions/454916/performance-of-arrays-vs-lists
         /// </summary>
-        public List<PieceBase> PieceList { get; set; }
+        public List<IPiece> PieceList { get; set; }
 
         /// <summary>
         /// Track kings at all times
         /// </summary>
-        public (PieceBase? white, PieceBase? black) Kings { get; set; }
+        public (IPiece? white, IPiece? black) Kings { get; set; }
         
         /// <summary>
         /// Single direction board information. Two hashes match if all pieces are in same position.
@@ -52,11 +52,11 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Return pieces in the <see cref="IPiece"/> format
         /// </summary>
-        public IList<IPiece> InterfacePieces
+        public IReadOnlyList<IPiece> InterfacePieces
         {
             get
             {
-                IList<IPiece> list = new List<IPiece>();
+                var list = new List<IPiece>();
                 foreach (var piece in PieceList)
                 {
                     list.Add(piece);
@@ -83,8 +83,8 @@ namespace vergiBlue.BoardModel
         /// </summary>
         public Board(bool initializeShared = true)
         {
-            BoardArray = new PieceBase[8,8];
-            PieceList = new List<PieceBase>();
+            BoardArray = new IPiece[8,8];
+            PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
 
             Shared = new SharedData(initializeShared);
@@ -96,8 +96,10 @@ namespace vergiBlue.BoardModel
         /// </summary>
         public Board(IBoard other, bool cloneSubSystems)
         {
-            BoardArray = new PieceBase[8,8];
-            PieceList = new List<PieceBase>();
+            // Minor optimization. PieceList should never grow
+            PieceList = new List<IPiece>(other.PieceList.Count);
+
+            BoardArray = new IPiece[8,8];
             MoveGenerator = new MoveGenerator(this);
 
             InitializeFromReference(other);
@@ -122,8 +124,10 @@ namespace vergiBlue.BoardModel
         /// </summary>
         public Board(IBoard other, SingleMove move)
         {
-            BoardArray = new PieceBase[8,8];
-            PieceList = new List<PieceBase>();
+            // Minor optimization. PieceList should never grow
+            PieceList = new List<IPiece>(other.PieceList.Count);
+
+            BoardArray = new IPiece[8,8];
             MoveGenerator = new MoveGenerator(this);
 
             InitializeFromReference(other);
@@ -136,8 +140,8 @@ namespace vergiBlue.BoardModel
 
         public Board(IBoard other, in ISingleMove move)
         {
-            BoardArray = new PieceBase[8, 8];
-            PieceList = new List<PieceBase>();
+            BoardArray = new IPiece[8, 8];
+            PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
 
             InitializeFromReference(other);
@@ -161,7 +165,7 @@ namespace vergiBlue.BoardModel
         {
             foreach (var piece in previous.PieceList)
             {
-                var newPiece = piece.CreateCopy();
+                var newPiece = Shared.PieceCache.Get(piece.CurrentPosition, piece.Identity, piece.IsWhite);
                 AddNew(newPiece);
 
                 if (newPiece.Identity == 'K')
@@ -268,7 +272,7 @@ namespace vergiBlue.BoardModel
                 Castling.UpdateStatusForNonCastling(this, piece, move);
             }
 
-            UpdatePosition(piece, move);
+            UpdatePieceFromMoveInternal(piece, move);
 
             // Initialize cache values that depend on board setup
             MoveGenerator.SliderAttacksCached = null;
@@ -297,24 +301,35 @@ namespace vergiBlue.BoardModel
             return powerPieces / 16.0;
         }
 
-        private void UpdatePosition(PieceBase piece, in ISingleMove move)
+        /// <summary>
+        /// Only piece itself & castling. No capture logic.
+        /// Remove old position from array.
+        /// Remove old from PieceList.
+        /// Add new position to array.
+        /// Add new position to PieceList.
+        /// </summary>
+        /// <param name="oldPiece"></param>
+        /// <param name="move"></param>
+        /// <exception cref="ArgumentException"></exception>
+        private void UpdatePieceFromMoveInternal(IPiece oldPiece, in ISingleMove move)
         {
+            RemovePiece(move.PrevPos);
+
+            IPiece newPiece;
             if (move.PromotionType != PromotionPieceType.NoPromotion)
             {
-                RemovePiece(piece.CurrentPosition);
-                piece = move.PromotionType switch
+                newPiece = move.PromotionType switch
                 {
-                    PromotionPieceType.Queen => new Queen(piece.IsWhite, move.NewPos),
-                    PromotionPieceType.Rook => new Rook(piece.IsWhite, move.NewPos),
-                    PromotionPieceType.Bishop => new Bishop(piece.IsWhite, move.NewPos),
-                    PromotionPieceType.Knight => new Knight(piece.IsWhite, move.NewPos),
+                    PromotionPieceType.Queen => Shared.PieceCache.Get(move.NewPos, 'Q', oldPiece.IsWhite),
+                    PromotionPieceType.Rook => Shared.PieceCache.Get(move.NewPos, 'R', oldPiece.IsWhite),
+                    PromotionPieceType.Bishop => Shared.PieceCache.Get(move.NewPos, 'B', oldPiece.IsWhite),
+                    PromotionPieceType.Knight => Shared.PieceCache.Get(move.NewPos, 'N', oldPiece.IsWhite),
                     _ => throw new ArgumentException($"Unknown promotion: {move.PromotionType}")
                 };
-                PieceList.Add(piece);
             }
             else
             {
-                piece.CurrentPosition = move.NewPos;
+                newPiece = Shared.PieceCache.Get(move.NewPos, oldPiece.Identity, oldPiece.IsWhite);
             }
 
             if (move.Castling)
@@ -325,19 +340,19 @@ namespace vergiBlue.BoardModel
                     // Execute also rook move
                     var row = move.NewPos.row;
                     var rookMove = new SingleMove((0, row), (3, row));
-                    UpdatePosition(ValueAtDefinitely((0, row)), rookMove);
+                    UpdatePieceFromMoveInternal(ValueAtDefinitely((0, row)), rookMove);
                 }
                 if (move.NewPos.column == 6)
                 {
                     // Execute also rook move
                     var row = move.NewPos.row;
                     var rookMove = new SingleMove((7, row), (5, row));
-                    UpdatePosition(ValueAtDefinitely((7, row)), rookMove);
+                    UpdatePieceFromMoveInternal(ValueAtDefinitely((7, row)), rookMove);
                 }
             }
 
-            BoardArray[move.PrevPos.Item1, move.PrevPos.Item2] = null;
-            BoardArray[move.NewPos.Item1, move.NewPos.Item2] = piece;
+            PieceList.Add(newPiece);
+            BoardArray[move.NewPos.column, move.NewPos.row] = newPiece;
         }
 
         /// <summary>
@@ -345,7 +360,7 @@ namespace vergiBlue.BoardModel
         /// If there is any piece in target square, it's deleted
         /// </summary>
         /// <param name="move"></param>
-        public void UpdateBoardArray(SingleMove move)
+        public void UpdateBoardArray(in ISingleMove move)
         {
             var piece = ValueAtDefinitely(move.PrevPos);
 
@@ -355,11 +370,12 @@ namespace vergiBlue.BoardModel
                 RemovePiece(move.NewPos);
             }
 
-            piece.CurrentPosition = move.NewPos;
-            BoardArray[move.PrevPos.Item1, move.PrevPos.Item2] = null;
-            BoardArray[move.NewPos.Item1, move.NewPos.Item2] = piece;
+            UpdatePieceFromMoveInternal(piece, move);
         }
 
+        /// <summary>
+        /// Remove from board array. Remove from PieceList
+        /// </summary>
         public void RemovePiece((int column, int row) position)
         {
             var piece = ValueAt(position);
@@ -380,7 +396,7 @@ namespace vergiBlue.BoardModel
             }
         }
         
-        private void UpdateKingReference(PieceBase king)
+        private void UpdateKingReference(IPiece king)
         {
             if (king.IsWhite)
             {
@@ -396,7 +412,7 @@ namespace vergiBlue.BoardModel
         /// Return piece at coordinates, null if empty.
         /// </summary>
         /// <returns>Can be null</returns>
-        public PieceBase? ValueAt((int column, int row) target)
+        public IPiece? ValueAt((int column, int row) target)
         {
             return BoardArray[target.column, target.row];
         }
@@ -405,7 +421,7 @@ namespace vergiBlue.BoardModel
         /// Return piece at coordinates. Known to have value
         /// </summary>
         /// <exception cref="ArgumentException"></exception>
-        public PieceBase ValueAtDefinitely((int column, int row) target)
+        public IPiece ValueAtDefinitely((int column, int row) target)
         {
             var piece = BoardArray[target.column, target.row];
             if (piece == null) throw new ArgumentException($"Logical error. Value should not be null at {target.ToAlgebraic()}");
@@ -413,7 +429,7 @@ namespace vergiBlue.BoardModel
             return piece;
         }
 
-        public void AddNew(PieceBase piece)
+        public void AddNew(IPiece piece)
         {
             PieceList.Add(piece);
             BoardArray[piece.CurrentPosition.column, piece.CurrentPosition.row] = piece;
@@ -424,7 +440,7 @@ namespace vergiBlue.BoardModel
             }
         }
 
-        public void AddNew(IEnumerable<PieceBase> pieces)
+        public void AddNew(IEnumerable<IPiece> pieces)
         {
             foreach (var piece in pieces)
             {
@@ -432,7 +448,7 @@ namespace vergiBlue.BoardModel
             }
         }
 
-        public void AddNew(params PieceBase[] pieces)
+        public void AddNew(params IPiece[] pieces)
         {
             foreach (var piece in pieces)
             {
@@ -456,7 +472,7 @@ namespace vergiBlue.BoardModel
         /// </summary>
         /// <param name="whiteKing"></param>
         /// <returns></returns>
-        public PieceBase? KingLocation(bool whiteKing)
+        public IPiece? KingLocation(bool whiteKing)
         {
             if (whiteKing) return Kings.white;
             else return Kings.black;

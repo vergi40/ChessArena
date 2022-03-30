@@ -25,16 +25,20 @@ namespace vergiBlue.BoardModel
         /// Query all raw moves when position known. No need for border check.
         /// </summary>
         public StaticMoves RawMoves { get; }
+
+        public PieceCache PieceCache { get; }
         
         public SharedData(bool initialize = true)
         {
             Transpositions = new TranspositionTables();
             RawMoves = new StaticMoves();
+            PieceCache = new PieceCache();
 
             if (initialize)
             {
                 Transpositions.Initialize();
                 RawMoves.Initialize();
+                PieceCache.Initialize();
             }
         }
     }
