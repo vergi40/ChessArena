@@ -18,12 +18,12 @@ namespace vergiBlue.BoardModel
         /// Sum all pieces
         /// https://stackoverflow.com/questions/454916/performance-of-arrays-vs-lists
         /// </summary>
-        List<PieceBase> PieceList { get; set; }
+        List<IPiece> PieceList { get; }
 
         /// <summary>
         /// Track kings at all times
         /// </summary>
-        (PieceBase? white, PieceBase? black) Kings { get; set; }
+        (IPiece? white, IPiece? black) Kings { get; set; }
 
         /// <summary>
         /// Single direction board information. Two hashes match if all pieces are in same position.
@@ -42,9 +42,9 @@ namespace vergiBlue.BoardModel
         StrategicData Strategic { get; }
 
         /// <summary>
-        /// Return pieces in the <see cref="IPiece"/> format
+        /// Return pieces in the <see cref="IPieceMinimal"/> format
         /// </summary>
-        IList<IPiece> InterfacePieces { get; }
+        IReadOnlyList<IPieceMinimal> InterfacePieces { get; }
 
         MoveGenerator MoveGenerator { get; }
 
@@ -65,7 +65,7 @@ namespace vergiBlue.BoardModel
         /// </summary>
         /// <param name="move"></param>
         /// <exception cref="InvalidMoveException"></exception>
-        void ExecuteMoveWithValidation(SingleMove move);
+        void ExecuteMoveWithValidation(in ISingleMove move);
 
         /// <summary>
         /// Apply single move to board. Most important function to keep consistent and error free.
@@ -88,30 +88,30 @@ namespace vergiBlue.BoardModel
         /// * (In desktop) UpdateGraphics()
         /// </summary>
         /// <param name="move"></param>
-        void ExecuteMove(SingleMove move);
-        
+        void ExecuteMove(in ISingleMove move);
+
         /// <summary>
         /// King location should be known at all times
         /// </summary>
         /// <param name="whiteKing"></param>
         /// <returns></returns>
-        PieceBase? KingLocation(bool whiteKing);
+        IPiece? KingLocation(bool whiteKing);
 
         /// <summary>
         /// Return piece at coordinates, null if empty.
         /// </summary>
         /// <returns>Can be null</returns>
-        PieceBase? ValueAt((int column, int row) target);
+        IPiece? ValueAt((int column, int row) target);
 
         /// <summary>
         /// Return piece at coordinates. Known to have value
         /// </summary>
         /// <exception cref="ArgumentException"></exception>
-        PieceBase ValueAtDefinitely((int column, int row) target);
+        IPiece ValueAtDefinitely((int column, int row) target);
 
-        void AddNew(PieceBase piece);
-        void AddNew(IEnumerable<PieceBase> pieces);
-        void AddNew(params PieceBase[] pieces);
+        void AddNew(IPiece piece);
+        void AddNew(IEnumerable<IPiece> pieces);
+        void AddNew(params IPiece[] pieces);
         double Evaluate(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null);
 
         /// <summary>

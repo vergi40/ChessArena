@@ -4,7 +4,61 @@ using CommonNetStandard.Interface;
 
 namespace vergiBlue
 {
-    public sealed class SingleMove : IEquatable<SingleMove>
+    public interface ISingleMove
+    {
+        (int column, int row) PrevPos { get; }
+        (int column, int row) NewPos { get; }
+
+        bool Capture { get; }
+        bool Castling { get; }
+        bool EnPassant { get; }
+        PromotionPieceType PromotionType { get; }
+
+        (int column, int row) EnPassantOpponentPosition { get; }
+    }
+
+
+    /// <summary>
+    /// Minimal move data.
+    /// Struct type to enable unmanaged utilization, e.g. stackalloc.
+    /// Should be passed as ref struct 
+    /// </summary>
+    public readonly struct MoveStruct : ISingleMove
+    {
+        public (int column, int row) PrevPos { get; init; }
+        public (int column, int row) NewPos { get; init; }
+
+        public bool Capture { get; init; }
+        public bool Castling { get; init; }
+        public bool EnPassant { get; init; }
+        public PromotionPieceType PromotionType { get; init; }
+
+
+        // Is needed?
+
+        /// <summary>
+        /// Produces check-state to other player
+        /// </summary>
+        public bool Check { get; init; }
+        
+        
+        // Should these be external functions?
+        public (int column, int row) EnPassantOpponentPosition
+        {
+            get
+            {
+                if (!EnPassant) return (-1, -1);
+                return (NewPos.column, PrevPos.row);
+            }
+        }
+        public bool Promotion => PromotionType != PromotionPieceType.NoPromotion;
+
+    }
+
+    /// <summary>
+    /// Reference type (class) move data
+    /// </summary>
+    public sealed class SingleMove : IEquatable<SingleMove>, ISingleMove
     {
         public bool Capture { get; set; }
         public bool Promotion => PromotionType != PromotionPieceType.NoPromotion;
@@ -121,7 +175,7 @@ namespace vergiBlue
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool EqualPositions(SingleMove? other)
+        public bool EqualPositions(in ISingleMove? other)
         {
             if (other == null) return false;
             if (PrevPos.Equals(other.PrevPos) && NewPos.Equals(other.NewPos) && PromotionType == other.PromotionType)

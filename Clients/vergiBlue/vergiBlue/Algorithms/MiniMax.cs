@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
@@ -23,6 +22,8 @@ namespace vergiBlue.Algorithms
     /// </summary>
     public static class MiniMax
     {
+        private const int MOVELIST_MAX_SIZE = 128;
+
         /// <summary>
         /// Main game decision feature. Calculate player and opponent moves to certain depth. When
         /// maximizing, return best move evaluation value for white player. When minimizing return best value for black.
@@ -40,19 +41,24 @@ namespace vergiBlue.Algorithms
             {
                 return newBoard.Evaluate(maximizingPlayer, false, depth);
             }
-            var allMoves = newBoard.MoveGenerator.MovesWithOrdering(maximizingPlayer, false);
+
+            // Allocating move memory to stack instead of heap
+            // https://docs.microsoft.com/en-us/dotnet/csharp/write-safe-efficient-code
+            // https://tearth.dev/posts/performance-of-chess-engines-written-in-csharp-part-1/
+            Span<MoveStruct> allMoves = stackalloc MoveStruct[MOVELIST_MAX_SIZE];
+            newBoard.MoveGenerator.MovesWithOrderingSpan(maximizingPlayer, false, allMoves, out var length);
 
             // Checkmate or stalemate
-            if (!allMoves.Any())
+            if (length == 0)
             {
                 return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
             }
             if (maximizingPlayer)
             {
-                var value = -1000000.0;
-                foreach (var move in allMoves)
+                var value = MiniMaxGeneral.DefaultAlpha;
+                for (int i = 0; i < length; i++)
                 {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
                     value = Math.Max(value, ToDepth(nextBoard, depth - 1, alpha, beta, false));
                     alpha = Math.Max(alpha, value);
                     if (alpha >= beta)
@@ -67,10 +73,10 @@ namespace vergiBlue.Algorithms
             }
             else
             {
-                var value = 1000000.0;
-                foreach (var move in allMoves)
+                var value = MiniMaxGeneral.DefaultBeta;
+                for (int i = 0; i < length; i++)
                 {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
                     value = Math.Min(value, ToDepth(nextBoard, depth - 1, alpha, beta, true));
                     beta = Math.Min(beta, value);
                     if (beta <= alpha)
@@ -148,8 +154,13 @@ namespace vergiBlue.Algorithms
                 //}
             }
 
-            var allMoves = newBoard.MoveGenerator.MovesWithOrdering(maximizingPlayer, false);
-            if (!allMoves.Any())
+            // Allocating move memory to stack instead of heap
+            // https://docs.microsoft.com/en-us/dotnet/csharp/write-safe-efficient-code
+            // https://tearth.dev/posts/performance-of-chess-engines-written-in-csharp-part-1/
+            Span<MoveStruct> allMoves = stackalloc MoveStruct[MOVELIST_MAX_SIZE];
+            newBoard.MoveGenerator.MovesWithOrderingSpan(maximizingPlayer, false, allMoves, out var length);
+
+            if (length == 0)
             {
                 // Checkmate or stalemate
                 return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
@@ -158,9 +169,9 @@ namespace vergiBlue.Algorithms
             if (maximizingPlayer)
             {
                 var value = MiniMaxGeneral.DefaultAlpha;
-                foreach (var move in allMoves)
+                for (int i = 0; i < length; i++)
                 {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
                     value = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false);
                     if (value >= beta)
                     {
@@ -192,9 +203,9 @@ namespace vergiBlue.Algorithms
             else
             {
                 var value = MiniMaxGeneral.DefaultBeta;
-                foreach (var move in allMoves)
+                for (int i = 0; i < length; i++)
                 {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
                     value = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true);
                     if (value <= alpha)
                     {

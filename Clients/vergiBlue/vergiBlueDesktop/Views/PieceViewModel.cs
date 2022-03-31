@@ -13,7 +13,7 @@ namespace vergiBlueDesktop.Views
     {
         public bool IsWhite { get; set; }
         public Uri SourceUri { get; set; }
-        public PieceBase PieceModel { get; set; }
+        public IPiece PieceModel { get; set; }
 
         public MainViewModel Main { get; }
 

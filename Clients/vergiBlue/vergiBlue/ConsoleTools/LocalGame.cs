@@ -114,7 +114,6 @@ namespace vergiBlue.ConsoleTools
                 var blackKing = new King(false, "e8");
                 board.AddNew(blackKing);
 
-                board.Kings = (whiteKing, blackKing);
                 Start(1500, null, board);
             }
             else if (input.KeyChar.ToString() == "3")
@@ -134,7 +133,6 @@ namespace vergiBlue.ConsoleTools
                 var blackKing = new King(false, "e8");
                 board.AddNew(blackKing);
 
-                board.Kings = (whiteKing, blackKing);
                 Start(800, null, board);
             }
             else if (input.KeyChar.ToString() == "4")
@@ -159,13 +157,9 @@ namespace vergiBlue.ConsoleTools
                 var blackKing = new King(false, "e8");
                 board.AddNew(blackKing);
 
-                board.Kings = (whiteKing, blackKing);
                 Start(1000, null, board);
             }
-
-
         }
-
 
         static void PrintMove(IPlayerMove move, string playerName)
         {

@@ -49,7 +49,7 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Create board setup after move. Clone subsystems
         /// </summary>
-        public static IBoard CreateFromMove(IBoard previous, SingleMove move)
+        public static IBoard CreateFromMove(IBoard previous, in ISingleMove move)
         {
             return new Board(previous, move);
         }

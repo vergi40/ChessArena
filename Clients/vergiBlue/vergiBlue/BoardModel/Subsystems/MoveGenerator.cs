@@ -229,7 +229,41 @@ namespace vergiBlue.BoardModel.Subsystems
             if (heavyOrdering) return MoveOrdering.SortMovesByEvaluation(list, _board, forWhite);
             return MoveOrdering.SortMovesByGuessWeight(list, _board, forWhite);
         }
+
+        /// <summary>
+        /// Find every possible move for every piece for given color.
+        /// Because sorting, full list returned.
+        /// </summary>
+        /// <param name="forWhite"></param>
+        /// <param name="heavyOrdering">Sort by light guess weight vs evaluate each new position.</param>
+        /// <returns></returns>
+        public void MovesWithOrderingSpan(bool forWhite, bool heavyOrdering, Span<MoveStruct> moveSpan, out int spanLength)
+        {
+            IList<SingleMove> moveList = ValidMovesQuick(forWhite).ToList();
+            spanLength = moveList.Count;
+
+            if (heavyOrdering) moveList = MoveOrdering.SortMovesByEvaluation(moveList, _board, forWhite);
+            else moveList = MoveOrdering.SortMovesByGuessWeight(moveList, _board, forWhite);
+
+            FillMoveSpan(moveSpan, moveList);
+        }
         
+        public static void FillSpan<T>(Span<T> span, IList<T> list)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                span[i] = list[i];
+            }
+        }
+
+        public static void FillMoveSpan(Span<MoveStruct> span, IList<SingleMove> list)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                span[i] = SingleMoveFactory.Create(list[i]);
+            }
+        }
+
         /// <summary>
         /// All possible capture positions (including pawn).
         /// No need to validate check (atm)
