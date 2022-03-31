@@ -67,15 +67,12 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// bool: whiteInCheck,
-        /// bool?: null - not calculated / false - no / true - yes]
+        /// Is black/white check precalculated and what is the result
+        /// [0] black, [1] white
+        /// bool?: null - not calculated / false - no / true - yes
         /// </summary>
-        private Dictionary<bool, bool?> _isCheck { get; } = new()
-        {
-            { false, null },
-            { true, null }
-        };
-
+        private bool?[] _isCheck { get; } = new bool?[2];
+        
         public MoveGenerator MoveGenerator { get; }
 
         /// <summary>
@@ -163,8 +160,7 @@ namespace vergiBlue.BoardModel
         {
             foreach (var piece in previous.PieceList)
             {
-                var newPiece = Shared.PieceCache.Get(piece.CurrentPosition, piece.Identity, piece.IsWhite);
-                AddNew(newPiece);
+                AddNew(piece);
             }
         }
 
@@ -268,12 +264,22 @@ namespace vergiBlue.BoardModel
 
             // Initialize cache values that depend on board setup
             MoveGenerator.SliderAttacksCached = null;
-            _isCheck[false] = null;
-            _isCheck[true] = null;
+            _isCheck[0] = null;
+            _isCheck[1] = null;
 
             // General every turn processes
             UpdateEndGameWeight();
             Strategic.TurnCountInCurrentDepth++;
+        }
+
+        /// <summary>
+        /// NOTE: definition - to some general class
+        /// </summary>
+        /// <param name="isWhite"></param>
+        /// <returns></returns>
+        protected static int ColorToInt(bool isWhite)
+        {
+            return isWhite ? 1 : 0;
         }
 
         public void UpdateEndGameWeight()
@@ -513,7 +519,7 @@ namespace vergiBlue.BoardModel
         /// <returns></returns>
         public bool IsCheck(bool isWhiteOffensive)
         {
-            var preCalculated = _isCheck[!isWhiteOffensive];
+            var preCalculated = _isCheck[ColorToInt(!isWhiteOffensive)];
             if (preCalculated != null)
             {
                 Collector.IncreaseOperationCount(OperationsKeys.CacheCheckUtilized);
@@ -523,11 +529,11 @@ namespace vergiBlue.BoardModel
             Collector.IncreaseOperationCount(OperationsKeys.CheckEvaluationDone);
             if(MoveGenerator.IsKingCurrentlyAttacked(!isWhiteOffensive))
             {
-                _isCheck[!isWhiteOffensive] = true;
+                _isCheck[ColorToInt(!isWhiteOffensive)] = true;
                 return true;
             }
 
-            _isCheck[!isWhiteOffensive] = false;
+            _isCheck[ColorToInt(!isWhiteOffensive)] = false;
             return false;
         }
 

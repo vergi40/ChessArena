@@ -10,19 +10,38 @@ namespace vergiBlue.BoardModel.Subsystems
     /// <summary>
     /// Instead of initializing new pieces, pick them using identity and position
     /// </summary>
-    public sealed class PieceCache
+    public class PieceCache
     {
-        // Efficiency: Use array
-        private Dictionary<char, PieceDict> AllPieces { get; } = new();
+        /// <summary>
+        /// All pieces for each position and color in single array
+        /// Pawn blacks, whites, king blacks, whites ... etc
+        /// </summary>
+        private IPiece[] AllPieces { get; } = new IPiece[6*2*64];
 
         public void Initialize()
         {
-            AllPieces.Add('P', PieceDict.Create('P'));
-            AllPieces.Add('K', PieceDict.Create('K'));
-            AllPieces.Add('N', PieceDict.Create('N'));
-            AllPieces.Add('R', PieceDict.Create('R'));
-            AllPieces.Add('B', PieceDict.Create('B'));
-            AllPieces.Add('Q', PieceDict.Create('Q'));
+            AddPieces('P');
+            AddPieces('K');
+            AddPieces('N');
+            AddPieces('R');
+            AddPieces('B');
+            AddPieces('Q');
+        }
+
+        private void AddPieces(char identity)
+        {
+            var pieceIndex = PieceToInt(identity);
+            var blackIdentity = char.ToLower(identity);
+
+            for (int i = 0; i < 64; i++)
+            {
+                // Black pawn 0-63
+                // White pawn 64 - 127
+                // Black king 128 - 191 etc...
+                var index = i + (64 * 2 * pieceIndex);
+                AllPieces[index] = PieceFactory.Create(blackIdentity, i.ToTuple());
+                AllPieces[index+64] = PieceFactory.Create(identity, i.ToTuple());
+            }
         }
 
         public IPiece Get((int column, int row) position, char identity, bool isWhite)
@@ -32,40 +51,32 @@ namespace vergiBlue.BoardModel.Subsystems
 
         public IPiece Get(int position1D, char identity, bool isWhite)
         {
-            return AllPieces[identity].Pieces[isWhite][position1D];
+            // Black pawn 0-63
+            // White pawn 64 - 127
+            // Black king 128 - 191 etc...
+            var pieceIndex = PieceToInt(identity);
+            var colorIndex = ColorToInt(isWhite);
+            var pieceBaseIndex = 64 * 2 * pieceIndex;
+            return AllPieces[pieceBaseIndex + 64 * colorIndex + position1D];
+        }
+        
+        protected static int PieceToInt(char identity)
+        {
+            return identity switch
+            {
+                'P' => 0,
+                'K' => 1,
+                'N' => 2,
+                'R' => 3,
+                'B' => 4,
+                'Q' => 5,
+                _ => throw new ArgumentException($"Unknown identity: {identity}")
+            };
         }
 
-        // Private classes or records which are not derived in current assembly should be marked as 'sealed'
-        private sealed class PieceDict
+        protected static int ColorToInt(bool isWhite)
         {
-            public Dictionary<bool, IPiece[]> Pieces { get; } = new();
-
-
-            public static PieceDict Create(char identity)
-            {
-                var dict = new PieceDict();
-
-                var whites = new IPiece[64];
-                for (int i = 0; i < 64; i++)
-                {
-                    var piece = PieceFactory.Create(identity, i.ToTuple());
-                    whites[i] = piece;
-                }
-
-                dict.Pieces[true] = whites;
-
-                // PieceFactory uses lowercase for black
-                var toLower = char.ToLower(identity);
-                var blacks = new IPiece[64];
-                for (int i = 0; i < 64; i++)
-                {
-                    var piece = PieceFactory.Create(toLower, i.ToTuple());
-                    blacks[i] = piece;
-                }
-
-                dict.Pieces[false] = blacks;
-                return dict;
-            }
+            return isWhite ? 1 : 0;
         }
     }
 }

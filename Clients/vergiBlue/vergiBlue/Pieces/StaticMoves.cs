@@ -12,12 +12,11 @@ namespace vergiBlue.Pieces
 
     public class StaticMoves
     {
-
         // 1D array used instead of 2D, remember to transform tuples
         public IReadOnlyList<(int column, int row)>[] Knight { get; private set; } = Array.Empty<IReadOnlyList<(int column, int row)>>();
         public IReadOnlyList<(int column, int row)>[] King { get; private set; } = Array.Empty<IReadOnlyList<(int column, int row)>>();
-        private Dictionary<int, DirectionMoves> Rook { get; } = new();
-        private Dictionary<int, DirectionMoves> Bishop { get; } = new();
+        private DirectionMoves[] Rook { get; } = new DirectionMoves[64];
+        private DirectionMoves[] Bishop { get; } = new DirectionMoves[64];
 
         public void Initialize()
         {
@@ -104,7 +103,7 @@ namespace vergiBlue.Pieces
             allMoves.Moves[Directions.S] = rook.MovesValidatedToDirection((0, -1));
             allMoves.Moves[Directions.W] = rook.MovesValidatedToDirection((-1, 0));
 
-            Rook.Add(position.To1DimensionArray(), allMoves);
+            Rook[position.To1DimensionArray()] = allMoves;
         }
 
         private void GenerateBishopRawMovesToPosition((int column, int row) position)
@@ -117,7 +116,7 @@ namespace vergiBlue.Pieces
             allMoves.Moves[Directions.SW] = bishop.MovesValidatedToDirection((-1, -1));
             allMoves.Moves[Directions.NW] = bishop.MovesValidatedToDirection((-1, 1));
 
-            Bishop.Add(position.To1DimensionArray(), allMoves);
+            Bishop[position.To1DimensionArray()] = allMoves;
         }
         
         class DirectionMoves
