@@ -12,10 +12,11 @@ namespace vergiBlue.BoardModel
     public class Board : IBoard
     {
         private static readonly ILog _localLogger = LogManager.GetLogger(typeof(Board));
+
         /// <summary>
         /// [column,row}
         /// </summary>
-        private IPiece?[,] BoardArray { get; }
+        private IPiece?[] BoardArray { get; } = new IPiece?[64];
 
         /// <summary>
         /// All pieces.
@@ -80,7 +81,6 @@ namespace vergiBlue.BoardModel
         /// </summary>
         public Board(bool initializeShared = true)
         {
-            BoardArray = new IPiece[8,8];
             PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
             Shared = new SharedData(initializeShared);
@@ -95,7 +95,6 @@ namespace vergiBlue.BoardModel
             // Minor optimization. PieceList should never grow
             PieceList = new List<IPiece>(other.PieceList.Count);
 
-            BoardArray = new IPiece[8,8];
             MoveGenerator = new MoveGenerator(this);
             Shared = other.Shared;
 
@@ -122,7 +121,6 @@ namespace vergiBlue.BoardModel
             // Minor optimization. PieceList should never grow
             PieceList = new List<IPiece>(other.PieceList.Count);
 
-            BoardArray = new IPiece[8,8];
             MoveGenerator = new MoveGenerator(this);
             Shared = other.Shared;
 
@@ -135,7 +133,6 @@ namespace vergiBlue.BoardModel
 
         public Board(IBoard other, in ISingleMove move)
         {
-            BoardArray = new IPiece[8, 8];
             PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
             Shared = other.Shared;
@@ -377,7 +374,7 @@ namespace vergiBlue.BoardModel
         {
             var piece = ValueAt(position);
             if (piece == null) throw new ArgumentException($"Piece in position {position} was null");
-            BoardArray[position.column, position.row] = null;
+            BoardArray[position.To1DimensionArray()] = null;
 
             PieceList.Remove(piece);
             if (piece.Identity == 'K')
@@ -411,7 +408,7 @@ namespace vergiBlue.BoardModel
         /// <returns>Can be null</returns>
         public IPiece? ValueAt((int column, int row) target)
         {
-            return BoardArray[target.column, target.row];
+            return BoardArray[target.To1DimensionArray()];
         }
 
         /// <summary>
@@ -420,7 +417,7 @@ namespace vergiBlue.BoardModel
         /// <exception cref="ArgumentException"></exception>
         public IPiece ValueAtDefinitely((int column, int row) target)
         {
-            var piece = BoardArray[target.column, target.row];
+            var piece = BoardArray[target.To1DimensionArray()];
             if (piece == null) throw new ArgumentException($"Logical error. Value should not be null at {target.ToAlgebraic()}");
 
             return piece;
@@ -433,7 +430,7 @@ namespace vergiBlue.BoardModel
         public void AddNew(IPiece piece)
         {
             PieceList.Add(piece);
-            BoardArray[piece.CurrentPosition.column, piece.CurrentPosition.row] = piece;
+            BoardArray[piece.CurrentPosition.To1DimensionArray()] = piece;
 
             if (piece.Identity == 'K')
             {
