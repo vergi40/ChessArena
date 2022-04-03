@@ -76,6 +76,8 @@ namespace vergiBlue.BoardModel
         
         public MoveGenerator MoveGenerator { get; }
 
+        public PieceQuery PieceQuery { get; }
+
         /// <summary>
         /// Start game initialization
         /// </summary>
@@ -83,6 +85,7 @@ namespace vergiBlue.BoardModel
         {
             PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
+            PieceQuery = new PieceQuery(this);
             Shared = new SharedData(initializeShared);
             Strategic = new StrategicData();
         }
@@ -96,11 +99,12 @@ namespace vergiBlue.BoardModel
             PieceList = new List<IPiece>(other.PieceList.Count);
 
             MoveGenerator = new MoveGenerator(this);
+            PieceQuery = new PieceQuery(this);
             Shared = other.Shared;
+            Strategic = new StrategicData(other.Strategic);
 
             InitializeFromReference(other);
 
-            Strategic = new StrategicData(other.Strategic);
             if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
@@ -112,33 +116,16 @@ namespace vergiBlue.BoardModel
 
             UpdateEndGameWeight();
         }
-
-        /// <summary>
-        /// Create board setup after move. Clone subsystems
-        /// </summary>
-        public Board(IBoard other, SingleMove move)
-        {
-            // Minor optimization. PieceList should never grow
-            PieceList = new List<IPiece>(other.PieceList.Count);
-
-            MoveGenerator = new MoveGenerator(this);
-            Shared = other.Shared;
-
-            InitializeFromReference(other);
-            Strategic = new StrategicData(other.Strategic);
-            BoardHash = other.BoardHash;
-
-            ExecuteMove(move);
-        }
-
+        
         public Board(IBoard other, in ISingleMove move)
         {
             PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
+            PieceQuery = new PieceQuery(this);
             Shared = other.Shared;
+            Strategic = new StrategicData(other.Strategic);
 
             InitializeFromReference(other);
-            Strategic = new StrategicData(other.Strategic);
             BoardHash = other.BoardHash;
 
             ExecuteMove(move);
@@ -292,8 +279,8 @@ namespace vergiBlue.BoardModel
         /// <returns></returns>
         public double GetPowerPiecePercent()
         {
-            var powerPieces = PieceList.Count(p => Math.Abs((double)p.RelativeStrength) > PieceBaseStrength.Pawn);
-            return powerPieces / 16.0;
+            var powerPieces = PieceQuery.AllPowerPiecesList().Count;
+            return powerPieces * 0.0625;
         }
 
         /// <summary>

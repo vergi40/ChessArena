@@ -51,7 +51,7 @@ namespace vergiBlue.BoardModel.Subsystems
             }
 
             var isCheck = _board.IsCheck(!forWhite);
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            foreach (var piece in _board.PieceQuery.GetColor(forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
                 {
@@ -99,7 +99,7 @@ namespace vergiBlue.BoardModel.Subsystems
             }
 
             var isCheck = _board.IsCheck(!forWhite);
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            foreach (var piece in _board.PieceQuery.GetColor(forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
                 {
@@ -171,7 +171,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// </summary>
         private IEnumerable<SingleMove> PseudoMoves(bool forWhite, bool includeCastling)
         {
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            foreach (var piece in _board.PieceQuery.GetColor(forWhite))
             {
                 foreach (var singleMove in piece.Moves(_board))
                 {
@@ -272,7 +272,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <returns></returns>
         public IEnumerable<SingleMove> AttackMoves(bool forWhiteAttacker)
         {
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhiteAttacker))
+            foreach (var piece in _board.PieceQuery.GetColor(forWhiteAttacker))
             {
                 foreach (var singleMove in piece.PseudoCaptureMoves(_board))
                 {
@@ -284,7 +284,7 @@ namespace vergiBlue.BoardModel.Subsystems
         public IEnumerable<SingleMove> GetOrCreateAttackMoves(bool forWhiteAttacker)
         {
             // TODO cache attack moves or cache each attack square to dictionary
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhiteAttacker))
+            foreach (var piece in _board.PieceQuery.GetColor(forWhiteAttacker))
             {
                 foreach (var singleMove in piece.PseudoCaptureMoves(_board))
                 {
@@ -300,7 +300,7 @@ namespace vergiBlue.BoardModel.Subsystems
             // Testing
             if (king.Equals((-1, -1))) return true;
 
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite != whiteKing))
+            foreach (var piece in _board.PieceQuery.GetColor(!whiteKing))
             {
                 if (piece.CanAttackQuick(king, _board))
                 {
@@ -313,7 +313,7 @@ namespace vergiBlue.BoardModel.Subsystems
 
         public bool IsSquareCurrentlyAttacked(bool whiteAttacker, (int column, int row) target)
         {
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == whiteAttacker))
+            foreach (var piece in _board.PieceQuery.GetColor(whiteAttacker))
             {
                 if (piece.CanAttackQuick(target, _board))
                 {
@@ -337,7 +337,7 @@ namespace vergiBlue.BoardModel.Subsystems
                 return list;
             }
 
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            foreach (var piece in _board.PieceQuery.GetColor(forWhite))
             {
                 if (piece.TryCreateSliderAttack(_board, king, out var sliderAttack))
                 {
@@ -354,7 +354,7 @@ namespace vergiBlue.BoardModel.Subsystems
             var king = GetKingLocationOrDefault(!forWhite);
             if (king.Equals((-1, -1))) yield break;
 
-            foreach (var piece in _board.PieceList.Where(p => p.IsWhite == forWhite))
+            foreach (var piece in _board.PieceQuery.GetColor(forWhite))
             {
                 if (piece.TryCreateSliderAttack(_board, king, out var sliderAttack))
                 {

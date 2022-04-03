@@ -48,6 +48,8 @@ namespace vergiBlue.BoardModel
 
         MoveGenerator MoveGenerator { get; }
 
+        PieceQuery PieceQuery { get; }
+
         // Functionality
 
         void InitializeDefaultBoard();
