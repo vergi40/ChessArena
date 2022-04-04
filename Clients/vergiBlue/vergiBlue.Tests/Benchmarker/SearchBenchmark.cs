@@ -12,7 +12,7 @@ using vergiBlue.Logic;
 namespace Benchmarker
 {
     [SimpleJob(RunStrategy.Monitoring, targetCount:15)]
-    [MeanColumn, MedianColumn, MinColumn, MaxColumn]
+    [MeanColumn, MedianColumn, MinColumn, MaxColumn, MemoryDiagnoser]
     public class SearchBenchmark
     {
 

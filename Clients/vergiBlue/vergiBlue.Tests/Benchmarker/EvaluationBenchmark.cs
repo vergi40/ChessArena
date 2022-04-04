@@ -1,53 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using PerftTests;
 using vergiBlue.BoardModel;
-using vergiBlue.Logic;
 
 namespace Benchmarker
 {
-    [SimpleJob(RunStrategy.Throughput)]
-    [MeanColumn, MedianColumn, MinColumn, MaxColumn]
+    [SimpleJob(RunStrategy.Monitoring, targetCount: 15)]
+    [MeanColumn, MedianColumn, MinColumn, MaxColumn, MemoryDiagnoser]
     public class EvaluationBenchmark
     {
-        [Params(10000)]
+        [Params(100000, 1000000)]
         public int N { get; set; }
+
+        private readonly IBoard _startBoard;
+        private readonly IBoard _goodBoard;
+        private readonly IBoard _promotionBoard;
+        public EvaluationBenchmark()
+        {
+            _startBoard = BoardFactory.CreateDefault();
+            _goodBoard = CaseBoards.GetGoodPositions().board;
+            _promotionBoard = CaseBoards.GetPromotion().board;
+        }
 
         [Benchmark]
         public void StartPosition()
         {
-            var board = BoardFactory.CreateDefault();
-
             for (int i = 0; i < N; i++)
             {
-                var eval = board.Evaluate(true, false);
+                var eval = _startBoard.Evaluate(true, false);
             }
         }
 
         [Benchmark]
         public void GoodPosition()
         {
-            var (board, whiteStarts) = CaseBoards.GetGoodPositions();
-
             for(int i = 0; i < N; i++)
             {
-                var eval = board.Evaluate(whiteStarts, false);
+                var eval = _goodBoard.Evaluate(true, false);
             }
         }
 
         [Benchmark]
         public void PromomotionPosition()
         {
-            var (board, whiteStarts) = CaseBoards.GetPromotion();
-
             for (int i = 0; i < N; i++)
             {
-                var eval = board.Evaluate(whiteStarts, false);
+                var eval = _promotionBoard.Evaluate(false, false);
             }
         }
     }
