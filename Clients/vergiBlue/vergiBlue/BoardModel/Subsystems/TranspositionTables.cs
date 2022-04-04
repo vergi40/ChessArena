@@ -365,5 +365,30 @@ namespace vergiBlue.BoardModel.Subsystems
             
             return null;
         }
+
+        public void AddOrUpdate(Transposition transposition)
+        {
+            if (transposition.Hash == 0) throw new ArgumentException("Board hash was empty.");
+            if (Tables.TryGetValue(transposition.Hash, out var oldTransposition))
+            {
+                // Replacement scheme: always replace
+                if (transposition.Depth >= oldTransposition.Depth)
+                {
+                    oldTransposition.Depth = transposition.Depth;
+                    oldTransposition.Evaluation = Evaluator.CheckMateScoreAdjustToEven(transposition.Evaluation);
+                    oldTransposition.Type = transposition.Type;
+                    oldTransposition.GameTurnCount = transposition.GameTurnCount;
+                }
+            }
+            else
+            {
+                lock (_tableLock)
+                {
+                    // New hash
+                    transposition.Evaluation = Evaluator.CheckMateScoreAdjustToEven(transposition.Evaluation);
+                    Tables.Add(transposition.Hash, transposition);
+                }
+            }
+        }
     }
 }
