@@ -175,6 +175,8 @@ namespace vergiBlueDesktop.Views
         }
         
         /// <summary>
+        /// Note: the internal PieceModel is not direct reference to board (and position not updated automatically).
+        /// Each move a new piece is constructed in <see cref="IViewObject.UpdateInternalLocation"/>
         /// </summary>
         /// <param name="move"></param>
         /// <param name="pieceNotMovedInView">Piece in view not updated yet</param>

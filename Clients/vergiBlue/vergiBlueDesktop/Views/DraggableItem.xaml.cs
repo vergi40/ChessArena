@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using SharpVectors.Converters;
 using vergiBlue;
+using vergiBlue.Pieces;
 
 namespace vergiBlueDesktop.Views
 {
@@ -116,6 +117,11 @@ namespace vergiBlueDesktop.Views
             PreviousPosition = new Position(Row, Column);
             Column = column;
             Row = row;
+
+            // TODO hack until better design
+            // PieceModel not binded directly to board anymore
+            var oldModel = Model.PieceModel;
+            Model.PieceModel = PieceFactory.Create(oldModel.Identity, (column, row), oldModel.IsWhite);
 
             if (IsAtStartPosition) IsAtStartPosition = false;
         }

@@ -8,6 +8,28 @@ namespace vergiBlue.Pieces
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="identity">Upper case: white. Lower case: black</param>
+        /// <param name="position"></param>
+        /// <param name="isWhite"></param>
+        /// <returns></returns>
+        public static PieceBase Create(char identity, (int column, int row) position, bool isWhite)
+        {
+            PieceBase piece = identity switch
+            {
+                'K' => new King(isWhite, position),
+                'Q' => new Queen(isWhite, position),
+                'R' => new Rook(isWhite, position),
+                'N' => new Knight(isWhite, position),
+                'B' => new Bishop(isWhite, position),
+                'P' => new Pawn(isWhite, position),
+                _ => throw new ArgumentException($"Unknown piece type: {identity}")
+            };
+            return piece;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="identityWithColor">Upper case: white. Lower case: black</param>
         /// <param name="position"></param>
         /// <returns></returns>
