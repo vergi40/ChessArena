@@ -8,6 +8,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using vergiBlue.Analytics;
 
 namespace vergiBlue.Algorithms
 {
@@ -124,7 +125,7 @@ namespace vergiBlue.Algorithms
                 var index = _random.Next(Openings.Count);
                 var strategy = Openings[index];
 
-                Diagnostics.AddMessage($"Chosen opening strategy: {strategy.Name}. ");
+                Collector.AddCustomMessage($"Chosen opening strategy: {strategy.Name}. ");
                 return strategy.Moves.First();
             }
             else
@@ -137,7 +138,7 @@ namespace vergiBlue.Algorithms
                 var index = _random.Next(similarOpenings.Count);
                 var strategy = similarOpenings[index];
 
-                Diagnostics.AddMessage($"Using opening strategy {strategy.Name}. ");
+                Collector.AddCustomMessage($"Using opening strategy {strategy.Name}. ");
                 return strategy.Moves[previousMoves.Count];
             }
         }

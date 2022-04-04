@@ -1,4 +1,5 @@
 using System.Linq;
+using NUnit.Framework;
 using vergiBlue.BoardModel;
 
 namespace PerftTests
@@ -20,6 +21,21 @@ namespace PerftTests
             {
                 var nextBoard = BoardFactory.CreateFromMove(newBoard, move);
                 nodes += PerftRec(nextBoard, depth - 1, !forWhite);
+            }
+
+            return nodes;
+        }
+
+        public static long Divide(IBoard board, int depth, bool forWhite)
+        {
+            long nodes = 0;
+            foreach (var move in board.MoveGenerator.MovesQuick(forWhite, true))
+            {
+                var newBoard = BoardFactory.CreateFromMove(board, move);
+                var childNodes = PerftRec(newBoard, depth - 1, !forWhite);
+                TestContext.WriteLine($"{move.ToCompactString()}: {childNodes}");
+
+                nodes += childNodes;
             }
 
             return nodes;

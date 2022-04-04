@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Media;
 using vergiBlue;
+using vergiBlue.Pieces;
 using vergiBlueDesktop.Views;
 
 namespace vergiBlueDesktop
@@ -36,18 +37,22 @@ namespace vergiBlueDesktop
 
         void UpdateImageLocation(int column, int row, bool updatePreviousPixelLocation);
         void UpdateInternalLocation(int column, int row);
+
+        IPieceWithUiControl Model { get; set; }
     }
 
-    public interface IPieceWithUiControl : IPiece
+    public interface IPieceWithUiControl : IPieceUi
     {
         MainViewModel Main { get; }
         void VisualizePossibleTiles();
         void ClearPossibleTiles();
         void TurnFinished(Position previousPosition, Position currentPosition);
         void SandboxTurnFinished(Position previousPosition, Position currentPosition);
+
+        IPiece PieceModel { get; set; }
     }
 
-    public interface IPiece
+    public interface IPieceUi
     {
         bool IsWhite { get; }
         

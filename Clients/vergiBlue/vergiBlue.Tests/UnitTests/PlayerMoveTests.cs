@@ -127,6 +127,7 @@ namespace UnitTests
             // 
             var whiteRook = new Rook(true, "d5");
             logic.Board.AddNew(whiteRook);
+            logic.Board.Shared.Testing = true;
 
             var playerMove = logic.CreateMoveWithDepth(3);
 

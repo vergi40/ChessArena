@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using CommonNetStandard;
 using CommonNetStandard.Interface;
 using log4net;
-using vergiBlue.Algorithms;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel.Subsystems;
-using vergiBlue.BoardModel.SubSystems;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel
@@ -14,10 +12,11 @@ namespace vergiBlue.BoardModel
     public class Board : IBoard
     {
         private static readonly ILog _localLogger = LogManager.GetLogger(typeof(Board));
+
         /// <summary>
         /// [column,row}
         /// </summary>
-        private PieceBase?[,] BoardArray { get; }
+        private IPiece?[] BoardArray { get; } = new IPiece?[64];
 
         /// <summary>
         /// All pieces.
@@ -28,12 +27,12 @@ namespace vergiBlue.BoardModel
         /// Sum all pieces
         /// https://stackoverflow.com/questions/454916/performance-of-arrays-vs-lists
         /// </summary>
-        public List<PieceBase> PieceList { get; set; }
+        public List<IPiece> PieceList { get; }
 
         /// <summary>
         /// Track kings at all times
         /// </summary>
-        public (PieceBase? white, PieceBase? black) Kings { get; set; }
+        public (IPiece? white, IPiece? black) Kings { get; set; }
         
         /// <summary>
         /// Single direction board information. Two hashes match if all pieces are in same position.
@@ -54,11 +53,11 @@ namespace vergiBlue.BoardModel
         /// <summary>
         /// Return pieces in the <see cref="IPiece"/> format
         /// </summary>
-        public IList<IPiece> InterfacePieces
+        public IReadOnlyList<IPieceMinimal> InterfacePieces
         {
             get
             {
-                IList<IPiece> list = new List<IPiece>();
+                var list = new List<IPiece>();
                 foreach (var piece in PieceList)
                 {
                     list.Add(piece);
@@ -69,30 +68,25 @@ namespace vergiBlue.BoardModel
         }
 
         /// <summary>
-        /// Is check = true. Not calculated = null.
-        /// Save some time if already calculated checkmate
+        /// Is black/white check precalculated and what is the result
+        /// [0] black, [1] white
+        /// bool?: null - not calculated / false - no / true - yes
         /// </summary>
-        private bool? _isCheckForOffensivePrecalculated { get; set; } = null;
-
-        /// <summary>
-        /// Board that was in checkmate was continued
-        /// </summary>
-        public bool DebugPostCheckMate { get; set; }
-
+        private bool?[] _isCheck { get; } = new bool?[2];
+        
         public MoveGenerator MoveGenerator { get; }
-        public AttackSquareMapper AttackMapper { get; private set; }
+
+        public PieceQuery PieceQuery { get; }
 
         /// <summary>
         /// Start game initialization
         /// </summary>
-        public Board()
+        public Board(bool initializeShared = true)
         {
-            BoardArray = new PieceBase[8,8];
-            PieceList = new List<PieceBase>();
+            PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
-            AttackMapper = new AttackSquareMapper();
-
-            Shared = new SharedData();
+            PieceQuery = new PieceQuery(this);
+            Shared = new SharedData(initializeShared);
             Strategic = new StrategicData();
         }
 
@@ -101,23 +95,19 @@ namespace vergiBlue.BoardModel
         /// </summary>
         public Board(IBoard other, bool cloneSubSystems)
         {
-            BoardArray = new PieceBase[8,8];
-            PieceList = new List<PieceBase>();
+            // Minor optimization. PieceList should never grow
+            PieceList = new List<IPiece>(other.PieceList.Count);
+
             MoveGenerator = new MoveGenerator(this);
-            AttackMapper = new AttackSquareMapper();
-
-            InitializeFromReference(other);
-
+            PieceQuery = new PieceQuery(this);
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
+
+            InitializeFromReference(other);
 
             if (cloneSubSystems)
             {
                 BoardHash = other.BoardHash;
-                if(Shared.UseCachedAttackSquares)
-                {
-                    AttackMapper = other.AttackMapper.Clone(PieceList);
-                }
             }
             else
             {
@@ -126,30 +116,21 @@ namespace vergiBlue.BoardModel
 
             UpdateEndGameWeight();
         }
-
-        /// <summary>
-        /// Create board setup after move. Clone subsystems
-        /// </summary>
-        public Board(IBoard other, SingleMove move)
+        
+        public Board(IBoard other, in ISingleMove move)
         {
-            BoardArray = new PieceBase[8,8];
-            PieceList = new List<PieceBase>();
+            PieceList = new List<IPiece>();
             MoveGenerator = new MoveGenerator(this);
-            AttackMapper = new AttackSquareMapper();
-
-            InitializeFromReference(other);
+            PieceQuery = new PieceQuery(this);
             Shared = other.Shared;
             Strategic = new StrategicData(other.Strategic);
 
-            if (Shared.UseCachedAttackSquares)
-            {
-                AttackMapper = other.AttackMapper.Clone(PieceList);
-            }
+            InitializeFromReference(other);
             BoardHash = other.BoardHash;
 
             ExecuteMove(move);
         }
-        
+
         /// <summary>
         /// Prerequisite: Pieces are set. Castling rights and en passant set.
         /// </summary>
@@ -157,21 +138,13 @@ namespace vergiBlue.BoardModel
         {
             Shared.Transpositions.Initialize();
             BoardHash = Shared.Transpositions.CreateBoardHash(this);
-
-            AttackMapper = new AttackSquareMapper(this);
         }
 
         private void InitializeFromReference(IBoard previous)
         {
             foreach (var piece in previous.PieceList)
             {
-                var newPiece = piece.CreateCopy();
-                AddNew(newPiece);
-
-                if (newPiece.Identity == 'K')
-                {
-                    UpdateKingReference(newPiece);
-                }
+                AddNew(piece);
             }
         }
 
@@ -226,24 +199,19 @@ namespace vergiBlue.BoardModel
 
             var blackKing = new King(false, "e8");
             AddNew(blackKing);
-            Kings = (whiteKing, blackKing);
 
             InitializeSubSystems();
         }
 
-        public void ExecuteMoveWithValidation(SingleMove move)
+        public void ExecuteMoveWithValidation(in ISingleMove move)
         {
             Validator.ValidateMove(this, move);
             ExecuteMove(move);
         }
         
-        public void ExecuteMove(SingleMove move)
+        public void ExecuteMove(in ISingleMove move)
         {
             BoardHash = Shared.Transpositions.GetNewBoardHash(move, this, BoardHash);
-            if(Shared.UseCachedAttackSquares)
-            {
-                AttackMapper.Update(this, move);
-            }
 
             var piece = ValueAt(move.PrevPos);
             if (piece == null) throw new ArgumentException($"Tried to execute move where previous piece position was empty ({move.PrevPos}).");
@@ -257,13 +225,7 @@ namespace vergiBlue.BoardModel
                 }
                 else if (KingLocation(!isWhite)?.CurrentPosition == move.NewPos)
                 {
-                    // TODO continuing after this makes logic really unstable
-                    // Ensure validation ends if king is eaten
-                    RemovePieces(!isWhite);
-                    UpdatePosition(piece, move);
-                    DebugPostCheckMate = true;
-                    Strategic.EnPassantPossibility = null;
-                    return;
+                    throw new ArgumentException("Logical error: king was captured");
                 }
                 else
                 {
@@ -282,11 +244,26 @@ namespace vergiBlue.BoardModel
                 Castling.UpdateStatusForNonCastling(this, piece, move);
             }
 
-            UpdatePosition(piece, move);
-            
+            UpdatePieceFromMoveInternal(piece, move);
+
+            // Initialize cache values that depend on board setup
+            MoveGenerator.SliderAttacksCached = null;
+            _isCheck[0] = null;
+            _isCheck[1] = null;
+
             // General every turn processes
             UpdateEndGameWeight();
             Strategic.TurnCountInCurrentDepth++;
+        }
+
+        /// <summary>
+        /// NOTE: definition - to some general class
+        /// </summary>
+        /// <param name="isWhite"></param>
+        /// <returns></returns>
+        protected static int ColorToInt(bool isWhite)
+        {
+            return isWhite ? 1 : 0;
         }
 
         public void UpdateEndGameWeight()
@@ -302,28 +279,39 @@ namespace vergiBlue.BoardModel
         /// <returns></returns>
         public double GetPowerPiecePercent()
         {
-            var powerPieces = PieceList.Count(p => Math.Abs((double)p.RelativeStrength) > PieceBaseStrength.Pawn);
-            return powerPieces / 16.0;
+            var powerPieces = PieceQuery.AllPowerPiecesList().Count;
+            return powerPieces * 0.0625;
         }
 
-        private void UpdatePosition(PieceBase piece, SingleMove move)
+        /// <summary>
+        /// Only piece itself & castling. No capture logic.
+        /// Remove old position from array.
+        /// Remove old from PieceList.
+        /// Add new position to array.
+        /// Add new position to PieceList.
+        /// </summary>
+        /// <param name="oldPiece"></param>
+        /// <param name="move"></param>
+        /// <exception cref="ArgumentException"></exception>
+        private void UpdatePieceFromMoveInternal(IPiece oldPiece, in ISingleMove move)
         {
-            if (move.Promotion)
+            RemovePiece(move.PrevPos);
+
+            IPiece newPiece;
+            if (move.PromotionType != PromotionPieceType.NoPromotion)
             {
-                RemovePiece(piece.CurrentPosition);
-                piece = move.PromotionType switch
+                newPiece = move.PromotionType switch
                 {
-                    PromotionPieceType.Queen => new Queen(piece.IsWhite, move.NewPos),
-                    PromotionPieceType.Rook => new Rook(piece.IsWhite, move.NewPos),
-                    PromotionPieceType.Bishop => new Bishop(piece.IsWhite, move.NewPos),
-                    PromotionPieceType.Knight => new Knight(piece.IsWhite, move.NewPos),
+                    PromotionPieceType.Queen => Shared.PieceCache.Get(move.NewPos, 'Q', oldPiece.IsWhite),
+                    PromotionPieceType.Rook => Shared.PieceCache.Get(move.NewPos, 'R', oldPiece.IsWhite),
+                    PromotionPieceType.Bishop => Shared.PieceCache.Get(move.NewPos, 'B', oldPiece.IsWhite),
+                    PromotionPieceType.Knight => Shared.PieceCache.Get(move.NewPos, 'N', oldPiece.IsWhite),
                     _ => throw new ArgumentException($"Unknown promotion: {move.PromotionType}")
                 };
-                PieceList.Add(piece);
             }
             else
             {
-                piece.CurrentPosition = move.NewPos;
+                newPiece = Shared.PieceCache.Get(move.NewPos, oldPiece.Identity, oldPiece.IsWhite);
             }
 
             if (move.Castling)
@@ -334,19 +322,18 @@ namespace vergiBlue.BoardModel
                     // Execute also rook move
                     var row = move.NewPos.row;
                     var rookMove = new SingleMove((0, row), (3, row));
-                    UpdatePosition(ValueAtDefinitely((0, row)), rookMove);
+                    UpdatePieceFromMoveInternal(ValueAtDefinitely((0, row)), rookMove);
                 }
                 if (move.NewPos.column == 6)
                 {
                     // Execute also rook move
                     var row = move.NewPos.row;
                     var rookMove = new SingleMove((7, row), (5, row));
-                    UpdatePosition(ValueAtDefinitely((7, row)), rookMove);
+                    UpdatePieceFromMoveInternal(ValueAtDefinitely((7, row)), rookMove);
                 }
             }
 
-            BoardArray[move.PrevPos.Item1, move.PrevPos.Item2] = null;
-            BoardArray[move.NewPos.Item1, move.NewPos.Item2] = piece;
+            AddNew(newPiece);
         }
 
         /// <summary>
@@ -354,7 +341,7 @@ namespace vergiBlue.BoardModel
         /// If there is any piece in target square, it's deleted
         /// </summary>
         /// <param name="move"></param>
-        public void UpdateBoardArray(SingleMove move)
+        public void UpdateBoardArray(in ISingleMove move)
         {
             var piece = ValueAtDefinitely(move.PrevPos);
 
@@ -364,16 +351,17 @@ namespace vergiBlue.BoardModel
                 RemovePiece(move.NewPos);
             }
 
-            piece.CurrentPosition = move.NewPos;
-            BoardArray[move.PrevPos.Item1, move.PrevPos.Item2] = null;
-            BoardArray[move.NewPos.Item1, move.NewPos.Item2] = piece;
+            UpdatePieceFromMoveInternal(piece, move);
         }
 
+        /// <summary>
+        /// Remove from board array. Remove from PieceList
+        /// </summary>
         public void RemovePiece((int column, int row) position)
         {
             var piece = ValueAt(position);
             if (piece == null) throw new ArgumentException($"Piece in position {position} was null");
-            BoardArray[position.column, position.row] = null;
+            BoardArray[position.To1DimensionArray()] = null;
 
             PieceList.Remove(piece);
             if (piece.Identity == 'K')
@@ -389,16 +377,7 @@ namespace vergiBlue.BoardModel
             }
         }
         
-        private void RemovePieces(bool isWhite)
-        {
-            var toBeRemoved = PieceList.Where(p => p.IsWhite == isWhite).ToList();
-            foreach (var piece in toBeRemoved)
-            {
-                RemovePiece(piece.CurrentPosition);
-            }
-        }
-        
-        private void UpdateKingReference(PieceBase king)
+        private void UpdateKingReference(IPiece king)
         {
             if (king.IsWhite)
             {
@@ -414,27 +393,31 @@ namespace vergiBlue.BoardModel
         /// Return piece at coordinates, null if empty.
         /// </summary>
         /// <returns>Can be null</returns>
-        public PieceBase? ValueAt((int column, int row) target)
+        public IPiece? ValueAt((int column, int row) target)
         {
-            return BoardArray[target.column, target.row];
+            return BoardArray[target.To1DimensionArray()];
         }
 
         /// <summary>
         /// Return piece at coordinates. Known to have value
         /// </summary>
         /// <exception cref="ArgumentException"></exception>
-        public PieceBase ValueAtDefinitely((int column, int row) target)
+        public IPiece ValueAtDefinitely((int column, int row) target)
         {
-            var piece = BoardArray[target.column, target.row];
+            var piece = BoardArray[target.To1DimensionArray()];
             if (piece == null) throw new ArgumentException($"Logical error. Value should not be null at {target.ToAlgebraic()}");
 
             return piece;
         }
 
-        public void AddNew(PieceBase piece)
+        /// <summary>
+        /// Add piece to array and PieceList. Update king references
+        /// </summary>
+        /// <param name="piece"></param>
+        public void AddNew(IPiece piece)
         {
             PieceList.Add(piece);
-            BoardArray[piece.CurrentPosition.column, piece.CurrentPosition.row] = piece;
+            BoardArray[piece.CurrentPosition.To1DimensionArray()] = piece;
 
             if (piece.Identity == 'K')
             {
@@ -442,7 +425,7 @@ namespace vergiBlue.BoardModel
             }
         }
 
-        public void AddNew(IEnumerable<PieceBase> pieces)
+        public void AddNew(IEnumerable<IPiece> pieces)
         {
             foreach (var piece in pieces)
             {
@@ -450,7 +433,7 @@ namespace vergiBlue.BoardModel
             }
         }
 
-        public void AddNew(params PieceBase[] pieces)
+        public void AddNew(params IPiece[] pieces)
         {
             foreach (var piece in pieces)
             {
@@ -464,10 +447,9 @@ namespace vergiBlue.BoardModel
             return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
         }
 
-        public double EvaluateNoMoves(bool isMaximizing, bool simpleEvaluation, int? currentSearchDepth = null)
+        public double EvaluateNoMoves(bool noMovesForWhite, bool simpleEvaluation, int? currentSearchDepth = null)
         {
-            // TODO more logic
-            return Evaluator.Evaluate(this, isMaximizing, simpleEvaluation, currentSearchDepth);
+            return Evaluator.EvaluateNoMoves(this, noMovesForWhite, simpleEvaluation, currentSearchDepth);
         }
         
         /// <summary>
@@ -475,7 +457,7 @@ namespace vergiBlue.BoardModel
         /// </summary>
         /// <param name="whiteKing"></param>
         /// <returns></returns>
-        public PieceBase? KingLocation(bool whiteKing)
+        public IPiece? KingLocation(bool whiteKing)
         {
             if (whiteKing) return Kings.white;
             else return Kings.black;
@@ -492,12 +474,13 @@ namespace vergiBlue.BoardModel
         {
             if(!currentBoardKnownToBeInCheck)
             {
+                // Not even check currently - cancel
                 if (!IsCheck(isWhiteOffensive)) return false;
             }
 
             // Iterate all opponent moves and check is there any that doesn't have check when next player moves
-            // TODO double-check that castling moves not needed to validate
-            var opponentMoves = MoveGenerator.MovesQuickWithoutCastling(!isWhiteOffensive, false);
+            // No need to include castling as checked king cannot castle
+            var opponentMoves = MoveGenerator.ValidMovesQuickWithoutCastling(!isWhiteOffensive);
             foreach (var singleMove in opponentMoves)
             {
                 var newBoard = BoardFactory.CreateFromMove(this, singleMove);
@@ -520,35 +503,21 @@ namespace vergiBlue.BoardModel
         /// <returns></returns>
         public bool IsCheck(bool isWhiteOffensive)
         {
-            if (_isCheckForOffensivePrecalculated == true)
+            var preCalculated = _isCheck[ColorToInt(!isWhiteOffensive)];
+            if (preCalculated != null)
             {
+                Collector.IncreaseOperationCount(OperationsKeys.CacheCheckUtilized);
+                return preCalculated.Value;
+            }
+
+            Collector.IncreaseOperationCount(OperationsKeys.CheckEvaluationDone);
+            if(MoveGenerator.IsKingCurrentlyAttacked(!isWhiteOffensive))
+            {
+                _isCheck[ColorToInt(!isWhiteOffensive)] = true;
                 return true;
             }
-            
-            var opponentKing = KingLocation(!isWhiteOffensive);
-            if (opponentKing == null)
-            {
-                DebugPostCheckMate = true;
-                return false; // Test override, don't always have kings on board
-            }
 
-            if (Shared.UseCachedAttackSquares)
-            {
-                var isAttacked = AttackMapper.IsPositionAttacked(opponentKing.CurrentPosition, isWhiteOffensive);
-                _isCheckForOffensivePrecalculated = true;
-                return isAttacked;
-            }
-
-            foreach (var attackMove in GetAttackSquares(isWhiteOffensive))
-            {
-                Diagnostics.IncrementCheckCount();
-                if (attackMove == opponentKing.CurrentPosition)
-                {
-                    _isCheckForOffensivePrecalculated = true;
-                    return true;
-                }
-            }
-            
+            _isCheck[ColorToInt(!isWhiteOffensive)] = false;
             return false;
         }
 
@@ -568,8 +537,6 @@ namespace vergiBlue.BoardModel
             var ownPiece = ValueAtDefinitely(from);
             var isWhite = ownPiece.IsWhite;
 
-
-            _isCheckForOffensivePrecalculated = null;
             var move = new SingleMove(from, to);
             
             if (initialMove.Capture)
@@ -637,7 +604,7 @@ namespace vergiBlue.BoardModel
 
         public IEnumerable<SingleMove> FilterOutIllegalMoves(IEnumerable<SingleMove> moves, bool isWhite)
         {
-            var legalMoves = MoveGenerator.MovesQuick(isWhite, true).ToList();
+            var legalMoves = MoveGenerator.ValidMovesQuick(isWhite).ToList();
             foreach (var singleMove in moves)
             {
                 var isLegal =
@@ -658,83 +625,5 @@ namespace vergiBlue.BoardModel
                 yield return move.NewPos;
             }
         }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToLeft(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteLeftCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackLeftCastlingValid) return false;
-                row = 7;
-            }
-            
-            // Castling pieces are intact
-            var rook = ValueAt((0, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-            
-            // No other pieces on the way
-            if (ValueAt((1, row)) != null) return false;
-            if (ValueAt((2, row)) != null) return false;
-            if (ValueAt((3, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> {(2, row), (3, row), (4, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Return as soon as possible
-        /// </summary>
-        public bool CanCastleToRight(bool white)
-        {
-            var row = 0;
-            if (white)
-            {
-                if (!Strategic.WhiteRightCastlingValid) return false;
-            }
-            else
-            {
-                if (!Strategic.BlackRightCastlingValid) return false;
-                row = 7;
-            }
-
-            // Castling pieces are intact
-            var rook = ValueAt((7, row));
-            var king = ValueAt((4, row));
-            if (rook == null || rook.Identity != 'R' || king == null || king.Identity != 'K') return false;
-
-            // No other pieces on the way
-            if (ValueAt((5, row)) != null) return false;
-            if (ValueAt((6, row)) != null) return false;
-
-            // Check that no position is under attack currently.
-            // NOTE: heavy on performance, done as last resort
-            var neededSquares = new List<(int, int)> { (4, row), (5, row), (6, row)};
-            var attackSquares = GetAttackSquares(!white);
-
-            foreach (var target in attackSquares)
-            {
-                if (neededSquares.Contains(target)) return false;
-            }
-
-            return true;
-        }
-
     }
 }

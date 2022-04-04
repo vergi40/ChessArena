@@ -10,6 +10,7 @@ using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
 using log4net;
+using vergiBlue.Analytics;
 using vergiBlue.Logic;
 
 namespace vergiBlue.ConsoleTools
@@ -127,7 +128,7 @@ namespace vergiBlue.ConsoleTools
 
         public override IPlayerMove CreateMove()
         {
-            var diagnostics = Diagnostics.CollectAndClear();
+            var diagnostics = Collector.Instance.CollectAndClear();
             // Dummy moves for connection testing
             var move = new PlayerMoveImplementation(
                 new MoveImplementation()

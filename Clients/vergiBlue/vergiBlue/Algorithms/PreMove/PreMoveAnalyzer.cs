@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Interface;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 
@@ -82,12 +83,12 @@ namespace vergiBlue.Algorithms.PreMove
         {
             if (depth != _previousDepth)
             {
-                Diagnostics.AddMessage($"Search depth update {_previousDepth} -> {depth} (estimate {estimate:F2}");
+                Collector.AddCustomMessage($"Search depth update {_previousDepth} -> {depth} (estimate {estimate:F2}");
             }
 
             if (phase != _previousPhase)
             {
-                Diagnostics.AddMessage($"Game phase update {_previousPhase} -> {phase}");
+                Collector.AddCustomMessage($"Game phase update {_previousPhase} -> {phase}");
             }
         }
 

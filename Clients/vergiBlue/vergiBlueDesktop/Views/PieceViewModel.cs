@@ -13,7 +13,7 @@ namespace vergiBlueDesktop.Views
     {
         public bool IsWhite { get; set; }
         public Uri SourceUri { get; set; }
-        public PieceBase PieceModel { get; set; }
+        public IPiece PieceModel { get; set; }
 
         public MainViewModel Main { get; }
 
@@ -32,7 +32,7 @@ namespace vergiBlueDesktop.Views
         {
             ClearPossibleTiles();
 
-            var moves = _gameModel.Model.Session.Board.MoveGenerator.MovesForPiece(PieceModel.CurrentPosition);
+            var moves = _gameModel.Model.Session.Board.MoveGenerator.ValidMovesForPiece(PieceModel.CurrentPosition);
             //var detailedMoves = _gameModel.Model.Session.Board.CollectMoveProperties(moves);
 
             var basicColor = GraphicConstants.PlayerMoveColor;

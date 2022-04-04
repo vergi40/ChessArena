@@ -175,6 +175,8 @@ namespace vergiBlueDesktop.Views
         }
         
         /// <summary>
+        /// Note: the internal PieceModel is not direct reference to board (and position not updated automatically).
+        /// Each move a new piece is constructed in <see cref="IViewObject.UpdateInternalLocation"/>
         /// </summary>
         /// <param name="move"></param>
         /// <param name="pieceNotMovedInView">Piece in view not updated yet</param>
@@ -293,7 +295,7 @@ namespace vergiBlueDesktop.Views
             }
         }
         
-        private Uri GetUriForPiece(PieceBase piece)
+        private Uri GetUriForPiece(IPiece piece)
         {
             var name = "";
             if (piece.IsWhite) name += "w";
@@ -304,7 +306,7 @@ namespace vergiBlueDesktop.Views
             return new Uri($"pack://application:,,,/vergiBlueDesktop;component/Resources/{IconSet}/{name}.svg");
         }
         
-        public void AddPromotionPiece(PieceBase piece, SingleMove move, GameModelProxy modelProxy)
+        public void AddPromotionPiece(IPiece piece, SingleMove move, GameModelProxy modelProxy)
         {
             AddUiPiece(piece, move.NewPos.column, move.NewPos.row, modelProxy, false);
         }
@@ -312,7 +314,7 @@ namespace vergiBlueDesktop.Views
         /// <summary>
         /// Add piece to view
         /// </summary>
-        public void AddUiPiece(PieceBase piece, int column, int row, GameModelProxy modelProxy, bool sandboxMode)
+        public void AddUiPiece(IPiece piece, int column, int row, GameModelProxy modelProxy, bool sandboxMode)
         {
             if (sandboxMode)
             {

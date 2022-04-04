@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
+using Math = System.Math;
 
 
 namespace vergiBlue.Pieces
@@ -48,12 +49,21 @@ namespace vergiBlue.Pieces
 
         public override IEnumerable<SingleMove> Moves(IBoard board)
         {
+            foreach (var newPosition in board.Shared.RawMoves.King[CurrentPosition.To1DimensionArray()])
+            {
+                var validMove = CanMoveTo(newPosition, board, false);
+                if (validMove != null) yield return validMove;
+            }
+        }
+
+        public IEnumerable<SingleMove> MovesValidated(IBoard board)
+        {
             var cur = CurrentPosition;
 
-            var moveRight = CanMoveTo((cur.column + 1, cur.row), board, true);
-            if (moveRight != null) yield return moveRight;
+            var move = CanMoveTo((cur.column + 1, cur.row), board, true);
+            if (move != null) yield return move;
 
-            var move = CanMoveTo((cur.column + 1, cur.row + 1), board, true);
+            move = CanMoveTo((cur.column + 1, cur.row + 1), board, true);
             if (move != null) yield return move;
 
             move = CanMoveTo((cur.column, cur.row + 1), board, true);
@@ -62,8 +72,8 @@ namespace vergiBlue.Pieces
             move = CanMoveTo((cur.column - 1, cur.row + 1), board, true);
             if (move != null) yield return move;
 
-            var moveLeft = CanMoveTo((cur.column - 1, cur.row), board, true);
-            if (moveLeft != null) yield return moveLeft;
+            move = CanMoveTo((cur.column - 1, cur.row), board, true);
+            if (move != null) yield return move;
 
             move = CanMoveTo((cur.column - 1, cur.row - 1), board, true);
             if (move != null) yield return move;
@@ -74,7 +84,7 @@ namespace vergiBlue.Pieces
             move = CanMoveTo((cur.column + 1, cur.row - 1), board, true);
             if (move != null) yield return move;
         }
-        
+
         public override PieceBase CreateCopy()
         {
             return new King(IsWhite, CurrentPosition);
@@ -83,6 +93,17 @@ namespace vergiBlue.Pieces
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
             return Moves(board);
+        }
+
+        public override bool CanAttackQuick((int column, int row) target, IBoard board)
+        {
+            // Target is in vicinity
+            if (Math.Abs(target.row - CurrentPosition.row) <= 1 && Math.Abs(target.column - CurrentPosition.column) <= 1)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

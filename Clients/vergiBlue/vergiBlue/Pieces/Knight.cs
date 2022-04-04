@@ -33,7 +33,16 @@ namespace vergiBlue.Pieces
             return PositionStrength;
         }
 
-        public override IEnumerable<SingleMove> Moves(BoardModel.IBoard board)
+        public override IEnumerable<SingleMove> Moves(IBoard board)
+        {
+            foreach (var newPosition in board.Shared.RawMoves.Knight[CurrentPosition.To1DimensionArray()])
+            {
+                var validMove = CanMoveTo(newPosition, board, false);
+                if (validMove != null) yield return validMove;
+            }
+        }
+
+        public IEnumerable<SingleMove> MovesValidated(IBoard board)
         {
             var cur = CurrentPosition;
 
@@ -70,6 +79,20 @@ namespace vergiBlue.Pieces
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
             return Moves(board);
+        }
+
+        public override bool CanAttackQuick((int column, int row) target, IBoard board)
+        {
+            if (target.Equals((-1, -1))) throw new ArgumentException("Knight used out-of-board target");
+            var dirAndDistance = GetTransformation(CurrentPosition, target);
+            // TODO max 2
+            if (Math.Abs(dirAndDistance.x) + Math.Abs(dirAndDistance.y) == 3 && Math.Abs(dirAndDistance.x) * Math.Abs(dirAndDistance.y) == 2)
+            {
+                // Don't really care of positions, just see if manhattan distance is 3
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -27,6 +27,7 @@ namespace UnitTests
             };
 
             board.AddNew(pieces);
+            board.Shared.Testing = true;
             board.ExecuteMove(new SingleMove("c7", "c5"));
             board.Strategic.EnPassantPossibility.ShouldBe("c6".ToTuple());
 
@@ -48,6 +49,7 @@ namespace UnitTests
             };
 
             board.AddNew(pieces);
+            board.Shared.Testing = true;
             board.ExecuteMove(new SingleMove("b2", "b4"));
             board.Strategic.EnPassantPossibility.ShouldBe("b3".ToTuple());
 

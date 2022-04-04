@@ -141,7 +141,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <summary>
         /// Get board hash for given move (with pre-move board reference and it's hash)
         /// </summary>
-        public ulong GetNewBoardHash(SingleMove move, IBoard oldBoard, ulong hash)
+        public ulong GetNewBoardHash(in ISingleMove move, IBoard oldBoard, ulong hash)
         {
             // Change side to move
             hash = ChangeSideToMove(hash);
@@ -177,7 +177,7 @@ namespace vergiBlue.BoardModel.Subsystems
 
             if (move.Capture)
             {
-                PieceBase captured;
+                IPiece captured;
                 (int column, int row) targetPosition;
                 if (move.EnPassant)
                 {
@@ -201,7 +201,7 @@ namespace vergiBlue.BoardModel.Subsystems
             hash = hash ^ GetPieceHash(piece, move.PrevPos);
 
             // Add new position
-            if (move.Promotion)
+            if (move.PromotionType != PromotionPieceType.NoPromotion)
             {
                 var identity = move.PromotionType switch
                 {
@@ -223,7 +223,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <summary>
         /// Hash that results from simple piece move
         /// </summary>
-        private ulong ExecuteMoveHash(ulong hash, PieceBase piece, (int column, int row) prev, (int column, int row) next)
+        private ulong ExecuteMoveHash(ulong hash, IPiece piece, (int column, int row) prev, (int column, int row) next)
         {
             // Remove old
             hash = hash ^ GetPieceHash(piece, prev);
@@ -233,7 +233,7 @@ namespace vergiBlue.BoardModel.Subsystems
             return hash;
         }
 
-        private ulong GetPieceHash(PieceBase piece, (int column, int row) position)
+        private ulong GetPieceHash(IPiece piece, (int column, int row) position)
         {
             var pieceIndex = GetPieceCustomIndex(piece.IsWhite, piece.Identity);
             return _hashTable[position.To1DimensionArray(), pieceIndex];

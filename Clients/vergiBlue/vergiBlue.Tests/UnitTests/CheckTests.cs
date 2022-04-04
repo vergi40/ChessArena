@@ -23,7 +23,6 @@ namespace UnitTests
 
             var board = BoardFactory.CreateEmptyBoard();
             board.AddNew(white, black);
-            board.Kings = (white, black);
 
             var move = new SingleMove("a1", "a2");
             //player1.Board.ExecuteMove(move);
@@ -40,38 +39,29 @@ namespace UnitTests
             var arrayReference = player1.Board.ValueAtDefinitely("a2".ToTuple());
             arrayReference.CurrentPosition.ToAlgebraic().ShouldBe("a2");
         }
-        
+
         [TestMethod]
         public void ShouldBeCheckMate()
         {
             // Easy double rook checkmate
 
-            // 8R     K
-            // 7 R
+            // 8r     K
+            // 7 r
             // 6
-            // 5
+            // 5k
             // 4
             // 3
             // 2
             // 1
             //  ABCDEFGH
 
-            var board = BoardFactory.CreateEmptyBoard();
+            var board = BoardFactory.CreateFromPieces("a1k", "a8r", "b7r", "g8K");
             board.Shared.GameTurnCount = 20;
-            // 
-            var rookPositions = new List<string> { "a8", "b7" };
-            var asTuples = rookPositions.Select(p => p.ToTuple()).ToList();
-            CreateRooks(asTuples, board, true);
 
-            // 
-            var king = new King(false, "g8");
-            board.AddNew(king);
-            board.Kings = (null, king);
-
-            var player = LogicFactory.CreateForTest(true, board);
-            player.Board.IsCheckMate(true, false).ShouldBeTrue();
-
+            //var player = LogicFactory.CreateForTest(true, board);
+            board.IsCheckMate(false, false).ShouldBeTrue();
         }
+
         [TestMethod]
         public void WhiteRooksShouldCheckMateInOneTurn()
         {

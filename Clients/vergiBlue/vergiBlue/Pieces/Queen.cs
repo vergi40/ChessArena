@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems;
 
 namespace vergiBlue.Pieces
 {
@@ -45,8 +46,44 @@ namespace vergiBlue.Pieces
 
         public override IEnumerable<SingleMove> MovesWithSoftTargets(IBoard board)
         {
-            var moves = BishopMoves(board, true);
+            var moves = BishopMoves(board);
             return moves.Concat(RookMoves(board));
+        }
+
+        public override bool TryCreateSliderAttack(IBoard board, (int column, int row) opponentKing, out SliderAttack sliderAttack)
+        {
+            if (TryCreateBishopSliderAttack(board, opponentKing, out sliderAttack))
+            {
+                return true;
+            }
+            if (TryCreateRookSliderAttack(board, opponentKing, out sliderAttack))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public override bool CanAttackQuick((int column, int row) target, IBoard board)
+        {
+            if (TryCreateRookDirectionUInitVector(CurrentPosition, target, out var unitDirectionR))
+            {
+                foreach (var next in board.Shared.RawMoves.RookRawMovesToDirection(CurrentPosition, unitDirectionR))
+                {
+                    if (target.Equals(next)) return true;
+                    if (board.ValueAt(next) != null) return false;
+                }
+            }
+            if (TryCreateBishopDirectionUnitVector(CurrentPosition, target, out var unitDirectionB))
+            {
+                foreach (var next in board.Shared.RawMoves.BishopRawMovesToDirection(CurrentPosition, unitDirectionB))
+                {
+                    if (target.Equals(next)) return true;
+                    if (board.ValueAt(next) != null) return false;
+                }
+            }
+
+            return false;
         }
     }
 }
