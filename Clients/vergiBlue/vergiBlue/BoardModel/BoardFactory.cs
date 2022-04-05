@@ -98,12 +98,24 @@ namespace vergiBlue.BoardModel
                 }
             }
             isWhiteTurn = char.Parse(components[1]) == 'w';
-
-            board.Strategic.SetCastlingStatus(components[2]);
-            var enPassantInput = components[3];
-            if (enPassantInput != "-")
+            // This can be enough parameters in simple FEN, so check length
+            
+            if(components.Length > 2)
             {
-                board.Strategic.EnPassantPossibility = enPassantInput.ToTuple();
+                board.Strategic.SetCastlingStatus(components[2]);
+            }
+            else
+            {
+                board.Strategic.SetCastlingStatus("");
+            }
+
+            if(components.Length > 3)
+            {
+                var enPassantInput = components[3];
+                if (enPassantInput != "-")
+                {
+                    board.Strategic.EnPassantPossibility = enPassantInput.ToTuple();
+                }
             }
             //var halfMoveClock = int.Parse(components[4]);
             //var fullMoveNumber = int.Parse(components[5]);
