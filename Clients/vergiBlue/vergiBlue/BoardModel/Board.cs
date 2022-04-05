@@ -200,6 +200,8 @@ namespace vergiBlue.BoardModel
             var blackKing = new King(false, "e8");
             AddNew(blackKing);
 
+            Strategic.SkipOpeningChecks = false;
+
             InitializeSubSystems();
         }
 
