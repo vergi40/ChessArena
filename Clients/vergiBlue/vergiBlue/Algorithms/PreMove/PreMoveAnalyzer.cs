@@ -67,7 +67,7 @@ namespace vergiBlue.Algorithms.PreMove
                 minDepth = Math.Min(minDepth, _overrideGameMaxDepth.Value);
             }
 
-            var depthEstimate = _depthController.GetDepthEstimate(allMoves, board, _turnInfo, maxDepth);
+            var depthEstimate = _depthController.GetDepthEstimate(allMoves, board, _turnInfo, maxDepth, _previousDepth);
 
             var resultDepth = (int)Math.Round(depthEstimate);
             resultDepth = Math.Clamp(resultDepth, minDepth, maxDepth);

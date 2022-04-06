@@ -24,10 +24,11 @@ namespace vergiBlue.Algorithms.PreMove
         /// <summary>
         /// Returns depth as double. Eg. 5.5 means estimate for time limit is between 5 and 6
         /// </summary>
-        public double GetDepthEstimate(IReadOnlyList<SingleMove> allMoves, IBoard board, TurnStartInfo turnInfo, int maxDepth)
+        public double GetDepthEstimate(IReadOnlyList<SingleMove> allMoves, IBoard board, TurnStartInfo turnInfo, int maxDepth, int previousDepth)
         {
             CleanHistory();
             var timeLimit = turnInfo.settings.TimeLimitInMs;
+            var previousTimeLimitExceeded = PreviousTurnExceededTimeLimit(turnInfo.previousMoveData, timeLimit);
 
             var previousEstimate = 0;
             var resultDepth = 0.0;
@@ -61,8 +62,16 @@ namespace vergiBlue.Algorithms.PreMove
             var correction = GetCorrection(turnInfo.previousMoveData);
 
             _previous.Add((resultDepth, previousEstimate, correction, allMoves.Count));
+
+            if (!previousTimeLimitExceeded)
+            {
+                // as previous round was ok, previous depth should be bare minimum
+                return Math.Max(resultDepth + correction, previousDepth);
+            }
             return resultDepth + correction;
         }
+
+
 
         /// <summary>
         /// Compare to previous findings and decrease or increase depth. Cap to -1, 1
@@ -109,11 +118,16 @@ namespace vergiBlue.Algorithms.PreMove
             // Increase estimate proportionally depending of piece count
             // All pieces -> use as is
             // 1 piece -> 1/16 of the time
-            var powerPieces = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
-            var factor = (double)powerPieces / 16;
+            var factor = board.GetPowerPiecePercent();
             //var factor = 0.5 + (double)powerPieces / 32;
 
             return (int)(timeEstimate * factor);
+        }
+
+        private bool PreviousTurnExceededTimeLimit(DiagnosticsData previousData, int currentTimeLimit)
+        {
+            var tolerance = 0.10;
+            return previousData.TimeElapsed.TotalMilliseconds > currentTimeLimit * (1 - tolerance);
         }
 
         private void CleanHistory()
