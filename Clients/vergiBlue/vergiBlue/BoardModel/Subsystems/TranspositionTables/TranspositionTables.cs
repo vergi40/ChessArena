@@ -3,72 +3,8 @@ using System.Collections.Generic;
 using CommonNetStandard.Interface;
 using vergiBlue.Pieces;
 
-namespace vergiBlue.BoardModel.Subsystems
+namespace vergiBlue.BoardModel.Subsystems.TranspositionTables
 {
-    /// <summary>
-    /// Alpha-beta tree node types.
-    /// https://www.chessprogramming.org/Node_Types#CUT
-    /// </summary>
-    public enum NodeType
-    {
-        Exact,
-
-        /// <summary>
-        /// Eval is at most alpha.
-        /// All-nodes. Cut-node occured with upper bound beta. Every move from all-node needs to be searched. Node score >= score (at least equal to score). E.g. evaluation 5, lowerbound can be [5, 6, 7, 8, 9].
-        /// </summary>
-        UpperBound,
-        
-        /// <summary>
-        /// Eval is at least beta.
-        /// Cut-nodes. Beta cutoff occured. A minimum of 1 node at a cut-node needs to be searched. Node score at most equal to eval score. E.g. evaluation 5, lowerbound can be [1, 2, 3, 4, 5]
-        /// </summary>
-        LowerBound
-    }
-    
-    /// <summary>
-    /// Store information of one board during certain depth
-    /// https://www.chessprogramming.org/Transposition_Table
-    /// </summary>
-    public class Transposition
-    {
-        /// <summary>
-        /// One-direction hash value for each possibly board situation. If two hashes are same, they have
-        /// * Identical piece setup
-        /// * Same player turn
-        /// * Same castling rights
-        /// * Same en passant situation
-        /// </summary>
-        public ulong Hash { get; set; }
-        public int Depth { get; set; }
-        public double Evaluation { get; set; }
-        
-        /// <summary>
-        /// Is transposition evaluation from exact result, of some approximation.
-        /// </summary>
-        public NodeType Type { get; set; }
-        
-        /// <summary>
-        /// Turn count in main board when transposition was saved.
-        /// Used to delete old entries.
-        /// </summary>
-        public int GameTurnCount { get; set; }
-
-        public Transposition(ulong hash, int depth, double evaluation, NodeType nodetype, int gameTurnCount)
-        {
-            Hash = hash;
-            Depth = depth;
-            Evaluation = evaluation;
-            Type = nodetype;
-            GameTurnCount = gameTurnCount;
-        }
-
-        public override string ToString()
-        {
-            return $"Eval: {Evaluation} - {Type.ToString()}";
-        }
-    }
-
     public class TranspositionTables
     {
         public Dictionary<ulong, Transposition> Tables { get; set; } = new ();

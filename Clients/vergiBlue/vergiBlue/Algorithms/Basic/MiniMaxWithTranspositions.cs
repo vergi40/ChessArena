@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
+using vergiBlue.BoardModel.Subsystems.TranspositionTables;
 using vergiBlue.Logic;
 
 namespace vergiBlue.Algorithms.Basic

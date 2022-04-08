@@ -2,6 +2,7 @@
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
+using vergiBlue.BoardModel.Subsystems.TranspositionTables;
 
 namespace vergiBlue.Algorithms
 {
