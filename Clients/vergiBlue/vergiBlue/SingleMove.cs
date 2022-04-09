@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 
@@ -15,6 +16,8 @@ namespace vergiBlue
         PromotionPieceType PromotionType { get; }
 
         (int column, int row) EnPassantOpponentPosition { get; }
+
+        string ToCompactString();
     }
 
 
@@ -53,6 +56,18 @@ namespace vergiBlue
         }
         public bool Promotion => PromotionType != PromotionPieceType.NoPromotion;
 
+        public string ToCompactString()
+        {
+            var message = new StringBuilder();
+            message.Append(PrevPos.ToAlgebraic());
+            message.Append(NewPos.ToAlgebraic());
+            if (Promotion)
+            {
+                message.Append(SingleMove.ConvertPromotion(PromotionType));
+            }
+
+            return message.ToString();
+        }
     }
 
     /// <summary>
@@ -193,21 +208,21 @@ namespace vergiBlue
             info += NewPos.ToAlgebraic();
             return info;
         }
-
+        
         public string ToCompactString()
         {
-            var from = PrevPos.ToAlgebraic();
-            var to = NewPos.ToAlgebraic();
-
+            var message = new StringBuilder();
+            message.Append(PrevPos.ToAlgebraic());
+            message.Append(NewPos.ToAlgebraic());
             if (Promotion)
             {
-                to += ConvertPromotion(PromotionType);
+                message.Append(ConvertPromotion(PromotionType));
             }
 
-            return from + to;
+            return message.ToString();
         }
 
-        private char ConvertPromotion(PromotionPieceType type)
+        internal static char ConvertPromotion(PromotionPieceType type)
         {
             var c = type switch
             {

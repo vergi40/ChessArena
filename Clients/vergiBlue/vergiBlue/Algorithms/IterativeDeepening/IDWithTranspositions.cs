@@ -101,11 +101,13 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             {
                 var result = previousIterationBest;
                 Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, result.eval, result.move, board);
+                Common.AddPVDiagnostics(depthUsed, board, result.move, isMaximizing);
                 return result.move;
             }
 
             var finalResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
             Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, finalResult.First().weight, finalResult.First().move, board);
+            Common.AddPVDiagnostics(depthUsed, board, finalResult.First().move, isMaximizing);
             return finalResult.First().move;
         }
     }

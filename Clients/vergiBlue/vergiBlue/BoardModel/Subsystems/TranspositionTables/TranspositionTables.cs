@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using CommonNetStandard.Interface;
 using vergiBlue.Pieces;
 
@@ -355,6 +356,17 @@ namespace vergiBlue.BoardModel.Subsystems.TranspositionTables
                     Tables.Add(transposition.Hash, transposition);
                 }
             }
+        }
+
+        public bool TryGet(ulong hash, out Transposition result)
+        {
+            if(Tables.TryGetValue(hash, out var transposition))
+            {
+                result = transposition;
+                return true;
+            }
+            result = new Transposition(0, 0, 0, NodeType.UpperBound, 0);
+            return false;
         }
     }
 }
