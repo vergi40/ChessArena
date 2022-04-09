@@ -23,11 +23,12 @@ namespace vergiBlue.Algorithms.Parallel
             return MoveResearch.SelectBestMove(evaluated, context.IsWhiteTurn, true);
         }
 
-        public static EvaluationResult GetMoveScoreListParallel(IReadOnlyList<SingleMove> moves, int searchDepth, IBoard board, bool isMaximizing)
+        public static EvaluationResult GetMoveScoreListParallel(IReadOnlyList<SingleMove> moves, int searchDepth, IBoard board, bool isMaximizing, int timeLimitInMs = 5000)
         {
             var result = new EvaluationResult();
             var evaluated = new List<(double, SingleMove)>();
             var syncObject = new object();
+            var timer = SearchTimer.Start(timeLimitInMs);
 
             // TODO maybe refactor to some task factories to simplify main loop
 
@@ -37,7 +38,7 @@ namespace vergiBlue.Algorithms.Parallel
                 (move, loopState, localState) => // Predefined lambda expression (Func<SingleMove, ParallelLoopState, thread-local variable, body>)
                 {
                     var newBoard = BoardFactory.CreateFromMove(board, move);
-                    var value = MiniMax.ToDepth(newBoard, searchDepth, MiniMaxGeneral.DefaultAlpha, MiniMaxGeneral.DefaultBeta, !isMaximizing);
+                    var value = MiniMax.ToDepth(newBoard, searchDepth, MiniMaxGeneral.DefaultAlpha, MiniMaxGeneral.DefaultBeta, !isMaximizing, timer);
                     localState.Add((value, move));
                     return localState;
                 },

@@ -19,11 +19,12 @@ namespace vergiBlue.Algorithms.Basic
         }
 
         private EvaluationResult GetMoveScoreList(IReadOnlyList<SingleMove> moves,
-            int searchDepth, IBoard board, bool isMaximizing)
+            int searchDepth, IBoard board, bool isMaximizing, int timeLimitInMs = 5000)
         {
             var result = new EvaluationResult();
             var alpha = MiniMaxGeneral.DefaultAlpha;
             var beta = MiniMaxGeneral.DefaultBeta;
+            var timer = SearchTimer.Start(timeLimitInMs);
 
             foreach (var move in moves)
             {
@@ -39,7 +40,7 @@ namespace vergiBlue.Algorithms.Basic
                     // Board evaluation at current depth
                     var newBoard = BoardFactory.CreateFromMove(board, move);
                     var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, alpha, beta,
-                        !isMaximizing);
+                        !isMaximizing, timer);
                     result.Add(value, move);
 
                     // Add new transposition table

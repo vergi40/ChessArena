@@ -161,5 +161,11 @@ namespace vergiBlue.BoardModel
         /// WARNING: Performance-heavy
         /// </summary>
         IEnumerable<(int column, int row)> GetAttackSquares(bool forWhiteAttacker);
+
+        /// <summary>
+        /// How many percent of non-pawn pieces exists on board
+        /// </summary>
+        /// <returns></returns>
+        double GetPowerPiecePercent();
     }
 }

@@ -35,8 +35,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             var midResult = new List<(double weight, SingleMove move)>();
             var currentIterationMoves = new List<SingleMove>(allMoves);
             (double eval, SingleMove move) previousIterationBest = new(0.0, new SingleMove((-1, -1), (-1, -1)));
-            var watch = new Stopwatch();
-            watch.Start();
+            var timer = SearchTimer.Start(timeLimitInMs);
 
             // Why this works for black start, but not white?
             //var alpha = -1000000.0;
@@ -53,7 +52,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                 foreach (var move in currentIterationMoves)
                 {
                     var newBoard = BoardFactory.CreateFromMove(board, move);
-                    var evaluation = MiniMax.ToDepth(newBoard, i, alpha, beta, !isMaximizing);
+                    var evaluation = MiniMax.ToDepth(newBoard, i, alpha, beta, !isMaximizing, timer);
                     midResult.Add((evaluation, move));
 
                     if (isMaximizing)
@@ -65,7 +64,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                         beta = Math.Min(beta, evaluation);
                     }
 
-                    if (watch.ElapsedMilliseconds > timeLimitInMs)
+                    if (timer.Exceeded())
                     {
                         timeUp = true;
                         break;

@@ -24,9 +24,25 @@ namespace vergiBlue.Algorithms
     {
         private const int MOVELIST_MAX_SIZE = 128;
 
+        private static double TimerExceededValue(double alpha, double beta, bool maximizingPlayer)
+        {
+            // Create immediate cutoff
+            if (maximizingPlayer) return alpha - 1;
+            return beta + 1;
+        }
+
         /// <summary>
         /// Main game decision feature. Calculate player and opponent moves to certain depth. When
         /// maximizing, return best move evaluation value for white player. When minimizing return best value for black.
+        ///
+        /// Fail-soft.
+        /// If min assured for maximizing player goes over higher depth beta -> cutoff. This branch would never be played.
+        ///
+        /// beta (max assured for minimizing player) e.g. +30
+        ///  |
+        ///  |  best move - both maximizing and minimizing agrees
+        ///  |
+        /// alpha (min assured for maximizing player) e.g. -30
         ///
         /// </summary>
         /// <param name="newBoard">Board setup to be evaluated</param>
@@ -35,11 +51,16 @@ namespace vergiBlue.Algorithms
         /// <param name="beta">The lowest known value at previous recursion level</param>
         /// <param name="maximizingPlayer">Maximizing = white, minimizing = black</param>
         /// <returns></returns>
-        public static double ToDepth(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
+        public static double ToDepth(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchTimer timer)
         {
             if (depth == 0)
             {
                 return newBoard.Evaluate(maximizingPlayer, false, depth);
+            }
+            if (timer.Exceeded())
+            {
+                Collector.IncreaseOperationCount("TimerExceeded");
+                return TimerExceededValue(alpha, beta, maximizingPlayer);
             }
 
             // Allocating move memory to stack instead of heap
@@ -59,7 +80,7 @@ namespace vergiBlue.Algorithms
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = Math.Max(value, ToDepth(nextBoard, depth - 1, alpha, beta, false));
+                    value = Math.Max(value, ToDepth(nextBoard, depth - 1, alpha, beta, false, timer));
                     alpha = Math.Max(alpha, value);
                     if (alpha >= beta)
                     {
@@ -77,7 +98,7 @@ namespace vergiBlue.Algorithms
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = Math.Min(value, ToDepth(nextBoard, depth - 1, alpha, beta, true));
+                    value = Math.Min(value, ToDepth(nextBoard, depth - 1, alpha, beta, true, timer));
                     beta = Math.Min(beta, value);
                     if (beta <= alpha)
                     {
@@ -122,10 +143,18 @@ namespace vergiBlue.Algorithms
         /// maximizing depth 4 receives 4 - ignored
         /// minimizing depth 3 receives 13 - ignored
         /// </summary>
-        public static double ToDepthWithTranspositions(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer)
+        public static double ToDepthWithTranspositions(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchTimer timer)
         {
-            if (depth == 0) return newBoard.Evaluate(maximizingPlayer, false, depth);
-            
+            if (depth == 0)
+            {
+                return newBoard.Evaluate(maximizingPlayer, false, depth);
+            }
+            if (timer.Exceeded())
+            {
+                Collector.IncreaseOperationCount("TimerExceeded");
+                return TimerExceededValue(alpha, beta, maximizingPlayer);
+            }
+
             // Check if solution already exists
             var transposition = newBoard.Shared.Transpositions.GetTranspositionForBoard(newBoard.BoardHash);
             if (transposition != null && transposition.Depth >= depth)
@@ -134,7 +163,7 @@ namespace vergiBlue.Algorithms
                 var transpositionEval = Evaluator.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
                 
                 if (transposition.Type == NodeType.Exact) return transpositionEval;
-                if (transposition.Type == NodeType.UpperBound && transpositionEval < beta)
+                else if (transposition.Type == NodeType.UpperBound && transpositionEval < beta)
                 {
                     beta = transpositionEval;
                 }
@@ -142,16 +171,13 @@ namespace vergiBlue.Algorithms
                 {
                     alpha = transpositionEval;
                 }
-                //else if (transposition.Type == NodeType.UpperBound && !maximizingPlayer && transposition.Evaluation <= alpha)
-                //{
-                //    // No need to search further, as score was worse than alpha
-                //    return transposition.Evaluation;
-                //}
-                //else if (transposition.Type == NodeType.LowerBound && maximizingPlayer && transposition.Evaluation >= beta)
-                //{
-                //    // No need to search further, as score was worse than beta
-                //    return transposition.Evaluation;
-                //}
+
+                // Early cutoff, nice
+                if (alpha >= beta)
+                {
+                    Collector.IncreaseOperationCount("TTcutoff");
+                    return transpositionEval;
+                }
             }
 
             // Allocating move memory to stack instead of heap
@@ -172,13 +198,15 @@ namespace vergiBlue.Algorithms
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false);
-                    if (value >= beta)
+                    value = Math.Max(value, ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false, timer));
+                    alpha = Math.Max(alpha, value);
+
+                    if (alpha >= beta)
                     {
                         // Eval is at least beta. Fail high
                         // Prune. Alpha is better than previous level beta. Don't want to use moves from this board set.
 
-                        if(depth > 1)
+                        if(depth > 1 && !timer.Exceeded())
                         {
                             nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
                                 NodeType.LowerBound, nextBoard.Shared.GameTurnCount);
@@ -186,17 +214,12 @@ namespace vergiBlue.Algorithms
                         Collector.IncreaseOperationCount(OperationsKeys.Beta);
                         break;
                     }
+                }
 
-                    if(value > alpha)
-                    {
-                        // Value between alpha and beta. Save as exact score
-                        // Update alpha for rest of iteration
-                        alpha = value;
-                        if(depth > 1)
-                        {
-                            nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value, NodeType.Exact, nextBoard.Shared.GameTurnCount);
-                        }
-                    }
+                // Save best move
+                if(value >= alpha && value <= beta && depth > 1 && !timer.Exceeded())
+                {
+                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, depth, value, NodeType.Exact, newBoard.Shared.GameTurnCount);
                 }
                 return value;
             }
@@ -206,13 +229,14 @@ namespace vergiBlue.Algorithms
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true);
-                    if (value <= alpha)
+                    value = Math.Min(value, ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true, timer));
+                    beta = Math.Min(beta, value);
+                    if (beta <= alpha)
                     {
                         // Eval is at most alpha. Fail low
                         // Prune. Beta is smaller than previous level alpha. Don't want to use moves from this board set.
                         
-                        if (depth > 1)
+                        if (depth > 1 && !timer.Exceeded())
                         {
                             nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
                                 NodeType.UpperBound, nextBoard.Shared.GameTurnCount);
@@ -220,19 +244,11 @@ namespace vergiBlue.Algorithms
                         Collector.IncreaseOperationCount(OperationsKeys.Alpha);
                         break;
                     }
-
-                    if(value < beta)
-                    {
-                        // Value between alpha and beta. Save as exact score
-                        // Update beta for rest of iteration
-                        beta = value;
-                        if (depth > 1)
-                        {
-                            
-                            // Add new transposition table
-                            nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value, NodeType.Exact, nextBoard.Shared.GameTurnCount);
-                        }
-                    }
+                }
+                // Save best move
+                if (value >= alpha && value <= beta && depth > 1 && !timer.Exceeded())
+                {
+                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, depth, value, NodeType.Exact, newBoard.Shared.GameTurnCount);
                 }
                 return value;
             }
