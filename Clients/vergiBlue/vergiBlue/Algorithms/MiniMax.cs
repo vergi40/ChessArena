@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
@@ -196,12 +197,18 @@ namespace vergiBlue.Algorithms
             if (maximizingPlayer)
             {
                 var value = MiniMaxGeneral.DefaultAlpha;
+                var bestMoveIndex = -1;
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = Math.Max(value, ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false, timer));
+                    var searchResult = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false, timer);
+                    if (searchResult > value)
+                    {
+                        value = searchResult;
+                        bestMoveIndex = i;
+                    }
+                    
                     alpha = Math.Max(alpha, value);
-
                     if (alpha >= beta)
                     {
                         // Eval is at least beta. Fail high
@@ -210,7 +217,7 @@ namespace vergiBlue.Algorithms
                         if(depth > 1 && !timer.Exceeded())
                         {
                             nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
-                                NodeType.LowerBound, nextBoard.Shared.GameTurnCount);
+                                NodeType.LowerBound, nextBoard.Shared.GameTurnCount, allMoves[i]);
                         }
                         Collector.IncreaseOperationCount(OperationsKeys.Beta);
                         break;
@@ -220,17 +227,25 @@ namespace vergiBlue.Algorithms
                 // Save best move
                 if(value >= alpha && value <= beta && depth > 1 && !timer.Exceeded())
                 {
-                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, depth, value, NodeType.Exact, newBoard.Shared.GameTurnCount);
+                    Debug.Assert(bestMoveIndex >= 0, "Logical error. No best move found");
+                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, depth, value, NodeType.Exact, newBoard.Shared.GameTurnCount, allMoves[bestMoveIndex]);
                 }
                 return value;
             }
             else
             {
                 var value = MiniMaxGeneral.DefaultBeta;
+                var bestMoveIndex = -1;
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = Math.Min(value, ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true, timer));
+                    var searchResult = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true, timer);
+                    if (searchResult < value)
+                    {
+                        value = searchResult;
+                        bestMoveIndex = i;
+                    }
+
                     beta = Math.Min(beta, value);
                     if (beta <= alpha)
                     {
@@ -240,7 +255,7 @@ namespace vergiBlue.Algorithms
                         if (depth > 1 && !timer.Exceeded())
                         {
                             nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
-                                NodeType.UpperBound, nextBoard.Shared.GameTurnCount);
+                                NodeType.UpperBound, nextBoard.Shared.GameTurnCount, allMoves[i]);
                         }
                         Collector.IncreaseOperationCount(OperationsKeys.Alpha);
                         break;
@@ -249,7 +264,8 @@ namespace vergiBlue.Algorithms
                 // Save best move
                 if (value >= alpha && value <= beta && depth > 1 && !timer.Exceeded())
                 {
-                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, depth, value, NodeType.Exact, newBoard.Shared.GameTurnCount);
+                    Debug.Assert(bestMoveIndex >= 0, "Logical error. No best move found");
+                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, depth, value, NodeType.Exact, newBoard.Shared.GameTurnCount, allMoves[bestMoveIndex]);
                 }
                 return value;
             }
