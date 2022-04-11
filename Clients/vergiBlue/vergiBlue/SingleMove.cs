@@ -68,6 +68,25 @@ namespace vergiBlue
 
             return message.ToString();
         }
+
+        public override string ToString()
+        {
+            var message = new StringBuilder();
+            message.Append($"{PrevPos.ToAlgebraic()} to ");
+            if (Capture) message.Append("x");
+            message.Append(NewPos.ToAlgebraic());
+            if (Promotion)
+            {
+                message.Append(SingleMove.ConvertPromotion(PromotionType));
+            }
+
+            if (Check)
+            {
+                message.Append(" (check)");
+            }
+
+            return message.ToString();
+        }
     }
 
     /// <summary>
@@ -203,10 +222,21 @@ namespace vergiBlue
 
         public override string ToString()
         {
-            var info = $"{PrevPos.ToAlgebraic()} to ";
-            if (Capture) info += "x";
-            info += NewPos.ToAlgebraic();
-            return info;
+            var message = new StringBuilder();
+            message.Append($"{PrevPos.ToAlgebraic()} to ");
+            if (Capture) message.Append("x");
+            message.Append(NewPos.ToAlgebraic());
+            if (Promotion)
+            {
+                message.Append(ConvertPromotion(PromotionType));
+            }
+
+            if (Check)
+            {
+                message.Append(" (check)");
+            }
+
+            return message.ToString();
         }
         
         public string ToCompactString()

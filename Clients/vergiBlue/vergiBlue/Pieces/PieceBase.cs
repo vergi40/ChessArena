@@ -52,8 +52,12 @@ namespace vergiBlue.Pieces
         }
 
         public abstract double GetEvaluationStrength(double endGameWeight = 0);
-        
-        
+
+        public override string ToString()
+        {
+            var color = IsWhite ? "w" : "b";
+            return $"{Identity}{color} at {CurrentPosition.ToAlgebraic()}";
+        }
 
         /// <summary>
         /// If target position is empty or has opponent piece, return SingleMove. If own piece or outside board, return null.

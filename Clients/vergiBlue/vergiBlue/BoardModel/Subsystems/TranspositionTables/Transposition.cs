@@ -41,6 +41,8 @@ public class Transposition
 
     public override string ToString()
     {
-        return $"Eval: {Evaluation} - {Type.ToString()}";
+        var best = "";
+        if (BestMove != null) best = $" - {BestMove.ToCompactString()}";
+        return $"Eval: {Evaluation} - {Type.ToString()}{best}";
     }
 }
