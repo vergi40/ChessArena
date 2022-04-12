@@ -1,5 +1,10 @@
-﻿using vergiBlue.Analytics;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
+using vergiBlue.BoardModel.Subsystems.TranspositionTables;
 
 namespace vergiBlue.Algorithms.IterativeDeepening
 {
@@ -24,6 +29,63 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             //    var isWhite = newBoard.ValueAtDefinitely(move.NewPos).IsWhite;
             //    Diagnostics.AddMessage(" EndGameKingToCornerEvaluation: " + Evaluator.EndGameKingToCornerEvaluation(newBoard, isWhite));
             //}
+        }
+
+        public static void AddPVDiagnostics(int depthUsed, IBoard board, ISingleMove bestMove, bool rootIsMaximizing)
+        {
+            var transpositions = board.Shared.Transpositions;
+            var message = new StringBuilder();
+            var nextMove = bestMove;
+            var nextIsMaximizing = rootIsMaximizing;
+
+            // E.g. this board = white
+            // i = 0, black
+            var nextBoard = board;
+
+            message.Append($"[PVS] Depth: {depthUsed}, {nextMove.ToCompactString()} ");
+
+            try
+            {
+                for (int i = 0; i < depthUsed; i++)
+                {
+                    nextBoard = BoardFactory.CreateFromMove(nextBoard, nextMove);
+                    nextIsMaximizing = !nextIsMaximizing;
+                    var nextMoves = nextBoard.MoveGenerator.ValidMovesQuick(nextIsMaximizing).ToList();
+                    if (!nextMoves.Any())
+                    {
+                        // 
+                        message.Append("checkmate or stalemate");
+                        break;
+                    }
+
+                    var hash = nextBoard.BoardHash;
+
+                    if (!transpositions.TryGet(hash, out var entry))
+                    {
+                        message.Append("??? ");
+                        break;
+                    }
+
+                    //Debug.Assert(entry.BestMove != null, "Principal variation was not saved");
+                    if (entry.BestMove == null || entry.Type != NodeType.Exact)
+                    {
+                        message.Append("??? ");
+                        break;
+                    }
+                    else
+                    {
+                        nextMove = entry.BestMove;
+                        message.Append($"{nextMove.ToCompactString()} ");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Collector.AddCustomMessage($"[PVS] Error {e.Message}");
+                return;
+            }
+
+            Collector.AddCustomMessage($"{message.ToString()}");
         }
     }
 }

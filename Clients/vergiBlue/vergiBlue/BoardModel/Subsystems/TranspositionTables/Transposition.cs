@@ -21,6 +21,8 @@ public class Transposition
     /// Is transposition evaluation from exact result, of some approximation.
     /// </summary>
     public NodeType Type { get; set; }
+
+    public ISingleMove? BestMove { get; set; }
         
     /// <summary>
     /// Turn count in main board when transposition was saved.
@@ -39,6 +41,8 @@ public class Transposition
 
     public override string ToString()
     {
-        return $"Eval: {Evaluation} - {Type.ToString()}";
+        var best = "";
+        if (BestMove != null) best = $" - {BestMove.ToCompactString()}";
+        return $"Eval: {Evaluation} - {Type.ToString()}{best}";
     }
 }

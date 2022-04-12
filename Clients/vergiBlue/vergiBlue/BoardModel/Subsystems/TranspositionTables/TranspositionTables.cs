@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using CommonNetStandard.Interface;
 using vergiBlue.Pieces;
 
@@ -244,6 +245,36 @@ namespace vergiBlue.BoardModel.Subsystems.TranspositionTables
         }
 
         /// <summary>
+        /// Add new boardhash transposition to tables data.
+        /// If already contained, only update. 
+        /// </summary>
+        public void Add(ulong boardHash, int depth, double evaluation, NodeType nodeType, int gameTurnCount, ISingleMove bestMove)
+        {
+            if (boardHash == 0) throw new ArgumentException("Board hash was empty.");
+            if (Tables.TryGetValue(boardHash, out var transposition))
+            {
+                // Replacement scheme: always replace
+                if (depth >= transposition.Depth)
+                {
+                    evaluation = Evaluator.CheckMateScoreAdjustToEven(evaluation);
+                    transposition.Depth = depth;
+                    transposition.Evaluation = evaluation;
+                    transposition.Type = nodeType;
+                    transposition.GameTurnCount = gameTurnCount;
+                    transposition.BestMove = bestMove;
+                }
+            }
+            else
+            {
+                lock (_tableLock)
+                {
+                    // New hash
+                    Tables.Add(boardHash, new Transposition(boardHash, depth, evaluation, nodeType, gameTurnCount));
+                }
+            }
+        }
+
+        /// <summary>
         /// Update transposition
         /// </summary>
         public void Update(ulong hash, int depth, double evaluation, NodeType nodeType, int gameTurnCount)
@@ -325,6 +356,17 @@ namespace vergiBlue.BoardModel.Subsystems.TranspositionTables
                     Tables.Add(transposition.Hash, transposition);
                 }
             }
+        }
+
+        public bool TryGet(ulong hash, out Transposition result)
+        {
+            if(Tables.TryGetValue(hash, out var transposition))
+            {
+                result = transposition;
+                return true;
+            }
+            result = new Transposition(0, 0, 0, NodeType.UpperBound, 0);
+            return false;
         }
     }
 }
