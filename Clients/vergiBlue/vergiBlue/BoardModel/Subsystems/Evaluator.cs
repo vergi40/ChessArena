@@ -89,14 +89,6 @@ namespace vergiBlue.BoardModel.Subsystems
 
         public static double EndGameKingToCornerEvaluation(IBoard board, bool isWhite)
         {
-            var ownPieces = board.PieceQuery.GetColorList(isWhite);
-            if (ownPieces.Count == 1)
-            {
-                // TODO if e.g. only opponent king, this returns 200000 
-                return 0.0;
-                return ownPieces.First().GetEvaluationStrength(-1);
-            }
-
             var evaluation = 0.0;
             var opponentKing = board.KingLocation(!isWhite);
             var ownKing = board.KingLocation(isWhite);
