@@ -100,11 +100,13 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             {
                 var result = previousIterationBest;
                 Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, result.eval, result.move, board);
+                Common.DebugPrintWeighedMoves(midResult);
                 return result.move;
             }
 
             var finalResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
             Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, finalResult.First().weight, finalResult.First().move, board);
+            Common.DebugPrintWeighedMoves(finalResult);
             return finalResult.First().move;
         }
 

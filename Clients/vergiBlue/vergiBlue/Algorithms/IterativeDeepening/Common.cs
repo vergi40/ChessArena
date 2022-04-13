@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -86,6 +87,17 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             }
 
             Collector.AddCustomMessage($"{message.ToString()}");
+        }
+
+        public static void DebugPrintWeighedMoves(List<(double weight, SingleMove move)> weightedMoves)
+        {
+            var message = new StringBuilder("Evaluation for all moves:");
+            message.Append(Environment.NewLine);
+            foreach (var (weight, move) in weightedMoves)
+            {
+                message.Append($"{move.ToCompactString()}: {weight}{Environment.NewLine}");
+            }
+            Debug.Print(message.ToString());
         }
     }
 }
