@@ -44,5 +44,21 @@ namespace Benchmarker
 
             // Debug marker 2
         }
+
+        [Benchmark]
+        public void GoodPositions_ID_TT_Depth4()
+        {
+            var board = BoardFactory.CreateClone(InitializedBoard);
+
+            var logic = LogicFactory.CreateForTest(true, board);
+            logic.Settings.UseTranspositionTables = true;
+            logic.Settings.UseIterativeDeepening = true;
+            logic.Settings.UseParallelComputation = false;
+
+            // Debug marker 1
+            var move = logic.CreateMoveWithDepth(4);
+
+            // Debug marker 2
+        }
     }
 }
