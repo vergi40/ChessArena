@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
+using System.IO;
 using System.Reflection;
 using CommonNetStandard;
 using CommandLine;
 using CommonNetStandard.Client;
 using log4net;
+using log4net.Config;
+using Microsoft.Extensions.Configuration;
 using vergiBlue.ConsoleTools;
+[assembly: log4net.Config.XmlConfigurator(ConfigFile = "log4net.config")]
 
 namespace vergiBlue
 {
@@ -15,16 +18,16 @@ namespace vergiBlue
         private static readonly ILog _localLogger = LogManager.GetLogger(typeof(Program));
 
         // Program is singleton static so static properties should be ok
-        private static string? _currentVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(2);
+        private static string? _currentVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3);
         private static string _playerName { get; set; } = "vergiBlue";
         private static int _gameMode { get; set; }
-        private static string _address { get; set; } = ConfigurationManager.AppSettings["Address"] ?? "";
-        private static string _port { get; set; } = ConfigurationManager.AppSettings["Port"] ?? "";
+        private static string _address { get; set; }
+        private static string _port { get; set; }
         private static int _minimumDelayBetweenMoves { get; set; } = 0;
 
         private static void Log(string message) => Logger.LogWithConsole(message, _localLogger);
 
-        private static string _fullAddress => $"{_address}:{_port}"; 
+        private static string _fullAddress => $"{_address}:{_port}";
 
         /// <summary>
         /// Optional arguments given in command line
@@ -52,6 +55,15 @@ namespace vergiBlue
 
         static void Main(string[] args)
         {
+            // https://docs.microsoft.com/en-us/dotnet/core/extensions/configuration#basic-example
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .AddEnvironmentVariables()
+                .Build();
+            var settingsSection = config.GetRequiredSection("Settings");
+            _address = settingsSection["Address"] ?? "";
+
+
             // Given arguments saved to private properties
             CommandLine.Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(RunOptions)
@@ -59,7 +71,6 @@ namespace vergiBlue
 
             if (_stopArgsGiven) return;
 
-            Logger.Setup();
             Log($"Chess ai vergiBlue [{_currentVersion}]");
 
             while (true)
@@ -85,7 +96,7 @@ namespace vergiBlue
                 {
                     Log(Environment.NewLine);
                     Log("Give player name: ");
-                    Console.Write(" > "); 
+                    Console.Write(" > ");
                     var playerName = Console.ReadLine() ?? _playerName;
                     Log($"Chess ai {playerName} [{_currentVersion}]");
                     using var connection = GrpcClientConnectionFactory.Create(_fullAddress);

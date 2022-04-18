@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30523.141
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonNetStandard", "CommonNetStandard\CommonNetStandard.csproj", "{E15B36EB-44E3-478F-8A9E-6B0AEC413CE7}"
 EndProject
@@ -11,13 +11,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vergiBlueDesktop", "vergiBl
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{AE4E5445-E560-44DD-9C6C-C00E3E8825DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "vergiBlue.Tests\UnitTests\UnitTests.csproj", "{E57CE665-F9C3-433E-AFC8-5E5B7FCDC50E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "vergiBlue.Tests\UnitTests\UnitTests.csproj", "{E57CE665-F9C3-433E-AFC8-5E5B7FCDC50E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerftTests", "vergiBlue.Tests\PerftTests\PerftTests.csproj", "{75C0DA74-0A09-468A-9F80-CF86B9A3657E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerftTests", "vergiBlue.Tests\PerftTests\PerftTests.csproj", "{75C0DA74-0A09-468A-9F80-CF86B9A3657E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarker", "vergiBlue.Tests\Benchmarker\Benchmarker.csproj", "{C0EF02CC-692B-460F-9205-344DD55ED845}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarker", "vergiBlue.Tests\Benchmarker\Benchmarker.csproj", "{C0EF02CC-692B-460F-9205-344DD55ED845}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestServer", "vergiBlue.Tests\TestServer\TestServer.csproj", "{BD2448B4-5E5F-43E4-B9B3-32127DA988F5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vergiBlueConsole", "vergiBlueConsole\vergiBlueConsole.csproj", "{96A0FFF4-21E9-4C66-B6AF-99503AB2BECF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,10 @@ Global
 		{BD2448B4-5E5F-43E4-B9B3-32127DA988F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD2448B4-5E5F-43E4-B9B3-32127DA988F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD2448B4-5E5F-43E4-B9B3-32127DA988F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96A0FFF4-21E9-4C66-B6AF-99503AB2BECF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96A0FFF4-21E9-4C66-B6AF-99503AB2BECF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96A0FFF4-21E9-4C66-B6AF-99503AB2BECF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96A0FFF4-21E9-4C66-B6AF-99503AB2BECF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

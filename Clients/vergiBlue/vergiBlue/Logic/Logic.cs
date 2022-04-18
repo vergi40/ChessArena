@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Client;
 using CommonNetStandard.Interface;
+using log4net;
 using vergiBlue.Algorithms;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
@@ -11,6 +12,8 @@ namespace vergiBlue.Logic
 {
     public class Logic : LogicBase
     {
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(Logic));
+
         // Game strategic variables
         public IMove? LatestOpponentMove { get; set; }
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
@@ -37,6 +40,7 @@ namespace vergiBlue.Logic
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
+            _logger.Info("Logic initialize");
         }
 
         /// <summary>
@@ -47,6 +51,7 @@ namespace vergiBlue.Logic
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             Board = BoardFactory.CreateClone(board);
             Board.Shared.Testing = true;
+            _logger.Info("Logic initialize");
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
@@ -54,7 +59,8 @@ namespace vergiBlue.Logic
             _algorithmController.Initialize(startInformation.WhitePlayer, overrideMaxDepth);
             if (overrideBoard != null) Board = BoardFactory.CreateClone(overrideBoard);
             else Board.InitializeDefaultBoard();
-            
+            _logger.Info("Logic initialize");
+
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
         }
@@ -76,6 +82,7 @@ namespace vergiBlue.Logic
 
         public override IPlayerMove CreateMove()
         {
+            _logger.Info("Create move");
             return CreateNewMove();
         }
 
@@ -172,6 +179,7 @@ namespace vergiBlue.Logic
 
         public sealed override void ReceiveMove(IMove? opponentMove)
         {
+            _logger.Info("Receive move");
             LatestOpponentMove = opponentMove ?? throw new ArgumentException($"Received null move. Error or game has ended.");
 
             // Basic validation
