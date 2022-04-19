@@ -252,17 +252,31 @@ namespace vergiBlue
             return message.ToString();
         }
 
-        internal static char ConvertPromotion(PromotionPieceType type)
+        public static char ConvertPromotion(PromotionPieceType type)
         {
             var c = type switch
             {
-                PromotionPieceType.Queen => 'Q',
-                PromotionPieceType.Rook => 'R',
-                PromotionPieceType.Bishop => 'B',
-                PromotionPieceType.Knight => 'N',
+                PromotionPieceType.Queen => 'q',
+                PromotionPieceType.Rook => 'r',
+                PromotionPieceType.Bishop => 'b',
+                PromotionPieceType.Knight => 'n',
                 _ => ' '
             };
             return c;
+        }
+
+        public static PromotionPieceType ConvertPromotion(char type)
+        {
+            type = char.ToLower(type);
+            var promotion = type switch
+            {
+                'q' =>  PromotionPieceType.Queen,
+                'r' =>  PromotionPieceType.Rook,
+                'b' =>  PromotionPieceType.Bishop,
+                'n' =>  PromotionPieceType.Knight,
+                _ => PromotionPieceType.NoPromotion
+            };
+            return promotion;
         }
     }
 }

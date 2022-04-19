@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reflection;
+using CommonNetStandard.Common;
 using log4net;
 using vergiBlue.Logic;
 
@@ -15,11 +11,10 @@ namespace vergiBlueConsole.UciMode
     internal class Uci
     {
         private static readonly ILog _logger = LogManager.GetLogger(typeof(Uci));
-        private static string? _currentVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3);
 
         public static void Run()
         {
-            WriteLine($"id name vergiBlue v{_currentVersion}");
+            WriteLine($"id name vergiBlue v{GetVergiBlueVersion()}, console v{GetConsoleVersion()}");
             WriteLine("id author Teemu Laine");
 
             WriteLine("uciok");
@@ -33,12 +28,63 @@ namespace vergiBlueConsole.UciMode
                 {
                     break;
                 }
+                else if (nextInput.Equals("exit"))
+                {
+                    return;
+                }
             }
 
             // Initialize logic
             var logic = LogicFactory.CreateForUci();
-            
-            throw new NotImplementedException();
+            WriteLine("readyok");
+
+            while (true)
+            {
+                var gameCommand = ReadLine();
+                if (gameCommand.Equals("isready"))
+                {
+                    // Always answer isready ping immediately, even though there is search etc. going
+                    WriteLine("readyok");
+                }
+                else if (gameCommand.Equals("ucinewgame"))
+                {
+                    // In startup: optional
+                    // After game x: should clear all and get ready for new game
+                }
+                else if (gameCommand.Contains("position"))
+                {
+                    var (startPosOrFenBoard, moves) = InputSupport.ReadUciPosition(gameCommand);
+
+                    // Create board defined
+                    logic.SetBoard(startPosOrFenBoard, moves);
+                }
+                else if (gameCommand.Contains("go"))
+                {
+                    // Start search
+                    var parameters = InputSupport.ReadGoParameters(gameCommand);
+
+
+                    // Output result
+                }
+                else if (gameCommand.Equals("exit"))
+                {
+                    break;
+                }
+            }
+        }
+
+        private static string GetVergiBlueVersion()
+        {
+            var assembly = AssemblyName.GetAssemblyName("vergiBlue.dll");
+            var version = assembly.Version.ToString(3);
+            return version;
+        }
+
+        private static string GetConsoleVersion()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var version = assembly.GetName().Version.ToString(3);
+            return version;
         }
 
         private static void WriteLine(string message)
@@ -55,7 +101,7 @@ namespace vergiBlueConsole.UciMode
                 throw new ArgumentException($"Received null line. Exiting in error state.");
             }
 
-            _logger.Info($"Received input: {line}");
+            _logger.Info($">> Received input: {line}");
             return line;
         }
     }

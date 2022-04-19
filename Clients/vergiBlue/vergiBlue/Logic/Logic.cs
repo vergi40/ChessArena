@@ -17,8 +17,9 @@ namespace vergiBlue.Logic
         // Game strategic variables
         public IMove? LatestOpponentMove { get; set; }
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
-        
-        public IBoard Board { get; set; } = BoardFactory.CreateEmptyBoard();
+
+        // Just initialize to any - will be overridden
+        public IBoard Board { get; set; } = new Board(false);
 
         /// <summary>
         /// For testing single next turn, overwrite this.
@@ -36,9 +37,9 @@ namespace vergiBlue.Logic
         /// <summary>
         /// Uci instance. Don't know which side yet
         /// </summary>
-        public Logic()
+        public Logic() : base(true)
         {
-
+            // TODO
         }
 
         /// <summary>
@@ -71,6 +72,50 @@ namespace vergiBlue.Logic
 
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
+        }
+
+        /// <summary>
+        /// Initialize hash tables, piece cache, move cache
+        /// </summary>
+        public void InitializeStaticSystems()
+        {
+            Board = BoardFactory.CreateEmptyBoard();
+        }
+
+        /// <summary>
+        /// Clear all game-related
+        /// </summary>
+        public void NewGame()
+        {
+
+        }
+
+
+        public void SetBoard(string startPosOrFenBoard, List<string> moves)
+        {
+            bool isWhite;
+            if (startPosOrFenBoard.Equals("startpos"))
+            {
+                // TODO separate static system init
+                Board = BoardFactory.CreateDefault();
+                isWhite = true;
+            }
+            else
+            {
+                Board = BoardFactory.CreateFromFen(startPosOrFenBoard, out isWhite);
+                IsPlayerWhite = isWhite;
+            }
+
+            foreach (var move in moves)
+            {
+                var tempMove = SingleMoveFactory.Create(move);
+                var fullMove = Board.CollectMoveProperties(tempMove);
+                Board.ExecuteMove(fullMove);
+                isWhite = !isWhite;
+            }
+
+            IsPlayerWhite = isWhite;
+            Board.InitializeSubSystems();
         }
 
         /// <summary>

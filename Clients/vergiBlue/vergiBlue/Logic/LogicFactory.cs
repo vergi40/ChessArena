@@ -36,7 +36,9 @@ namespace vergiBlue.Logic
 
         public static Logic CreateForUci()
         {
-            return new Logic();
+            var logic = new Logic();
+            logic.InitializeStaticSystems();
+            return logic;
         }
     }
 }
