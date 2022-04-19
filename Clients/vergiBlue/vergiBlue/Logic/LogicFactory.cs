@@ -33,5 +33,10 @@ namespace vergiBlue.Logic
         {
             return new Logic(isPlayerWhite, overrideMaxDepth);
         }
+
+        public static Logic CreateForUci()
+        {
+            return new Logic();
+        }
     }
 }

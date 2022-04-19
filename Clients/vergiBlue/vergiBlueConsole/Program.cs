@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Diagnostics;
 using System.Reflection;
 using CommonNetStandard;
 using CommandLine;
@@ -9,7 +7,9 @@ using log4net;
 using log4net.Config;
 using Microsoft.Extensions.Configuration;
 using vergiBlue.ConsoleTools;
-[assembly: log4net.Config.XmlConfigurator(ConfigFile = "log4net.config")]
+using vergiBlueConsole.UciMode;
+
+[assembly: XmlConfigurator(ConfigFile = "log4net.config")]
 
 namespace vergiBlue
 {
@@ -63,6 +63,26 @@ namespace vergiBlue
             var settingsSection = config.GetRequiredSection("Settings");
             _address = settingsSection["Address"] ?? "";
 
+            Debug.WriteLine("Start console by selecting mode:");
+            Debug.WriteLine("  uci");
+            Debug.WriteLine("  chessarena");
+            var startCommand = Console.ReadLine();
+
+            if (startCommand != null && startCommand.Equals("uci"))
+            {
+                Uci.Run();
+                return;
+            }
+            else if (startCommand != null && startCommand.ToLower().Equals("chessarena"))
+            {
+                // TODO move to own namespace
+                // Continue as is
+            }
+            else
+            {
+                Console.WriteLine("Unknown command");
+                return;
+            }
 
             // Given arguments saved to private properties
             CommandLine.Parser.Default.ParseArguments<Options>(args)

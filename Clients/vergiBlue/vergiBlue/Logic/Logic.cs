@@ -34,6 +34,14 @@ namespace vergiBlue.Logic
         private AlgorithmController _algorithmController { get; } = new AlgorithmController();
 
         /// <summary>
+        /// Uci instance. Don't know which side yet
+        /// </summary>
+        public Logic()
+        {
+
+        }
+
+        /// <summary>
         /// For tests. Need to set board explicitly. Test environment handles initializations.
         /// </summary>
         [Obsolete("For tests, use constructor with Board parameter.")]
