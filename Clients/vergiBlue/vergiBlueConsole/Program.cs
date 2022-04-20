@@ -65,7 +65,7 @@ namespace vergiBlue
 
             Debug.WriteLine("Start console by selecting mode:");
             Debug.WriteLine("  uci");
-            Debug.WriteLine("  chessarena");
+            Debug.WriteLine("  arena");
             var startCommand = Console.ReadLine();
 
             if (startCommand != null && startCommand.Equals("uci"))
@@ -73,7 +73,7 @@ namespace vergiBlue
                 Uci.Run();
                 return;
             }
-            else if (startCommand != null && startCommand.ToLower().Equals("chessarena"))
+            else if (startCommand != null && startCommand.ToLower().Equals("arena"))
             {
                 // TODO move to own namespace
                 // Continue as is

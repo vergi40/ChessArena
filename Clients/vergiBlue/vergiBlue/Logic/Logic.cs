@@ -69,8 +69,14 @@ namespace vergiBlue.Logic
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
         {
             _algorithmController.Initialize(startInformation.WhitePlayer, overrideMaxDepth);
-            if (overrideBoard != null) Board = BoardFactory.CreateClone(overrideBoard);
-            else Board.InitializeDefaultBoard();
+            if (overrideBoard != null)
+            {
+                Board = BoardFactory.CreateClone(overrideBoard);
+            }
+            else
+            {
+                Board = BoardFactory.CreateDefault();
+            }
 
             _logger.Info("Logic initialized");
 
@@ -109,6 +115,8 @@ namespace vergiBlue.Logic
                 Board = BoardFactory.CreateFromFen(startPosOrFenBoard, out isWhite);
                 IsPlayerWhite = isWhite;
             }
+
+            Board.Strategic.SkipOpeningChecks = true;
 
             foreach (var move in moves)
             {
@@ -184,12 +192,20 @@ namespace vergiBlue.Logic
             return move;
         }
 
-        private void RefreshAlgorithm(int? overrideSearchDepth = null)
+        private void RefreshAlgorithm(int? overrideSearchDepth)
         {
             var isMaximizing = IsPlayerWhite;
             var startInfo = new TurnStartInfo(isMaximizing, GameHistory.ToList(), Settings, PreviousData,
                 overrideSearchDepth);
             _algorithmController.TurnStartUpdate(startInfo);
+        }
+
+        private void RefreshAlgorithm(SearchParameters parameters)
+        {
+            var isMaximizing = IsPlayerWhite;
+            var startInfo = new TurnStartInfo(isMaximizing, GameHistory.ToList(), Settings, PreviousData, null);
+            parameters.TurnStartInfo = startInfo;
+            _algorithmController.TurnStartUpdate(parameters);
         }
 
         private void RefreshTranspositions()
@@ -283,15 +299,82 @@ namespace vergiBlue.Logic
             if (useIterativeDeepening != null) Settings.UseIterativeDeepening = useIterativeDeepening.Value;
         }
 
+        /// <summary>
+        /// Create search task with cancellation support
+        /// </summary>
         public Task<SearchResult> CreateSearchTask(UciGoParameters parameters, Action<string> searchInfoUpdate, CancellationToken ct)
         {
             searchInfoUpdate("test");
-            throw new NotImplementedException();
+
+            var searchParameters = new SearchParameters()
+            {
+                UciParameters = parameters,
+                WriteToOutputAction = searchInfoUpdate,
+                StopSearchToken = ct
+            };
+
+            // Do merge class of parameters and action infoupdate
+            var move = CreateNewMoveUci(searchParameters);
+
+            return Task.FromResult(new SearchResult(move));
+        }
+
+
+        private ISingleMove CreateNewMoveUci(SearchParameters parameters)
+        {
+            Collector.Instance.StartMoveCalculationTimer();
+
+            // Common start measures
+            RefreshAlgorithm(parameters);
+
+            if (Settings.UseTranspositionTables)
+            {
+                RefreshTranspositions();
+            }
+
+            // Get all available moves and do necessary ordering & filtering
+            List<SingleMove> validMoves = GetValidMoves();
+
+            // Best move
+            var aiMove = _algorithmController.GetBestMove(Board, validMoves);
+            Validator.ValidateMoveAndColor(Board, aiMove, IsPlayerWhite);
+
+            if (Board.Shared.Transpositions.Tables.Count > 0)
+                Collector.AddCustomMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
+
+            // Update local
+            var moveWithData = Board.CollectMoveProperties(aiMove);
+
+            // NOTE in uci commands the engine never executes move itself
+            //Board.ExecuteMove(moveWithData);
+            //Board.Shared.GameTurnCount++;
+
+            var (analyticsOutput, previousData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
+            PreviousData = previousData;
+
+            var historyMove = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
+                analyticsOutput);
+            GameHistory.Add(historyMove.Move);
+            return moveWithData;
         }
     }
 
     public class SearchResult
     {
-        public ISingleMove bestMove { get; }
+        public ISingleMove BestMove { get; }
+
+        public SearchResult(ISingleMove bestMove)
+        {
+            BestMove = bestMove;
+        }
+    }
+
+    public class SearchParameters
+    {
+        public UciGoParameters UciParameters { get; set; }
+        public Action<string> WriteToOutputAction { get; set; }
+        public TurnStartInfo TurnStartInfo { get; set; }
+
+        public CancellationToken StopSearchToken { get; set; }
     }
 }

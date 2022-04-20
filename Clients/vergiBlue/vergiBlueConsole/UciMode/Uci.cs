@@ -111,7 +111,7 @@ namespace vergiBlueConsole.UciMode
                     var result = searchTask.Result;
 
                     // info before bestmove
-                    WriteLine($"bestmove {result.bestMove.ToCompactString()}");
+                    WriteLine($"bestmove {result.BestMove.ToCompactString()}");
 
                     break;
                 }

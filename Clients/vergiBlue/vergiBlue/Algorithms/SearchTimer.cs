@@ -8,6 +8,8 @@ namespace vergiBlue.Algorithms
     public interface ISearchTimer
     {
         bool Exceeded();
+
+        int CurrentElapsed();
     }
 
     public class SearchTimer : ISearchTimer
@@ -21,6 +23,12 @@ namespace vergiBlue.Algorithms
             _maxMilliseconds = maxMilliseconds;
             InternalTimer = new Stopwatch();
         }
+
+        public int CurrentElapsed()
+        {
+            return (int)InternalTimer.ElapsedMilliseconds;
+        }
+
         public static ISearchTimer Start(int maxMilliseconds)
         {
             var timer = new SearchTimer(maxMilliseconds);

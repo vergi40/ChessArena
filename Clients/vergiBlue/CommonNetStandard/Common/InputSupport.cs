@@ -62,7 +62,58 @@ namespace CommonNetStandard.Common
 
         public static UciGoParameters ReadGoParameters(string input)
         {
-            throw new NotImplementedException();
+            // go wtime 122000 btime 120000 winc 2000 binc 2000
+            // go infinite
+            // go infinite searchmoves e2e4 d2d4
+            // go movetime 4000 depth 5 nodes 500000 mate 4
+            var s = input.Split(' ');
+            if (s[0] != "go")
+            {
+                throw new ArgumentException("Missing go command");
+            }
+            if (s.Length < 2)
+            {
+                throw new ArgumentException("Missing go parameters");
+            }
+
+            var parameters = new UciGoParameters();
+            if (input.Contains("infinite"))
+            {
+                parameters.Infinite = true;
+
+                if (s.Length > 3 && s[2] == "searchmoves")
+                {
+                    for (int i = 3; i < s.Length; i++)
+                    {
+                        parameters.SearchMoves.Add(s[i]);
+                    }
+                }
+                return parameters;
+            }
+
+            for (int i = 1; i < s.Length - 1; i += 2)
+            {
+                var key = s[i];
+                var value = s[i + 1];
+                if (key == "movetime")
+                {
+                    parameters.SearchLimits.Time = int.Parse(value);
+                }
+                else if (key == "depth")
+                {
+                    parameters.SearchLimits.Depth = int.Parse(value);
+                }
+                else if (key == "nodes")
+                {
+                    parameters.SearchLimits.Nodes = int.Parse(value);
+                }
+                else if (key == "mate")
+                {
+                    parameters.SearchLimits.Mate = int.Parse(value);
+                }
+            }
+
+            return parameters;
         }
     }
 
