@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using CommonNetStandard.Client;
+using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using log4net;
 using vergiBlue.Algorithms;
@@ -49,7 +52,7 @@ namespace vergiBlue.Logic
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
-            _logger.Info("Logic initialize");
+            _logger.Info("Logic initialized");
         }
 
         /// <summary>
@@ -60,7 +63,7 @@ namespace vergiBlue.Logic
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             Board = BoardFactory.CreateClone(board);
             Board.Shared.Testing = true;
-            _logger.Info("Logic initialize");
+            _logger.Info("Logic initialized");
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
@@ -68,7 +71,8 @@ namespace vergiBlue.Logic
             _algorithmController.Initialize(startInformation.WhitePlayer, overrideMaxDepth);
             if (overrideBoard != null) Board = BoardFactory.CreateClone(overrideBoard);
             else Board.InitializeDefaultBoard();
-            _logger.Info("Logic initialize");
+
+            _logger.Info("Logic initialized");
 
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
@@ -135,58 +139,96 @@ namespace vergiBlue.Logic
 
         public override IPlayerMove CreateMove()
         {
-            _logger.Info("Create move");
-            return CreateNewMove();
+            _logger.Info("Starting create move operations...");
+            var bestMove = CreateNewMove();
+            var inner = bestMove.Move;
+            _logger.Info($"Created move {inner.StartPosition}{inner.EndPosition}{SingleMove.ConvertPromotion(inner.PromotionResult)}");
+            
+            return bestMove;
         }
 
 
         private IPlayerMove CreateNewMove(int? overrideSearchDepth = null)
         {
-            var isMaximizing = IsPlayerWhite;
             Collector.Instance.StartMoveCalculationTimer();
 
+            // Common start measures
+            RefreshAlgorithm(overrideSearchDepth);
+
+            if (Settings.UseTranspositionTables)
+            {
+                RefreshTranspositions();
+            }
+
+            // Get all available moves and do necessary ordering & filtering
+            List<SingleMove> validMoves = GetValidMoves();
+            
+            // Best move
+            var aiMove = _algorithmController.GetBestMove(Board, validMoves);
+            Validator.ValidateMoveAndColor(Board, aiMove, IsPlayerWhite);
+
+            if (Board.Shared.Transpositions.Tables.Count > 0)
+                Collector.AddCustomMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
+
+            // Update local
+            var moveWithData = Board.CollectMoveProperties(aiMove);
+            Board.ExecuteMove(moveWithData);
+            Board.Shared.GameTurnCount++;
+            
+            var (analyticsOutput, previousData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
+            PreviousData = previousData;
+
+            var move = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
+                analyticsOutput);
+            GameHistory.Add(move.Move);
+            return move;
+        }
+
+        private void RefreshAlgorithm(int? overrideSearchDepth = null)
+        {
+            var isMaximizing = IsPlayerWhite;
             var startInfo = new TurnStartInfo(isMaximizing, GameHistory.ToList(), Settings, PreviousData,
                 overrideSearchDepth);
             _algorithmController.TurnStartUpdate(startInfo);
+        }
 
-            // Common start measures - WIP
-            if (Settings.UseTranspositionTables)
+        private void RefreshTranspositions()
+        {
+            // Delete old entries from tables
+            var transpositions = Board.Shared.Transpositions.Tables;
+            if (transpositions.Any())
             {
-                // Delete old entries from tables
-                var transpositions = Board.Shared.Transpositions.Tables;
-                if (transpositions.Any())
+                var toBeDeleted = new List<ulong>();
+                var currentTurnCount = Board.Shared.GameTurnCount;
+
+                foreach (var transposition in transpositions)
                 {
-                    var toBeDeleted = new List<ulong>();
-                    var currentTurnCount = Board.Shared.GameTurnCount;
-
-                    foreach (var transposition in transpositions)
+                    // If transposition.turn 20 < current 25 - 4
+                    if (transposition.Value.GameTurnCount <
+                        currentTurnCount - Settings.ClearSavedTranspositionsAfterTurnsPassed)
                     {
-                        // If transposition.turn 20 < current 25 - 4
-                        if (transposition.Value.GameTurnCount <
-                            currentTurnCount - Settings.ClearSavedTranspositionsAfterTurnsPassed)
-                        {
-                            toBeDeleted.Add(transposition.Key);
-                        }
-                    }
-
-                    foreach (var hash in toBeDeleted)
-                    {
-                        transpositions.Remove(hash);
-                    }
-                    
-                    if(Settings.UseFullDiagnostics)
-                    {
-                        if(toBeDeleted.Any()) Collector.AddCustomMessage($"Deleted {toBeDeleted.Count} old transposition entries.");
-                        Collector.AddCustomMessage($"Total transpositions: {transpositions.Count}.");
+                        toBeDeleted.Add(transposition.Key);
                     }
                 }
+
+                foreach (var hash in toBeDeleted)
+                {
+                    transpositions.Remove(hash);
+                }
+
+                if (Settings.UseFullDiagnostics)
+                {
+                    if (toBeDeleted.Any()) Collector.AddCustomMessage($"Deleted {toBeDeleted.Count} old transposition entries.");
+                    Collector.AddCustomMessage($"Total transpositions: {transpositions.Count}.");
+                }
             }
+        }
 
-            // Opening -- done
+        private List<SingleMove> GetValidMoves()
+        {
+            var isMaximizing = IsPlayerWhite;
+            var validMoves = Board.MoveGenerator.MovesWithOrdering(isMaximizing, true, true).ToList();
 
-            // Get all available moves and do necessary filtering
-            List<SingleMove> validMoves = Board.MoveGenerator.MovesWithOrdering(isMaximizing, true, true).ToList();
-            
             if (MoveHistory.IsLeaningToDraw(GameHistory))
             {
                 // Repetition
@@ -204,57 +246,27 @@ namespace vergiBlue.Logic
                     $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
             }
 
-            Collector.AddCustomMessage($"Available moves found: {validMoves.Count}. ");
-            
-            // Use controller - WIP
-            var aiMove = _algorithmController.GetBestMove(Board, validMoves);
-
-            if (aiMove == null)
-                throw new ArgumentException(
-                    $"Board didn't contain any possible move for player [isWhite={IsPlayerWhite}].");
-
-            if (Board.Shared.Transpositions.Tables.Count > 0)
-                Collector.AddCustomMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
-
-            // Update local
-            var moveWithData = Board.CollectMoveProperties(aiMove);
-            Board.ExecuteMoveWithValidation(moveWithData);
-            Board.Shared.GameTurnCount++;
-            
-            var (analyticsOutput, previousData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
-            PreviousData = previousData;
-
-            var move = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
-                analyticsOutput);
-            GameHistory.Add(move.Move);
-            return move;
+            _logger.Info($"{validMoves.Count} valid moves found: {string.Join(", ", validMoves)}.");
+            Collector.AddCustomMessage($"{validMoves.Count} valid moves found.");
+            return validMoves;
         }
 
         public sealed override void ReceiveMove(IMove? opponentMove)
         {
-            _logger.Info("Receive move");
             LatestOpponentMove = opponentMove ?? throw new ArgumentException($"Received null move. Error or game has ended.");
+            _logger.Info(
+                $"Received move {opponentMove.StartPosition}{opponentMove.EndPosition}{SingleMove.ConvertPromotion(opponentMove.PromotionResult)}");
 
             // Basic validation
             var move = new SingleMove(opponentMove);
-            if (Board.ValueAt(move.PrevPos) == null)
-            {
-                throw new ArgumentException(
-                    $"Player [isWhite={!IsPlayerWhite}] Tried to move a from position that is empty");
-            }
-
-            var from = Board.ValueAt(move.PrevPos);
-            if (from?.IsWhite == IsPlayerWhite)
-            {
-                throw new ArgumentException($"Opponent tried to move player piece");
-            }
+            Validator.ValidateMoveAndColor(Board, move, !IsPlayerWhite);
 
             // Interface misses properties like capture, enpassant
             move = Board.CollectMoveProperties(move);
-
-            Board.ExecuteMoveWithValidation(move);
-            GameHistory.Add(opponentMove);
+            Board.ExecuteMove(move);
             Board.Shared.GameTurnCount++;
+
+            GameHistory.Add(opponentMove);
         }
 
         /// <summary>
@@ -270,5 +282,16 @@ namespace vergiBlue.Logic
             if (useTranspositionTables != null) Settings.UseTranspositionTables = useTranspositionTables.Value;
             if (useIterativeDeepening != null) Settings.UseIterativeDeepening = useIterativeDeepening.Value;
         }
+
+        public Task<SearchResult> CreateSearchTask(UciGoParameters parameters, Action<string> searchInfoUpdate, CancellationToken ct)
+        {
+            searchInfoUpdate("test");
+            throw new NotImplementedException();
+        }
+    }
+
+    public class SearchResult
+    {
+        public ISingleMove bestMove { get; }
     }
 }

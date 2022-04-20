@@ -19,20 +19,7 @@ namespace vergiBlueConsole.UciMode
 
             WriteLine("uciok");
 
-            while (true)
-            {
-                var nextInput = ReadLine();
-                // When adding available options, set here
-
-                if (nextInput.Equals("isready"))
-                {
-                    break;
-                }
-                else if (nextInput.Equals("exit"))
-                {
-                    return;
-                }
-            }
+            if (!RunOptions()) return;
 
             // Initialize logic
             var logic = LogicFactory.CreateForUci();
@@ -60,17 +47,87 @@ namespace vergiBlueConsole.UciMode
                 }
                 else if (gameCommand.Contains("go"))
                 {
-                    // Start search
                     var parameters = InputSupport.ReadGoParameters(gameCommand);
 
-
-                    // Output result
+                    if (!RunSearch(logic, parameters)) return;
+                }
+                else if (gameCommand.Contains("stop"))
+                {
+                    // TODO
+                }
+                else if (gameCommand.Contains("ponderhit"))
+                {
+                    // TODO
                 }
                 else if (gameCommand.Equals("exit"))
                 {
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <returns>False - exit</returns>
+        private static bool RunOptions()
+        {
+            while (true)
+            {
+                var nextInput = ReadLine();
+                // When adding available options, set here
+
+                if (nextInput.Equals("isready"))
+                {
+                    break;
+                }
+                else if (nextInput.Equals("exit"))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <returns>False - exit</returns>
+        private static bool RunSearch(Logic logic, UciGoParameters parameters)
+        {
+            var cancellationSource = new CancellationTokenSource();
+            var searchTask = Task.Run(() => logic.CreateSearchTask(parameters, SearchInfoUpdate, cancellationSource.Token));
+
+            while (true)
+            {
+                var gameCommand = ReadLine();
+                if (gameCommand.Equals("isready"))
+                {
+                    // Always answer isready ping immediately, even though there is search etc. going
+                    WriteLine("readyok");
+                }
+                else if (gameCommand.Contains("stop"))
+                {
+                    cancellationSource.Cancel();
+                    var result = searchTask.Result;
+
+                    // info before bestmove
+                    WriteLine($"bestmove {result.bestMove.ToCompactString()}");
+
+                    break;
+                }
+                else if (gameCommand.Equals("exit"))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        // RunPonder loop
+
+        private static void SearchInfoUpdate(string message)
+        {
+            WriteLine(message);
         }
 
         private static string GetVergiBlueVersion()
