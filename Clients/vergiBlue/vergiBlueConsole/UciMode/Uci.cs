@@ -11,9 +11,11 @@ namespace vergiBlueConsole.UciMode
     internal class Uci
     {
         private static readonly ILog _logger = LogManager.GetLogger(typeof(Uci));
+        private static UciInput _input = new UciInput(null);
 
-        public static void Run()
+        public static void Run(StreamReader? inputStream = null)
         {
+            _input = new UciInput(inputStream);
             WriteLine($"id name vergiBlue v{GetVergiBlueVersion()}, console v{GetConsoleVersion()}");
             WriteLine("id author Teemu Laine");
 
@@ -27,7 +29,7 @@ namespace vergiBlueConsole.UciMode
 
             while (true)
             {
-                var gameCommand = ReadLine();
+                var gameCommand = _input.ReadLine();
                 if (gameCommand.Equals("isready"))
                 {
                     // Always answer isready ping immediately, even though there is search etc. going
@@ -51,10 +53,6 @@ namespace vergiBlueConsole.UciMode
 
                     if (!RunSearch(logic, parameters)) return;
                 }
-                else if (gameCommand.Contains("stop"))
-                {
-                    // TODO
-                }
                 else if (gameCommand.Contains("ponderhit"))
                 {
                     // TODO
@@ -62,6 +60,10 @@ namespace vergiBlueConsole.UciMode
                 else if (gameCommand.Equals("exit"))
                 {
                     break;
+                }
+                else
+                {
+                    throw new ArgumentException($"Unknown command: {gameCommand}");
                 }
             }
         }
@@ -73,7 +75,7 @@ namespace vergiBlueConsole.UciMode
         {
             while (true)
             {
-                var nextInput = ReadLine();
+                var nextInput = _input.ReadLine();
                 // When adding available options, set here
 
                 if (nextInput.Equals("isready"))
@@ -83,6 +85,10 @@ namespace vergiBlueConsole.UciMode
                 else if (nextInput.Equals("exit"))
                 {
                     return false;
+                }
+                else
+                {
+                    throw new ArgumentException($"Unknown command: {nextInput}");
                 }
             }
 
@@ -99,7 +105,7 @@ namespace vergiBlueConsole.UciMode
 
             while (true)
             {
-                var gameCommand = ReadLine();
+                var gameCommand = _input.ReadLine();
                 if (gameCommand.Equals("isready"))
                 {
                     // Always answer isready ping immediately, even though there is search etc. going
@@ -118,6 +124,10 @@ namespace vergiBlueConsole.UciMode
                 else if (gameCommand.Equals("exit"))
                 {
                     return false;
+                }
+                else
+                {
+                    throw new ArgumentException($"Unknown command: {gameCommand}");
                 }
             }
 
@@ -146,19 +156,51 @@ namespace vergiBlueConsole.UciMode
 
         private static void WriteLine(string message)
         {
-            _logger.Info(message);
+            _logger.Info($"Output << {message}");
             Console.WriteLine(message);
         }
+    }
 
-        private static string ReadLine()
+    class UciInput
+    {
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(Uci));
+        private bool UseStreamAsInput { get; set; }
+        private StreamReader InputStream { get; }
+
+        public UciInput(StreamReader? inputStream)
         {
+            if (inputStream != null)
+            {
+                InputStream = inputStream;
+                UseStreamAsInput = true;
+            }
+            else
+            {
+                InputStream = StreamReader.Null;
+            }
+        }
+
+        public string ReadLine()
+        {
+            if (UseStreamAsInput)
+            {
+                var lineFromStream = InputStream.ReadLine();
+                if (lineFromStream != null)
+                {
+                    _logger.Info($"Input  >> {lineFromStream}");
+                    return lineFromStream;
+                }
+                // Else stream ended, change to console read
+                UseStreamAsInput = false;
+            }
+
             var line = Console.ReadLine();
             if (line == null)
             {
-                throw new ArgumentException($"Received null line. Exiting in error state.");
+                throw new ArgumentException($"Received end of stream from Console.ReadLine. Exiting in error state.");
             }
 
-            _logger.Info($">> Received input: {line}");
+            _logger.Info($"Input  >> {line}");
             return line;
         }
     }

@@ -262,7 +262,9 @@ namespace vergiBlue.Logic
                     $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
             }
 
-            _logger.Info($"{validMoves.Count} valid moves found: {string.Join(", ", validMoves)}.");
+            var movesSorted = validMoves.Select(m => m.ToCompactString()).OrderBy(m => m);
+            
+            _logger.Info($"{validMoves.Count} valid moves found: {string.Join(", ", movesSorted)}.");
             Collector.AddCustomMessage($"{validMoves.Count} valid moves found.");
             return validMoves;
         }
@@ -304,15 +306,8 @@ namespace vergiBlue.Logic
         /// </summary>
         public Task<SearchResult> CreateSearchTask(UciGoParameters parameters, Action<string> searchInfoUpdate, CancellationToken ct)
         {
-            searchInfoUpdate("test");
-
-            var searchParameters = new SearchParameters()
-            {
-                UciParameters = parameters,
-                WriteToOutputAction = searchInfoUpdate,
-                StopSearchToken = ct
-            };
-
+            var searchParameters = new SearchParameters(parameters, searchInfoUpdate, ct);
+            
             // Do merge class of parameters and action infoupdate
             var move = CreateNewMoveUci(searchParameters);
 
@@ -371,10 +366,17 @@ namespace vergiBlue.Logic
 
     public class SearchParameters
     {
-        public UciGoParameters UciParameters { get; set; }
-        public Action<string> WriteToOutputAction { get; set; }
+        public UciGoParameters UciParameters { get;}
+        public Action<string> WriteToOutputAction { get; }
         public TurnStartInfo TurnStartInfo { get; set; }
 
-        public CancellationToken StopSearchToken { get; set; }
+        public CancellationToken StopSearchToken { get; }
+
+        public SearchParameters(UciGoParameters parameters, Action<string> searchInfoUpdate, CancellationToken stopSearchToken)
+        {
+            UciParameters = parameters;
+            WriteToOutputAction = searchInfoUpdate;
+            StopSearchToken = stopSearchToken;
+        }
     }
 }

@@ -62,6 +62,24 @@ namespace vergiBlue
                 .Build();
             var settingsSection = config.GetRequiredSection("Settings");
             _address = settingsSection["Address"] ?? "";
+            _port = settingsSection["Port"] ?? "";
+
+            if (args.Length > 0)
+            {
+                // Start uci game with file inputs
+                var tryPath = args[0];
+                if (File.Exists(tryPath))
+                {
+                    var input = File.OpenText(tryPath);
+                    var firstLine = input.ReadLine();
+                    if(firstLine != null && firstLine.Equals("uci"))
+                    {
+                        Uci.Run(input);
+                        return;
+                    }
+                    // Else continue normally, don't know what this file is
+                }
+            }
 
             Debug.WriteLine("Start console by selecting mode:");
             Debug.WriteLine("  uci");
