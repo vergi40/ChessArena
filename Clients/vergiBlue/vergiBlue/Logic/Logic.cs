@@ -356,11 +356,18 @@ namespace vergiBlue.Logic
 
     public class SearchResult
     {
+        public TaskStatus SearchStatus { get; set; }
         public ISingleMove BestMove { get; }
 
         public SearchResult(ISingleMove bestMove)
         {
             BestMove = bestMove;
+            SearchStatus = TaskStatus.RanToCompletion;
+        }
+
+        public SearchResult(TaskStatus status)
+        {
+            SearchStatus = status;
         }
     }
 

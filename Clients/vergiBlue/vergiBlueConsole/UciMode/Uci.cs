@@ -13,6 +13,9 @@ namespace vergiBlueConsole.UciMode
         private static readonly ILog _logger = LogManager.GetLogger(typeof(Uci));
         private static UciInput _input = new UciInput(null);
 
+        private static Task<SearchResult>? _currentSearch { get; set; }
+        private static CancellationTokenSource _searchCancellation { get; set; } = new CancellationTokenSource();
+
         public static void Run(StreamReader? inputStream = null)
         {
             _input = new UciInput(inputStream);
@@ -51,7 +54,30 @@ namespace vergiBlueConsole.UciMode
                 {
                     var parameters = InputSupport.ReadGoParameters(gameCommand);
 
-                    if (!RunSearch(logic, parameters)) return;
+                    _logger.Debug("Search task start");
+                    _searchCancellation = new CancellationTokenSource();
+                    _currentSearch = Task.Run(() => logic.CreateSearchTask(parameters, SearchInfoUpdate, _searchCancellation.Token));
+                    _currentSearch.ContinueWith(asd =>
+                    {
+                        _logger.Debug($"Search finished with status {asd.Status}");
+                        WriteLine($"bestmove {asd.Result.BestMove.ToCompactString()}");
+                    });
+                }
+                else if (gameCommand.Contains("stop"))
+                {
+                    if (_currentSearch == null)
+                    {
+                        _logger.Debug("Stop called even though no search running.");
+                    }
+                    else if (_currentSearch.IsCompleted)
+                    {
+                        _logger.Debug("Search has already ran to completion");
+                    }
+                    else
+                    {
+                        _logger.Debug("Search task stop requested");
+                        _searchCancellation.Cancel();
+                    }
                 }
                 else if (gameCommand.Contains("ponderhit"))
                 {
@@ -94,45 +120,7 @@ namespace vergiBlueConsole.UciMode
 
             return true;
         }
-
-        /// <summary>
-        /// </summary>
-        /// <returns>False - exit</returns>
-        private static bool RunSearch(Logic logic, UciGoParameters parameters)
-        {
-            var cancellationSource = new CancellationTokenSource();
-            var searchTask = Task.Run(() => logic.CreateSearchTask(parameters, SearchInfoUpdate, cancellationSource.Token));
-
-            while (true)
-            {
-                var gameCommand = _input.ReadLine();
-                if (gameCommand.Equals("isready"))
-                {
-                    // Always answer isready ping immediately, even though there is search etc. going
-                    WriteLine("readyok");
-                }
-                else if (gameCommand.Contains("stop"))
-                {
-                    cancellationSource.Cancel();
-                    var result = searchTask.Result;
-
-                    // info before bestmove
-                    WriteLine($"bestmove {result.BestMove.ToCompactString()}");
-
-                    break;
-                }
-                else if (gameCommand.Equals("exit"))
-                {
-                    return false;
-                }
-                else
-                {
-                    throw new ArgumentException($"Unknown command: {gameCommand}");
-                }
-            }
-
-            return true;
-        }
+        
         // RunPonder loop
 
         private static void SearchInfoUpdate(string message)
