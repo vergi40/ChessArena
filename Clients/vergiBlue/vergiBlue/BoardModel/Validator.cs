@@ -8,11 +8,40 @@ namespace vergiBlue.BoardModel
     public static class Validator
     {
         /// <summary>
-        /// 
+        /// Validate move and color before it's executed
+        /// </summary>
+        /// <exception cref="InvalidMoveException"></exception>
+        public static void ValidateMoveAndColor(IBoard board, ISingleMove move, bool isWhiteturn)
+        {
+            ValidateMove(board, move);
+
+            // Check that is really valid move for current player
+            var piece = board.ValueAtDefinitely(move.PrevPos);
+            if (piece.IsWhite != isWhiteturn)
+            {
+                throw new InvalidMoveException(
+                    $"Invalid move. Piece isWhite={piece.IsWhite}, isWhiteTurn={isWhiteturn}");
+            }
+
+            var target = board.ValueAt(move.NewPos);
+            if (target != null && piece.IsWhite == target.IsWhite)
+            {
+                throw new InvalidMoveException(
+                    $"Invalid move. Can't move to square containing same color piece. Target square {move.NewPos.ToAlgebraic()} piece isWhite={piece.IsWhite}, target isWhite={target.IsWhite}");
+            }
+        }
+
+        /// <summary>
+        /// Validate any color move before it's executed
         /// </summary>
         /// <exception cref="InvalidMoveException"></exception>
         public static void ValidateMove(IBoard board, ISingleMove move)
         {
+            if (move == null)
+            {
+                throw new ArgumentException($"Move can't be null.");
+            }
+
             if (IsOutside(move.PrevPos))
             {
                 throw new InvalidMoveException($"Invalid move. Start position outside of board {move.PrevPos}");

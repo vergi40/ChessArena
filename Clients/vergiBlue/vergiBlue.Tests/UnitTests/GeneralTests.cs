@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
@@ -115,6 +116,23 @@ namespace UnitTests
             intArray.ToAlgebraic().ShouldBe("h8");
 
 
+        }
+
+        [TestMethod]
+        public void ReadUciPosition_Fen()
+        {
+            var fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+            var command1 = "position fen r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+            var command2 = "position fen r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 moves";
+
+            var result1 = InputSupport.ReadUciPosition(command1);
+            var result2 = InputSupport.ReadUciPosition(command2);
+
+            result1.startPosOrFenBoard.ShouldBe(fen);
+            result2.startPosOrFenBoard.ShouldBe(fen);
+
+            result1.moves.ShouldBeEmpty();
+            result2.moves.ShouldBeEmpty();
         }
     }
 }

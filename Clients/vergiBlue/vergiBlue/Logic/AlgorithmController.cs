@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using CommonNetStandard.Client;
+﻿using System.Collections.Generic;
 using CommonNetStandard.Interface;
 using vergiBlue.Algorithms;
 using vergiBlue.Algorithms.Basic;
@@ -17,28 +13,6 @@ namespace vergiBlue.Logic
     interface IAlgorithm
     {
         SingleMove CalculateBestMove(BoardContext context);
-    }
-
-    /// <summary>
-    /// Pre-algorithm infos
-    /// </summary>
-    public record TurnStartInfo(bool isWhiteTurn, IReadOnlyList<IMove> gameHistory, LogicSettings settings,
-        DiagnosticsData previousMoveData, int? overrideSearchDepth = null)
-    {
-        public bool IsSearchDepthFixed => overrideSearchDepth != null;
-
-        public int SearchDepthFixed
-        {
-            get
-            {
-                if (overrideSearchDepth != null)
-                {
-                    return overrideSearchDepth.Value;
-                }
-
-                return -1;
-            }
-        }
     }
 
     /// <summary>
@@ -68,6 +42,9 @@ namespace vergiBlue.Logic
         private TurnStartInfo _turnInfo { get; set; } =
             new(false, new List<IMove>(), new LogicSettings(), new DiagnosticsData());
 
+        // TODO quick hack
+        private SearchParameters? _searchParameters { get; set; }
+
         // time limit
         // max depth
         // min depth
@@ -80,13 +57,22 @@ namespace vergiBlue.Logic
         {
             _turnInfo = turnInfo;
             UpdateGameHistory(_turnInfo.gameHistory);
-
-
-
+            
             _currentTurnIsWhite = turnInfo.isWhiteTurn;
             _contextAnalyzer.TurnStartUpdate(turnInfo);
         }
-        
+
+        public void TurnStartUpdate(SearchParameters parameters)
+        {
+            _turnInfo = parameters.TurnStartInfo;
+            UpdateGameHistory(_turnInfo.gameHistory);
+
+            _currentTurnIsWhite = _turnInfo.isWhiteTurn;
+            _contextAnalyzer.TurnStartUpdate(_turnInfo);
+
+            _searchParameters = parameters;
+        }
+
         private void UpdateGameHistory(IReadOnlyList<IMove> gameHistory)
         {
             var moves = new List<SingleMove>();
@@ -120,9 +106,19 @@ namespace vergiBlue.Logic
                 }
             }
 
-            // Select wanted algorithm and calculate
-            
+            if (_searchParameters == null)
+            {
+                return GetBestMoveOld(board, validMoves);
+            }
+            else
+            {
+                return GetBestMoveUci(board, validMoves, _searchParameters);
+            }
+        }
 
+        private SingleMove GetBestMoveOld(IBoard board, IReadOnlyList<SingleMove> validMoves)
+        {
+            // Select wanted algorithm and calculate
             var depthResult = _contextAnalyzer.DecideSearchDepth(validMoves, board);
 
             SetAlgorithm(depthResult.depth, depthResult.phase);
@@ -140,6 +136,30 @@ namespace vergiBlue.Logic
 
             Collector.AddCustomMessage($"Algorithm: {_algorithm.GetType().Name}");
             return _algorithm.CalculateBestMove(context);
+        }
+
+        private SingleMove GetBestMoveUci(IBoard board, IReadOnlyList<SingleMove> validMoves, SearchParameters parameters)
+        {
+            // WIP if depth < 3?
+            var algorithm = new IDWithUciParameters();
+            
+            // WIP 
+            var maxDepth = 10;
+
+            var context = new BoardContext()
+            {
+                // Calculating for ai - so this should always match?
+                // TODO what if we want to calculate for any player?
+                IsWhiteTurn = _currentTurnIsWhite,
+                CurrentBoard = board,
+                ValidMoves = validMoves,
+                NominalSearchDepth = maxDepth,
+                MaxTimeMs = _turnInfo.settings.TimeLimitInMs
+            };
+
+            Collector.AddCustomMessage($"Algorithm: {_algorithm.GetType().Name}");
+
+            return algorithm.CalculateBestMove(context, parameters);
         }
 
         private void SetAlgorithm(int searchDepth, GamePhase gamePhase)

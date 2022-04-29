@@ -118,7 +118,12 @@ namespace vergiBlue.BoardModel
                 }
             }
             //var halfMoveClock = int.Parse(components[4]);
-            //var fullMoveNumber = int.Parse(components[5]);
+
+            if (components.Length > 5)
+            {
+                var fullMoveNumber = int.Parse(components[5]);
+                board.Shared.GameTurnCount = fullMoveNumber * 2;
+            }
 
             board.InitializeSubSystems();
             return board;

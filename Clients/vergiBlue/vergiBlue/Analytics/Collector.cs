@@ -97,7 +97,12 @@ namespace vergiBlue.Analytics
 
         public void AddElapsedTime(TimeSpan span)
         {
+            // TODO
+        }
 
+        public static uint CurrentEvalCount()
+        {
+            return _instance._evaluationCount;
         }
 
         public (string output, DiagnosticsData data) CollectAndClear(bool fullDiagnostics = false, bool lineBreaks = false)

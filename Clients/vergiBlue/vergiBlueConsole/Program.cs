@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Diagnostics;
 using System.Reflection;
 using CommonNetStandard;
 using CommandLine;
@@ -9,7 +7,9 @@ using log4net;
 using log4net.Config;
 using Microsoft.Extensions.Configuration;
 using vergiBlue.ConsoleTools;
-[assembly: log4net.Config.XmlConfigurator(ConfigFile = "log4net.config")]
+using vergiBlueConsole.UciMode;
+
+[assembly: XmlConfigurator(ConfigFile = "log4net.config")]
 
 namespace vergiBlue
 {
@@ -62,7 +62,45 @@ namespace vergiBlue
                 .Build();
             var settingsSection = config.GetRequiredSection("Settings");
             _address = settingsSection["Address"] ?? "";
+            _port = settingsSection["Port"] ?? "";
 
+            if (args.Length > 0)
+            {
+                // Start uci game with file inputs
+                var tryPath = args[0];
+                if (File.Exists(tryPath))
+                {
+                    var input = File.OpenText(tryPath);
+                    var firstLine = input.ReadLine();
+                    if(firstLine != null && firstLine.Equals("uci"))
+                    {
+                        Uci.Run(input);
+                        return;
+                    }
+                    // Else continue normally, don't know what this file is
+                }
+            }
+
+            Debug.WriteLine("Start console by selecting mode:");
+            Debug.WriteLine("  uci");
+            Debug.WriteLine("  arena");
+            var startCommand = Console.ReadLine();
+
+            if (startCommand != null && startCommand.Equals("uci"))
+            {
+                Uci.Run();
+                return;
+            }
+            else if (startCommand != null && startCommand.ToLower().Equals("arena"))
+            {
+                // TODO move to own namespace
+                // Continue as is
+            }
+            else
+            {
+                Console.WriteLine("Unknown command");
+                return;
+            }
 
             // Given arguments saved to private properties
             CommandLine.Parser.Default.ParseArguments<Options>(args)
