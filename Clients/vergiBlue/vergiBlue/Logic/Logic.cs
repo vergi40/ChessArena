@@ -97,7 +97,11 @@ namespace vergiBlue.Logic
         /// </summary>
         public void NewGame()
         {
+            Board = BoardFactory.CreateEmptyBoard();
+            LatestOpponentMove = null;
+            GameHistory.Clear();
 
+            Collector.Instance.CollectAndClear();
         }
 
 
@@ -288,20 +292,6 @@ namespace vergiBlue.Logic
         }
 
         /// <summary>
-        /// For tests. Keep parameters intact. After logic constructor, this initialization can be used to set any logical aspect.
-        /// LTS - Long Time Support. Parameters will be kept the same.
-        /// </summary>
-        /// <param name="useParallelComputation"></param>
-        /// <param name="useTranspositionTables"></param>
-        /// <param name="useIterativeDeepening"></param>
-        public void SetConfigLTS(bool? useParallelComputation = null, bool? useTranspositionTables = null, bool? useIterativeDeepening = null)
-        {
-            if (useParallelComputation != null) Settings.UseParallelComputation = useParallelComputation.Value;
-            if (useTranspositionTables != null) Settings.UseTranspositionTables = useTranspositionTables.Value;
-            if (useIterativeDeepening != null) Settings.UseIterativeDeepening = useIterativeDeepening.Value;
-        }
-
-        /// <summary>
         /// Create search task with cancellation support
         /// </summary>
         public Task<SearchResult> CreateSearchTask(UciGoParameters parameters, Action<string> searchInfoUpdate, CancellationToken ct)
@@ -354,36 +344,14 @@ namespace vergiBlue.Logic
         }
     }
 
+    // Note: as class instead of just move string. Room to extend with e.g. ponder return values
     public class SearchResult
     {
-        public TaskStatus SearchStatus { get; set; }
         public ISingleMove BestMove { get; }
 
         public SearchResult(ISingleMove bestMove)
         {
             BestMove = bestMove;
-            SearchStatus = TaskStatus.RanToCompletion;
-        }
-
-        public SearchResult(TaskStatus status)
-        {
-            SearchStatus = status;
-        }
-    }
-
-    public class SearchParameters
-    {
-        public UciGoParameters UciParameters { get;}
-        public Action<string> WriteToOutputAction { get; }
-        public TurnStartInfo TurnStartInfo { get; set; }
-
-        public CancellationToken StopSearchToken { get; }
-
-        public SearchParameters(UciGoParameters parameters, Action<string> searchInfoUpdate, CancellationToken stopSearchToken)
-        {
-            UciParameters = parameters;
-            WriteToOutputAction = searchInfoUpdate;
-            StopSearchToken = stopSearchToken;
         }
     }
 }

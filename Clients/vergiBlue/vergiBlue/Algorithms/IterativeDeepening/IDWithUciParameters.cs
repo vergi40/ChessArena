@@ -12,13 +12,11 @@ namespace vergiBlue.Algorithms.IterativeDeepening
     internal class IDWithUciParameters
     {
         // TODO either add all as privates or use all as arguments
-        private Action<string> _writeOutputAction { get; set; }
+        private Action<string> _writeOutputAction { get; set; } = delegate(string s) {  };
 
         public SingleMove CalculateBestMove(BoardContext context, SearchParameters parameters)
         {
             //
-            var uciParameters = parameters.UciParameters;
-            var limits = uciParameters.SearchLimits;
             _writeOutputAction = parameters.WriteToOutputAction;
 
             var (maxDepth, timeLimit) = DefineDepthAndTime(context, parameters);

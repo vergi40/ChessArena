@@ -111,6 +111,23 @@ namespace CommonNetStandard.Common
                 {
                     parameters.SearchLimits.Mate = int.Parse(value);
                 }
+                else if (key == "wtime")
+                {
+                    parameters.WhiteTimeLeft = int.Parse(value);
+                }
+                else if (key == "btime")
+                {
+                    parameters.BlackTimeLeft = int.Parse(value);
+                }
+                else if (key == "winc")
+                {
+                    parameters.WhiteIncrementPerMove = int.Parse(value);
+                }
+                else if (key == "binc")
+                {
+                    parameters.BlackIncrementPerMove = int.Parse(value);
+                }
+
             }
 
             return parameters;
