@@ -41,10 +41,10 @@ namespace vergiBlue.Algorithms.IterativeDeepening
         /// <param name="rootMove"></param>
         /// <param name="rootIsMaximizing"></param>
         /// <returns></returns>
-        public static List<ISingleMove> GetPrincipalVariation(IBoard board, ISingleMove rootMove, bool rootIsMaximizing)
+        public static List<ISingleMove> GetPrincipalVariation(int maxDepth, IBoard board, ISingleMove rootMove, bool rootIsMaximizing)
         {
             var transpositions = board.Shared.Transpositions;
-            var result = new List<ISingleMove>();
+            var result = new List<ISingleMove>(){rootMove};
             var nextMove = rootMove;
             var nextIsMaximizing = rootIsMaximizing;
 
@@ -54,7 +54,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
 
             try
             {
-                while(true)
+                for(int i = 0; i < maxDepth; i++)
                 {
                     nextBoard = BoardFactory.CreateFromMove(nextBoard, nextMove);
                     nextIsMaximizing = !nextIsMaximizing;
@@ -93,16 +93,16 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             return result;
         }
 
-        public static string GetPrincipalVariationAsString(IBoard board, ISingleMove rootMove, bool rootIsMaximizing)
+        public static string GetPrincipalVariationAsString(int maxDepth, IBoard board, ISingleMove rootMove, bool rootIsMaximizing)
         {
-            var pv = GetPrincipalVariation(board, rootMove, rootIsMaximizing);
+            var pv = GetPrincipalVariation(maxDepth, board, rootMove, rootIsMaximizing);
             return string.Join(", ", pv.Select(move => move.ToCompactString()));
         }
 
-        public static void AddPVDiagnostics(int depthUsed, IBoard board, ISingleMove bestMove, bool rootIsMaximizing)
+        public static void AddPVDiagnostics(int maxDepth, IBoard board, ISingleMove bestMove, bool rootIsMaximizing)
         {
-            var pv = GetPrincipalVariationAsString(board, bestMove, rootIsMaximizing);
-            var message = $"[PV] Depth: {depthUsed}, {pv}";
+            var pv = GetPrincipalVariationAsString(maxDepth, board, bestMove, rootIsMaximizing);
+            var message = $"[PV] Depth: {maxDepth}, {pv}";
             
             Collector.AddCustomMessage($"{message}");
         }

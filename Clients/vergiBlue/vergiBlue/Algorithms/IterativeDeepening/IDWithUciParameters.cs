@@ -106,7 +106,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                 midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
 
                 if (timeUp) break;
-                var pvString = Common.GetPrincipalVariationAsString(board, midResult.First().move, isMaximizing);
+                var pvString = Common.GetPrincipalVariationAsString(searchDepth, board, midResult.First().move, isMaximizing);
                 // info depth 4 score cp -30 time 55 nodes 1292 nps 25606 pv d7d5 e2e3 e7e6 g1f3
                 var infoPrint =
                     $"info depth {i} score cp {midResult.First().weight} " +
