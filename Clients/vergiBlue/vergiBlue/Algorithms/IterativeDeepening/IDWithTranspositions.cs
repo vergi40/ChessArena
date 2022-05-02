@@ -26,16 +26,18 @@ namespace vergiBlue.Algorithms.IterativeDeepening
         /// </summary>
         private SingleMove IterativeDeepeningWithTranspositions(IReadOnlyList<SingleMove> allMoves, int searchDepth, IBoard board, bool isMaximizing, int timeLimitInMs = 5000)
         {
-            // 
-            var minimumSearchPercentForHigherDepthUse = 1 / (double)3;
+            // Only use deeped depth stopped search results, if this percent of moves were evaluated 
+            var minimumSearchPercentForHigherDepthUse = 0.49;
             var timeUp = false;
             int depthUsed = 0;
 
             var midResult = new List<(double weight, SingleMove move)>();
             var currentIterationMoves = new List<SingleMove>(allMoves);
             (double eval, SingleMove move) previousIterationBest = new(0.0, new SingleMove((-1, -1), (-1, -1)));
-            var watch = new Stopwatch();
-            watch.Start();
+
+            // Mostly for debug
+            var previousIterationAll = new List<(double weight, SingleMove move)>();
+            var timer = SearchTimer.Start(timeLimitInMs);
 
             // Why this works for black start, but not white?
             //var alpha = -1000000.0;
@@ -52,7 +54,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                 foreach (var move in currentIterationMoves)
                 {
                     var newBoard = BoardFactory.CreateFromMove(board, move);
-                    var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, alpha, beta, !isMaximizing);
+                    var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, alpha, beta, !isMaximizing, timer);
                     midResult.Add((evaluation, move));
 
                     if (isMaximizing)
@@ -66,7 +68,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                         if (beta <= alpha) { /* */ }
                     }
 
-                    if (watch.ElapsedMilliseconds > timeLimitInMs)
+                    if (timer.Exceeded())
                     {
                         timeUp = true;
                         break;
@@ -92,6 +94,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
 
                 currentIterationMoves = midResult.Select(item => item.Item2).ToList();
                 previousIterationBest = midResult.First();
+                previousIterationAll = midResult.ToList();
             }
 
             // midResult is either partial or full. Just sort and return first.
@@ -102,11 +105,15 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             {
                 var result = previousIterationBest;
                 Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, result.eval, result.move, board);
+                Common.AddPVDiagnostics(depthUsed, board, result.move, isMaximizing);
+                Common.DebugPrintWeighedMoves(previousIterationAll);
                 return result.move;
             }
 
             var finalResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
             Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, finalResult.First().weight, finalResult.First().move, board);
+            Common.AddPVDiagnostics(depthUsed, board, finalResult.First().move, isMaximizing);
+            Common.DebugPrintWeighedMoves(finalResult);
             return finalResult.First().move;
         }
     }

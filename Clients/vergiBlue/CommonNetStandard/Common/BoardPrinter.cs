@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CommonNetStandard;
 using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
@@ -46,9 +47,9 @@ namespace CommonNetStandard.Common
                     columnString += DrawPiece(Get((column, row)));
                     columnString += Colors.BlackBackground + Colors.WhiteForeground;
                 }
-                Logger.LogWithConsole(columnString, _localLogger);
+                Console.WriteLine(columnString);
             }
-            Logger.LogWithConsole("    A  B  C  D  E  F  G  H ", _localLogger);
+            Console.WriteLine("    A  B  C  D  E  F  G  H ");
         }
 
         private string DrawPiece(string value)

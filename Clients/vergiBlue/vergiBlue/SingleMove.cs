@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 
@@ -15,6 +16,8 @@ namespace vergiBlue
         PromotionPieceType PromotionType { get; }
 
         (int column, int row) EnPassantOpponentPosition { get; }
+
+        string ToCompactString();
     }
 
 
@@ -53,6 +56,37 @@ namespace vergiBlue
         }
         public bool Promotion => PromotionType != PromotionPieceType.NoPromotion;
 
+        public string ToCompactString()
+        {
+            var message = new StringBuilder();
+            message.Append(PrevPos.ToAlgebraic());
+            message.Append(NewPos.ToAlgebraic());
+            if (Promotion)
+            {
+                message.Append(SingleMove.ConvertPromotion(PromotionType));
+            }
+
+            return message.ToString();
+        }
+
+        public override string ToString()
+        {
+            var message = new StringBuilder();
+            message.Append($"{PrevPos.ToAlgebraic()} to ");
+            if (Capture) message.Append("x");
+            message.Append(NewPos.ToAlgebraic());
+            if (Promotion)
+            {
+                message.Append(SingleMove.ConvertPromotion(PromotionType));
+            }
+
+            if (Check)
+            {
+                message.Append(" (check)");
+            }
+
+            return message.ToString();
+        }
     }
 
     /// <summary>
@@ -188,36 +222,61 @@ namespace vergiBlue
 
         public override string ToString()
         {
-            var info = $"{PrevPos.ToAlgebraic()} to ";
-            if (Capture) info += "x";
-            info += NewPos.ToAlgebraic();
-            return info;
-        }
-
-        public string ToCompactString()
-        {
-            var from = PrevPos.ToAlgebraic();
-            var to = NewPos.ToAlgebraic();
-
+            var message = new StringBuilder();
+            message.Append($"{PrevPos.ToAlgebraic()} to ");
+            if (Capture) message.Append("x");
+            message.Append(NewPos.ToAlgebraic());
             if (Promotion)
             {
-                to += ConvertPromotion(PromotionType);
+                message.Append(ConvertPromotion(PromotionType));
             }
 
-            return from + to;
+            if (Check)
+            {
+                message.Append(" (check)");
+            }
+
+            return message.ToString();
+        }
+        
+        public string ToCompactString()
+        {
+            var message = new StringBuilder();
+            message.Append(PrevPos.ToAlgebraic());
+            message.Append(NewPos.ToAlgebraic());
+            if (Promotion)
+            {
+                message.Append(ConvertPromotion(PromotionType));
+            }
+
+            return message.ToString();
         }
 
-        private char ConvertPromotion(PromotionPieceType type)
+        public static char ConvertPromotion(PromotionPieceType type)
         {
             var c = type switch
             {
-                PromotionPieceType.Queen => 'Q',
-                PromotionPieceType.Rook => 'R',
-                PromotionPieceType.Bishop => 'B',
-                PromotionPieceType.Knight => 'N',
+                PromotionPieceType.Queen => 'q',
+                PromotionPieceType.Rook => 'r',
+                PromotionPieceType.Bishop => 'b',
+                PromotionPieceType.Knight => 'n',
                 _ => ' '
             };
             return c;
+        }
+
+        public static PromotionPieceType ConvertPromotion(char type)
+        {
+            type = char.ToLower(type);
+            var promotion = type switch
+            {
+                'q' =>  PromotionPieceType.Queen,
+                'r' =>  PromotionPieceType.Rook,
+                'b' =>  PromotionPieceType.Bishop,
+                'n' =>  PromotionPieceType.Knight,
+                _ => PromotionPieceType.NoPromotion
+            };
+            return promotion;
         }
     }
 }

@@ -10,7 +10,7 @@ namespace CommonNetStandard.Client
         /// <summary>
         /// Client is white player and starts the game
         /// </summary>
-        public bool IsPlayerWhite { get; }
+        public bool IsPlayerWhite { get; set; }
         protected LogicBase(bool isPlayerWhite) { IsPlayerWhite = isPlayerWhite; }
         
         public abstract IPlayerMove CreateMove();

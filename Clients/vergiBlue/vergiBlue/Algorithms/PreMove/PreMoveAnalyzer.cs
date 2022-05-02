@@ -48,35 +48,48 @@ namespace vergiBlue.Algorithms.PreMove
 
             if (_turnInfo.IsSearchDepthFixed)
             {
-                _previousDepth = _turnInfo.SearchDepthFixed;
+                UpdateChanges(_turnInfo.SearchDepthFixed, _turnInfo.SearchDepthFixed, gamePhase);
                 return (_turnInfo.SearchDepthFixed, gamePhase);
             }
-            // Track previous depth and time. Only +1 or -1 if enough points tick the box
-            // 
-            // Decide game phase
-            // Min&max depth from settings (algorithm type) and game phase - update each turn
-            // Estimate time by amount of possible moves to board
-            // Compare estimate time to previous time and possibilities
-
-            // Clamp()
-            // PrintChanges(newDepth) - if changes
-            var (minDepth, maxDepth) = GetDepthMinMax(_turnInfo, board, gamePhase);
-            if (_overrideGameMaxDepth != null)
+            else if (_turnInfo.settings.UseTranspositionTables && _turnInfo.settings.UseIterativeDeepening)
             {
-                maxDepth = _overrideGameMaxDepth.Value;
-                minDepth = Math.Min(minDepth, _overrideGameMaxDepth.Value);
+                var newDepth = GetMaxDepthForTTAndID(board, gamePhase);
+                UpdateChanges(newDepth, newDepth, gamePhase);
+                return (newDepth, gamePhase);
             }
+            else
+            {
+                // Track previous depth and time. Only +1 or -1 if enough points tick the box
+                // 
+                // Decide game phase
+                // Min&max depth from settings (algorithm type) and game phase - update each turn
+                // Estimate time by amount of possible moves to board
+                // Compare estimate time to previous time and possibilities
 
-            var depthEstimate = _depthController.GetDepthEstimate(allMoves, board, _turnInfo, maxDepth);
+                // Clamp()
+                // PrintChanges(newDepth) - if changes
+                var (minDepth, maxDepth) = GetDepthMinMax(_turnInfo, board, gamePhase);
+                if (_overrideGameMaxDepth != null)
+                {
+                    maxDepth = _overrideGameMaxDepth.Value;
+                    minDepth = Math.Min(minDepth, _overrideGameMaxDepth.Value);
+                }
 
-            var resultDepth = (int)Math.Round(depthEstimate);
-            resultDepth = Math.Clamp(resultDepth, minDepth, maxDepth);
+                var depthEstimate = _depthController.GetDepthEstimate(allMoves, board, _turnInfo, maxDepth, _previousDepth);
 
+                var resultDepth = (int)Math.Round(depthEstimate);
+                resultDepth = Math.Clamp(resultDepth, minDepth, maxDepth);
+
+                UpdateChanges(resultDepth, depthEstimate, gamePhase);
+                return (resultDepth, gamePhase);
+            }
+        }
+
+        private void UpdateChanges(int resultDepth, double depthEstimate, GamePhase resultPhase)
+        {
             PrintChanges(resultDepth, depthEstimate, Phase);
             _previousDepth = resultDepth;
-            _previousPhase = Phase;
-
-            return (resultDepth, gamePhase);
+            _previousPhase = resultPhase;
         }
 
         private void PrintChanges(int depth, double estimate, GamePhase phase)
@@ -92,6 +105,21 @@ namespace vergiBlue.Algorithms.PreMove
             }
         }
 
+        private int GetMaxDepthForTTAndID(IBoard board, GamePhase phase)
+        {
+            var tempOffset = +1;
+
+            // Cool new switch structure
+            var powerPieceCount = board.PieceQuery.AllPowerPiecesList().Count;
+            return powerPieceCount switch
+            {
+                > 7 => 7 + tempOffset,
+                > 6 => 8 + tempOffset,
+                > 4 => 9 + tempOffset,
+                _ => 10 + tempOffset
+            };
+        }
+
         private (int minDepth, int maxDepth) GetDepthMinMax(TurnStartInfo turnInfo, IBoard board, GamePhase phase)
         {
             // NOTE: take phase into account
@@ -99,18 +127,7 @@ namespace vergiBlue.Algorithms.PreMove
 
             if (settings.UseTranspositionTables && settings.UseIterativeDeepening)
             {
-                var tempOffset = -1;
-                
-                // Cool new switch structure
-                var powerPieceCount = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
-                var max = powerPieceCount switch
-                {
-                    > 7 => 7 + tempOffset,
-                    > 6 => 8 + tempOffset,
-                    > 4 => 9 + tempOffset,
-                    _ => 10 + tempOffset
-                };
-
+                var max = GetMaxDepthForTTAndID(board, phase);
                 return (3, max);
             }
 
@@ -118,7 +135,7 @@ namespace vergiBlue.Algorithms.PreMove
             {
                 var tempOffset = -2;
 
-                var powerPieceCount = board.PieceList.Count(p => Math.Abs(p.RelativeStrength) > PieceBaseStrength.Pawn);
+                var powerPieceCount = board.PieceQuery.AllPowerPiecesList().Count;
                 var max = powerPieceCount switch
                 {
                     > 9 => 7 + tempOffset,

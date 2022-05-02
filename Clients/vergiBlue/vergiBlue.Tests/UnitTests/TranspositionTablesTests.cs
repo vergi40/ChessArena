@@ -11,6 +11,7 @@ using vergiBlue;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
+using vergiBlue.BoardModel.Subsystems.TranspositionTables;
 using vergiBlue.Logic;
 using vergiBlue.Pieces;
 

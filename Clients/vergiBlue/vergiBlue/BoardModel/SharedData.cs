@@ -1,5 +1,6 @@
 ﻿using vergiBlue.Algorithms;
 using vergiBlue.BoardModel.Subsystems;
+using vergiBlue.BoardModel.Subsystems.TranspositionTables;
 using vergiBlue.Pieces;
 
 namespace vergiBlue.BoardModel

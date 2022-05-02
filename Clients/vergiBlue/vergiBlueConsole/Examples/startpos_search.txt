@@ -1,0 +1,4 @@
+uci
+isready
+position startpos e2e4
+go depth 6
