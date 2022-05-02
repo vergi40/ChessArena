@@ -85,8 +85,10 @@ namespace vergiBlueDesktop
         private void InitializeEnvironment(bool playerIsWhite, bool isWhiteTurn, IBoard initializedBoard = null)
         {
             TurnCount = 0;
+            var usingDefaultStartBoard = false;
             if (initializedBoard == null)
             {
+                usingDefaultStartBoard = true;
                 initializedBoard = BoardFactory.CreateEmptyBoard();
                 initializedBoard.InitializeDefaultBoard();
             }
@@ -95,6 +97,12 @@ namespace vergiBlueDesktop
 
             AiLogic = LogicFactory.CreateForTest(!playerIsWhite, initializedBoard);
             AiLogic.Settings = Session.Settings;
+
+            if (usingDefaultStartBoard)
+            {
+                // Awkward
+                AiLogic.SkipOpeningChecks = false;
+            }
 
             _viewModel.InitializeViewModel(Session, _proxy);
         }

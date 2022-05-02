@@ -89,10 +89,10 @@ namespace vergiBlue.Logic
         // Update game phase
 
 
-        public SingleMove GetBestMove(IBoard board, IReadOnlyList<SingleMove> validMoves)
+        public SingleMove GetBestMove(IBoard board, IReadOnlyList<SingleMove> validMoves, bool skipOpeningChecks)
         {
             // If still at opening phase, skip all unnecessarities
-            if (_openingPhase && !board.Strategic.SkipOpeningChecks)
+            if (!skipOpeningChecks && _openingPhase)
             {
                 var openingMove = _openings.NextMove(_moveHistory);
                 if (openingMove != null)
