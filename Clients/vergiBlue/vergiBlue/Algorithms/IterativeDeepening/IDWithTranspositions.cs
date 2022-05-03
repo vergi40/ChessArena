@@ -2,31 +2,63 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using log4net;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 
 namespace vergiBlue.Algorithms.IterativeDeepening
 {
     /// <summary>
+    /// De facto search algorithm containing all available features.
     /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ... 
     /// </summary>
     internal class IDWithTranspositions : IAlgorithm
     {
-        public SingleMove CalculateBestMove(BoardContext context)
-        {
-            //
-            return IterativeDeepeningWithTranspositions(context.ValidMoves, context.NominalSearchDepth, context.CurrentBoard,
-                context.IsWhiteTurn, context.MaxTimeMs);
-        }
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(IDWithTranspositions));
 
+        /// <summary>
+        /// Overridden to write in UCI console, if UCI search
+        /// </summary>
+        private Action<string> _writeOutputAction { get; set; } = delegate(string s)
+        {
+            _logger.Info(s);
+        };
+
+        public SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null)
+        {
+            if (searchParameters != null)
+            {
+                // UCI search
+                _writeOutputAction = searchParameters.WriteToOutputAction;
+
+                var (maxDepth, timeLimit) = Common.DefineDepthAndTime(context, searchParameters);
+
+                return IterativeDeepeningWithTT(context.ValidMoves, maxDepth, context.CurrentBoard,
+                    context.IsWhiteTurn, timeLimit, searchParameters.StopSearchToken);
+            }
+            else
+            {
+                // Desktop / test search
+
+                // dummy
+                var stopTokenSource = new CancellationTokenSource();
+
+                return IterativeDeepeningWithTT(context.ValidMoves, context.NominalSearchDepth,
+                    context.CurrentBoard,
+                    context.IsWhiteTurn, context.MaxTimeMs, stopTokenSource.Token);
+            }
+        }
+        
         /// <summary>
         /// Iterative deepening sub-method.
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ...
-        /// 
         /// </summary>
-        private SingleMove IterativeDeepeningWithTranspositions(IReadOnlyList<SingleMove> allMoves, int searchDepth, IBoard board, bool isMaximizing, int timeLimitInMs = 5000)
+        private SingleMove IterativeDeepeningWithTT(IReadOnlyList<SingleMove> allMoves, int searchDepth,
+            IBoard board, bool isMaximizing, int timeLimitInMs, CancellationToken stopSearchToken)
         {
-            // Only use deeped depth stopped search results, if this percent of moves were evaluated 
+            // Only use deeper depth stopped search results, if this percent of moves were evaluated 
             var minimumSearchPercentForHigherDepthUse = 0.49;
             var timeUp = false;
             int depthUsed = 0;
@@ -38,10 +70,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             // Mostly for debug
             var previousIterationAll = new List<(double weight, SingleMove move)>();
             var timer = SearchTimer.Start(timeLimitInMs);
-
-            // Why this works for black start, but not white?
-            //var alpha = -1000000.0;
-            //var beta = 1000000.0;
+            var stopControl = new SearchStopControl(timer, stopSearchToken);
 
             // Initial depth 2
             for (int i = 2; i <= searchDepth; i++)
@@ -54,7 +83,15 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                 foreach (var move in currentIterationMoves)
                 {
                     var newBoard = BoardFactory.CreateFromMove(board, move);
-                    var evaluation = MiniMax.ToDepthWithTranspositions(newBoard, i, alpha, beta, !isMaximizing, timer);
+                    var evaluation = MiniMax.ToDepthUciPrototype(newBoard, i, alpha, beta, !isMaximizing, stopControl);
+
+                    if (stopControl.StopSearch())
+                    {
+                        // Don't use results if search was stopped
+                        timeUp = true;
+                        break;
+                    }
+
                     midResult.Add((evaluation, move));
 
                     if (isMaximizing)
@@ -67,30 +104,19 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                         beta = Math.Min(beta, evaluation);
                         if (beta <= alpha) { /* */ }
                     }
-
-                    if (timer.Exceeded())
-                    {
-                        timeUp = true;
-                        break;
-                    }
                 }
-
 
                 // Full search finished for depth
                 midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
 
-                // Found checkmate
-                //if (isMaximizing && midResult.First().weight > PieceBaseStrength.CheckMateThreshold
-                //    || !isMaximizing && midResult.First().weight < -PieceBaseStrength.CheckMateThreshold)
-                //{
-                //    // TODO This might result in stupid movements, if opponent doesn't do the exact move AI thinks is best for it
-
-                //    Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed}. Check mate found.");
-                //    Diagnostics.AddMessage($" Move evaluation: {midResult.First().weight}.");
-                //    return midResult.First().move;
-                //}
-
                 if (timeUp) break;
+                var pvString = Common.GetPrincipalVariationAsString(searchDepth, board, midResult.First().move, isMaximizing);
+                // info depth 4 score cp -30 time 55 nodes 1292 nps 25606 pv d7d5 e2e3 e7e6 g1f3
+                var infoPrint =
+                    $"info depth {i} score cp {midResult.First().weight} " +
+                    $"time {timer.CurrentElapsed()} nodes {Collector.CurrentEvalCount()} " +
+                    $"pv { pvString}";
+                _writeOutputAction(infoPrint);
 
                 currentIterationMoves = midResult.Select(item => item.Item2).ToList();
                 previousIterationBest = midResult.First();
@@ -99,7 +125,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
 
             // midResult is either partial or full. Just sort and return first.
 
-            // If too small percent was searched for new depth, use prevous results
+            // If too small percent was searched for new depth, use previous results
             // E.g. out of 8 possible moves, only 2 were searched
             if (midResult.Count / (double)allMoves.Count < minimumSearchPercentForHigherDepthUse)
             {

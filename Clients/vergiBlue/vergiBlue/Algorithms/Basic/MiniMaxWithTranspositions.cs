@@ -12,7 +12,7 @@ namespace vergiBlue.Algorithms.Basic
 {
     internal class MiniMaxWithTranspositions : IAlgorithm
     {
-        public SingleMove CalculateBestMove(BoardContext context)
+        public SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null)
         {
             var evaluated = GetMoveScoreList(context.ValidMoves, context.NominalSearchDepth, context.CurrentBoard, context.IsWhiteTurn);
 

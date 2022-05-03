@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using log4net;
+using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
 
@@ -14,18 +17,47 @@ namespace vergiBlue.Algorithms.IterativeDeepening
     /// </summary>
     public class IDBasic : IAlgorithm
     {
-        public SingleMove CalculateBestMove(BoardContext context)
-        {
-            //
-            return IterativeDeepeningBasic(context.ValidMoves, context.NominalSearchDepth, context.CurrentBoard,
-                context.IsWhiteTurn, context.MaxTimeMs);
-        }
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(IDWithTranspositions));
 
+        /// <summary>
+        /// Overridden to write in UCI console, if UCI search
+        /// </summary>
+        private Action<string> _writeOutputAction { get; set; } = delegate (string s)
+        {
+            _logger.Info(s);
+        };
+
+        public SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null)
+        {
+            if (searchParameters != null)
+            {
+                // UCI search
+                _writeOutputAction = searchParameters.WriteToOutputAction;
+
+                var (maxDepth, timeLimit) = Common.DefineDepthAndTime(context, searchParameters);
+
+                return IterativeDeepeningBasic(context.ValidMoves, maxDepth, context.CurrentBoard,
+                    context.IsWhiteTurn, timeLimit, searchParameters.StopSearchToken);
+            }
+            else
+            {
+                // Desktop / test search
+
+                // dummy
+                var stopTokenSource = new CancellationTokenSource();
+
+                return IterativeDeepeningBasic(context.ValidMoves, context.NominalSearchDepth,
+                    context.CurrentBoard,
+                    context.IsWhiteTurn, context.MaxTimeMs, stopTokenSource.Token);
+            }
+        }
+        
         /// <summary>
         /// Iterative deepening sub-method.
         /// Evaluate moves at search depth 2. Reorder. Evaluate moves at search depth 3. Reorder ... 
         /// </summary>
-        private SingleMove IterativeDeepeningBasic(IReadOnlyList<SingleMove> allMoves, int searchDepth, IBoard board, bool isMaximizing, int timeLimitInMs = 5000)
+        private SingleMove IterativeDeepeningBasic(IReadOnlyList<SingleMove> allMoves, int searchDepth, IBoard board,
+            bool isMaximizing, int timeLimitInMs, CancellationToken stopSearchToken)
         {
             // 
             var minimumSearchPercentForHigherDepthUse = 1 / (double)3;
@@ -35,11 +67,12 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             var midResult = new List<(double weight, SingleMove move)>();
             var currentIterationMoves = new List<SingleMove>(allMoves);
             (double eval, SingleMove move) previousIterationBest = new(0.0, new SingleMove((-1, -1), (-1, -1)));
+            
+            // Mostly for debug
+            var previousIterationAll = new List<(double weight, SingleMove move)>();
             var timer = SearchTimer.Start(timeLimitInMs);
+            var stopControl = new SearchStopControl(timer, stopSearchToken);
 
-            // Why this works for black start, but not white?
-            //var alpha = -1000000.0;
-            //var beta = 1000000.0;
 
             // Initial depth 2
             for (int i = 2; i <= searchDepth; i++)
@@ -52,7 +85,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                 foreach (var move in currentIterationMoves)
                 {
                     var newBoard = BoardFactory.CreateFromMove(board, move);
-                    var evaluation = MiniMax.ToDepth(newBoard, i, alpha, beta, !isMaximizing, timer);
+                    var evaluation = MiniMax.ToDepthUciBasic(newBoard, i, alpha, beta, !isMaximizing, stopControl);
                     midResult.Add((evaluation, move));
 
                     if (isMaximizing)
@@ -75,21 +108,16 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                 // Full search finished for depth
                 midResult = MoveOrdering.SortWeightedMovesWithSort(midResult, isMaximizing).ToList();
 
-                // Found checkmate
-                //if (isMaximizing && midResult.First().weight > PieceBaseStrength.CheckMateThreshold
-                //    || !isMaximizing && midResult.First().weight < -PieceBaseStrength.CheckMateThreshold)
-                //{
-                //    // TODO This might result in stupid movements, if opponent doesn't do the exact move AI thinks is best for it
-
-                //    Diagnostics.AddMessage($" Iterative deepening search depth was {depthUsed}. Check mate found.");
-                //    Diagnostics.AddMessage($" Move evaluation: {midResult.First().weight}.");
-                //    return midResult.First().move;
-                //}
-
                 if (timeUp) break;
+                // info depth 4 score cp -30 time 55 nodes 1292 nps 25606 pv d7d5 e2e3 e7e6 g1f3
+                var infoPrint =
+                    $"info depth {i} score cp {midResult.First().weight} " +
+                    $"time {timer.CurrentElapsed()} nodes {Collector.CurrentEvalCount()} ";
+                _writeOutputAction(infoPrint);
 
                 currentIterationMoves = midResult.Select(item => item.Item2).ToList();
                 previousIterationBest = midResult.First();
+                previousIterationAll = midResult.ToList();
             }
 
             // midResult is either partial or full. Just sort and return first.
@@ -100,7 +128,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             {
                 var result = previousIterationBest;
                 Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, midResult.Count, result.eval, result.move, board);
-                Common.DebugPrintWeighedMoves(midResult);
+                Common.DebugPrintWeighedMoves(previousIterationAll);
                 return result.move;
             }
 

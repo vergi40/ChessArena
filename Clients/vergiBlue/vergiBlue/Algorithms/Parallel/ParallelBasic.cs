@@ -10,7 +10,7 @@ namespace vergiBlue.Algorithms.Parallel
 {
     internal class ParallelBasic : IAlgorithm
     {
-        public SingleMove CalculateBestMove(BoardContext context)
+        public SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null)
         {
             var evaluated = GetMoveScoreListParallel(context.ValidMoves, context.NominalSearchDepth, context.CurrentBoard,
                 context.IsWhiteTurn);

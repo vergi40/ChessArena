@@ -271,6 +271,66 @@ namespace vergiBlue.Algorithms
             }
         }
 
+        public static double ToDepthUciBasic(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchStopControl stopControl)
+        {
+            if (depth == 0)
+            {
+                return newBoard.Evaluate(maximizingPlayer, false, depth);
+            }
+            if (stopControl.StopSearch())
+            {
+                Collector.IncreaseOperationCount($"{stopControl.Reason}");
+                return TimerExceededValue(alpha, beta, maximizingPlayer);
+            }
+
+            // Allocating move memory to stack instead of heap
+            // https://docs.microsoft.com/en-us/dotnet/csharp/write-safe-efficient-code
+            // https://tearth.dev/posts/performance-of-chess-engines-written-in-csharp-part-1/
+            Span<MoveStruct> allMoves = stackalloc MoveStruct[MOVELIST_MAX_SIZE];
+            newBoard.MoveGenerator.MovesWithOrderingSpan(maximizingPlayer, false, allMoves, out var length);
+
+            // Checkmate or stalemate
+            if (length == 0)
+            {
+                return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
+            }
+            if (maximizingPlayer)
+            {
+                var value = MiniMaxGeneral.DefaultAlpha;
+                for (int i = 0; i < length; i++)
+                {
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
+                    value = Math.Max(value, ToDepthUciBasic(nextBoard, depth - 1, alpha, beta, false, stopControl));
+                    alpha = Math.Max(alpha, value);
+                    if (alpha >= beta)
+                    {
+                        // Prune. Alpha is better than previous level beta. Don't want to use moves from this board set.
+                        // Saved some time by noticing this branch is a dead end
+                        Collector.IncreaseOperationCount(OperationsKeys.Alpha);
+                        break;
+                    }
+                }
+                return value;
+            }
+            else
+            {
+                var value = MiniMaxGeneral.DefaultBeta;
+                for (int i = 0; i < length; i++)
+                {
+                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
+                    value = Math.Min(value, ToDepthUciBasic(nextBoard, depth - 1, alpha, beta, true, stopControl));
+                    beta = Math.Min(beta, value);
+                    if (beta <= alpha)
+                    {
+                        // Prune. Beta is smaller than previous level alpha. Don't want to use moves from this board set.
+                        Collector.IncreaseOperationCount(OperationsKeys.Beta);
+                        break;
+                    }
+                }
+                return value;
+            }
+        }
+
         public static double ToDepthUciPrototype(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchStopControl stopControl)
         {
             if (depth == 0)
