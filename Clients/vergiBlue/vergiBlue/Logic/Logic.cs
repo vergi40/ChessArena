@@ -19,6 +19,10 @@ namespace vergiBlue.Logic
 
         // Game strategic variables
         public IMove? LatestOpponentMove { get; set; }
+
+        /// <summary>
+        /// Note: only accurate from start if board not generated from fen string
+        /// </summary>
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
 
         // Just initialize to any - will be overridden
@@ -143,6 +147,11 @@ namespace vergiBlue.Logic
                 var tempMove = SingleMoveFactory.Create(move);
                 var fullMove = Board.CollectMoveProperties(tempMove);
                 Board.ExecuteMove(fullMove);
+
+                // Add to logic history - in case of opening book
+                var interfaceMove = fullMove.ToInterfaceMove();
+                GameHistory.Add(interfaceMove);
+
                 isWhite = !isWhite;
             }
 
@@ -352,9 +361,7 @@ namespace vergiBlue.Logic
             var (analyticsOutput, previousData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
             PreviousData = previousData;
 
-            var historyMove = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
-                analyticsOutput);
-            GameHistory.Add(historyMove.Move);
+            // NOTE: never add to move history, since uci game is not played continuously to same board
             return moveWithData;
         }
     }
