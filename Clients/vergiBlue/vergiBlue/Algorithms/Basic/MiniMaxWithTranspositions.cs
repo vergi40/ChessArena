@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems;
@@ -25,7 +26,9 @@ namespace vergiBlue.Algorithms.Basic
             var result = new EvaluationResult();
             var alpha = MiniMaxGeneral.DefaultAlpha;
             var beta = MiniMaxGeneral.DefaultBeta;
+
             var timer = SearchTimer.Start(timeLimitInMs);
+            var stopControl = new SearchStopControl(timer);
 
             foreach (var move in moves)
             {
@@ -40,8 +43,8 @@ namespace vergiBlue.Algorithms.Basic
                 {
                     // Board evaluation at current depth
                     var newBoard = BoardFactory.CreateFromMove(board, move);
-                    var value = MiniMax.ToDepthWithTranspositions(newBoard, searchDepth, alpha, beta,
-                        !isMaximizing, timer);
+                    var value = MiniMax.ToDepthWithTT(newBoard, searchDepth, alpha, beta,
+                        !isMaximizing, stopControl);
                     result.Add(value, move);
 
                     // Add new transposition table

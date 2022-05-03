@@ -53,15 +53,15 @@ namespace vergiBlue.Algorithms
         /// <param name="beta">The lowest known value at previous recursion level</param>
         /// <param name="maximizingPlayer">Maximizing = white, minimizing = black</param>
         /// <returns></returns>
-        public static double ToDepth(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchTimer timer)
+        public static double ToDepth(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchStopControl stopControl)
         {
             if (depth == 0)
             {
                 return newBoard.Evaluate(maximizingPlayer, false, depth);
             }
-            if (timer.Exceeded())
+            if (stopControl.StopSearch())
             {
-                Collector.IncreaseOperationCount("TimerExceeded");
+                Collector.IncreaseOperationCount($"{stopControl.Reason}");
                 return TimerExceededValue(alpha, beta, maximizingPlayer);
             }
 
@@ -82,7 +82,7 @@ namespace vergiBlue.Algorithms
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = Math.Max(value, ToDepth(nextBoard, depth - 1, alpha, beta, false, timer));
+                    value = Math.Max(value, ToDepth(nextBoard, depth - 1, alpha, beta, false, stopControl));
                     alpha = Math.Max(alpha, value);
                     if (alpha >= beta)
                     {
@@ -100,7 +100,7 @@ namespace vergiBlue.Algorithms
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = Math.Min(value, ToDepth(nextBoard, depth - 1, alpha, beta, true, timer));
+                    value = Math.Min(value, ToDepth(nextBoard, depth - 1, alpha, beta, true, stopControl));
                     beta = Math.Min(beta, value);
                     if (beta <= alpha)
                     {
@@ -145,193 +145,7 @@ namespace vergiBlue.Algorithms
         /// maximizing depth 4 receives 4 - ignored
         /// minimizing depth 3 receives 13 - ignored
         /// </summary>
-        public static double ToDepthWithTranspositions(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchTimer timer)
-        {
-            if (depth == 0)
-            {
-                return newBoard.Evaluate(maximizingPlayer, false, depth);
-            }
-            if (timer.Exceeded())
-            {
-                Collector.IncreaseOperationCount("TimerExceeded");
-                return TimerExceededValue(alpha, beta, maximizingPlayer);
-            }
-
-            // Check if solution already exists
-            var transposition = newBoard.Shared.Transpositions.GetTranspositionForBoard(newBoard.BoardHash);
-            if (transposition != null && transposition.Depth >= depth)
-            {
-                Collector.IncreaseOperationCount(OperationsKeys.TranspositionUsed);
-                var transpositionEval = Evaluator.CheckMateScoreAdjustToDepthFixed(transposition.Evaluation, depth);
-                
-                if (transposition.Type == NodeType.Exact) return transpositionEval;
-                else if (transposition.Type == NodeType.UpperBound && transpositionEval < beta)
-                {
-                    beta = transpositionEval;
-                }
-                else if (transposition.Type == NodeType.LowerBound && transpositionEval > alpha)
-                {
-                    alpha = transpositionEval;
-                }
-
-                // Early cutoff, nice
-                if (alpha >= beta)
-                {
-                    Collector.IncreaseOperationCount("TTcutoff");
-                    return transpositionEval;
-                }
-            }
-
-            // Allocating move memory to stack instead of heap
-            // https://docs.microsoft.com/en-us/dotnet/csharp/write-safe-efficient-code
-            // https://tearth.dev/posts/performance-of-chess-engines-written-in-csharp-part-1/
-            Span<MoveStruct> allMoves = stackalloc MoveStruct[MOVELIST_MAX_SIZE];
-            newBoard.MoveGenerator.MovesWithOrderingSpan(maximizingPlayer, false, allMoves, out var length);
-
-            if (length == 0)
-            {
-                // Checkmate or stalemate
-                return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
-            }
-            
-            if (maximizingPlayer)
-            {
-                var value = MiniMaxGeneral.DefaultAlpha;
-                var bestMoveIndex = -1;
-                for (int i = 0; i < length; i++)
-                {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    var searchResult = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, false, timer);
-                    if (searchResult > value)
-                    {
-                        value = searchResult;
-                        bestMoveIndex = i;
-                    }
-                    
-                    alpha = Math.Max(alpha, value);
-                    if (alpha >= beta)
-                    {
-                        // Eval is at least beta. Fail high
-                        // Prune. Alpha is better than previous level beta. Don't want to use moves from this board set.
-
-                        if(depth > 1 && !timer.Exceeded())
-                        {
-                            nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
-                                NodeType.LowerBound, nextBoard.Shared.GameTurnCount, allMoves[i]);
-                        }
-                        Collector.IncreaseOperationCount(OperationsKeys.Beta);
-                        break;
-                    }
-                }
-
-                // Save best move
-                if(value >= alpha && value <= beta && depth > 1 && !timer.Exceeded())
-                {
-                    Debug.Assert(bestMoveIndex >= 0, "Logical error. No best move found");
-                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, depth, value, NodeType.Exact, newBoard.Shared.GameTurnCount, allMoves[bestMoveIndex]);
-                }
-                return value;
-            }
-            else
-            {
-                var value = MiniMaxGeneral.DefaultBeta;
-                var bestMoveIndex = -1;
-                for (int i = 0; i < length; i++)
-                {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    var searchResult = ToDepthWithTranspositions(nextBoard, depth - 1, alpha, beta, true, timer);
-                    if (searchResult < value)
-                    {
-                        value = searchResult;
-                        bestMoveIndex = i;
-                    }
-
-                    beta = Math.Min(beta, value);
-                    if (beta <= alpha)
-                    {
-                        // Eval is at most alpha. Fail low
-                        // Prune. Beta is smaller than previous level alpha. Don't want to use moves from this board set.
-                        
-                        if (depth > 1 && !timer.Exceeded())
-                        {
-                            nextBoard.Shared.Transpositions.Add(nextBoard.BoardHash, depth, value,
-                                NodeType.UpperBound, nextBoard.Shared.GameTurnCount, allMoves[i]);
-                        }
-                        Collector.IncreaseOperationCount(OperationsKeys.Alpha);
-                        break;
-                    }
-                }
-                // Save best move
-                if (value >= alpha && value <= beta && depth > 1 && !timer.Exceeded())
-                {
-                    Debug.Assert(bestMoveIndex >= 0, "Logical error. No best move found");
-                    newBoard.Shared.Transpositions.Add(newBoard.BoardHash, depth, value, NodeType.Exact, newBoard.Shared.GameTurnCount, allMoves[bestMoveIndex]);
-                }
-                return value;
-            }
-        }
-
-        public static double ToDepthUciBasic(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchStopControl stopControl)
-        {
-            if (depth == 0)
-            {
-                return newBoard.Evaluate(maximizingPlayer, false, depth);
-            }
-            if (stopControl.StopSearch())
-            {
-                Collector.IncreaseOperationCount($"{stopControl.Reason}");
-                return TimerExceededValue(alpha, beta, maximizingPlayer);
-            }
-
-            // Allocating move memory to stack instead of heap
-            // https://docs.microsoft.com/en-us/dotnet/csharp/write-safe-efficient-code
-            // https://tearth.dev/posts/performance-of-chess-engines-written-in-csharp-part-1/
-            Span<MoveStruct> allMoves = stackalloc MoveStruct[MOVELIST_MAX_SIZE];
-            newBoard.MoveGenerator.MovesWithOrderingSpan(maximizingPlayer, false, allMoves, out var length);
-
-            // Checkmate or stalemate
-            if (length == 0)
-            {
-                return newBoard.EvaluateNoMoves(maximizingPlayer, false, depth);
-            }
-            if (maximizingPlayer)
-            {
-                var value = MiniMaxGeneral.DefaultAlpha;
-                for (int i = 0; i < length; i++)
-                {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = Math.Max(value, ToDepthUciBasic(nextBoard, depth - 1, alpha, beta, false, stopControl));
-                    alpha = Math.Max(alpha, value);
-                    if (alpha >= beta)
-                    {
-                        // Prune. Alpha is better than previous level beta. Don't want to use moves from this board set.
-                        // Saved some time by noticing this branch is a dead end
-                        Collector.IncreaseOperationCount(OperationsKeys.Alpha);
-                        break;
-                    }
-                }
-                return value;
-            }
-            else
-            {
-                var value = MiniMaxGeneral.DefaultBeta;
-                for (int i = 0; i < length; i++)
-                {
-                    var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    value = Math.Min(value, ToDepthUciBasic(nextBoard, depth - 1, alpha, beta, true, stopControl));
-                    beta = Math.Min(beta, value);
-                    if (beta <= alpha)
-                    {
-                        // Prune. Beta is smaller than previous level alpha. Don't want to use moves from this board set.
-                        Collector.IncreaseOperationCount(OperationsKeys.Beta);
-                        break;
-                    }
-                }
-                return value;
-            }
-        }
-
-        public static double ToDepthUciPrototype(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchStopControl stopControl)
+        public static double ToDepthWithTT(IBoard newBoard, int depth, double alpha, double beta, bool maximizingPlayer, ISearchStopControl stopControl)
         {
             if (depth == 0)
             {
@@ -387,7 +201,7 @@ namespace vergiBlue.Algorithms
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    var searchResult = ToDepthUciPrototype(nextBoard, depth - 1, alpha, beta, false, stopControl);
+                    var searchResult = ToDepthWithTT(nextBoard, depth - 1, alpha, beta, false, stopControl);
                     if (searchResult > value)
                     {
                         value = searchResult;
@@ -425,7 +239,7 @@ namespace vergiBlue.Algorithms
                 for (int i = 0; i < length; i++)
                 {
                     var nextBoard = BoardFactory.CreateFromMove(newBoard, allMoves[i]);
-                    var searchResult = ToDepthUciPrototype(nextBoard, depth - 1, alpha, beta, true, stopControl);
+                    var searchResult = ToDepthWithTT(nextBoard, depth - 1, alpha, beta, true, stopControl);
                     if (searchResult < value)
                     {
                         value = searchResult;

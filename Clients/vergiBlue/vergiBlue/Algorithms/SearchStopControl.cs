@@ -15,6 +15,21 @@ namespace vergiBlue.Algorithms
 
         public string Reason { get; set; } = "";
 
+        /// <summary>
+        /// Only timer control
+        /// </summary>
+        /// <param name="searchTimer"></param>
+        public SearchStopControl(ISearchTimer searchTimer)
+        {
+            _searchTimer = searchTimer;
+            _stopSearchToken = CancellationToken.None;
+        }
+
+        /// <summary>
+        /// Timer control & cancellation support
+        /// </summary>
+        /// <param name="searchTimer"></param>
+        /// <param name="stopSearchToken"></param>
         public SearchStopControl(ISearchTimer searchTimer, CancellationToken stopSearchToken)
         {
             _searchTimer = searchTimer;

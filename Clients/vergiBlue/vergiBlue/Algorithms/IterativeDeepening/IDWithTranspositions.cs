@@ -41,13 +41,9 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             else
             {
                 // Desktop / test search
-
-                // dummy
-                var stopTokenSource = new CancellationTokenSource();
-
                 return IterativeDeepeningWithTT(context.ValidMoves, context.NominalSearchDepth,
                     context.CurrentBoard,
-                    context.IsWhiteTurn, context.MaxTimeMs, stopTokenSource.Token);
+                    context.IsWhiteTurn, context.MaxTimeMs, CancellationToken.None);
             }
         }
         
@@ -83,7 +79,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                 foreach (var move in currentIterationMoves)
                 {
                     var newBoard = BoardFactory.CreateFromMove(board, move);
-                    var evaluation = MiniMax.ToDepthUciPrototype(newBoard, i, alpha, beta, !isMaximizing, stopControl);
+                    var evaluation = MiniMax.ToDepthWithTT(newBoard, i, alpha, beta, !isMaximizing, stopControl);
 
                     if (stopControl.StopSearch())
                     {
