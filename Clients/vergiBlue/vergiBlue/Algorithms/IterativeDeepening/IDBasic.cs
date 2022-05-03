@@ -69,9 +69,16 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             var timer = SearchTimer.Start(timeLimitInMs);
             var stopControl = new SearchStopControl(timer, stopSearchToken);
 
+            if (searchDepth == 0)
+            {
+                throw new ArgumentException("Can't search with search depth limited to 0");
+            }
+
+            // In case depth = 1
+            var initialSearchDepth = Math.Min(2, searchDepth);
 
             // Initial depth 2
-            for (int i = 2; i <= searchDepth; i++)
+            for (int i = initialSearchDepth; i <= searchDepth; i++)
             {
                 var alpha = MiniMaxGeneral.DefaultAlpha;
                 var beta = MiniMaxGeneral.DefaultBeta;

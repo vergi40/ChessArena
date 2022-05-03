@@ -26,10 +26,25 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             if (infinite) maxDepth = 100;
             else if (limits.Depth != 0) maxDepth = limits.Depth;
 
-            // Infinite -> use really large time limit. If not set -> use settings time limit
-            var timeLimit = context.MaxTimeMs;
-            if (infinite) timeLimit = int.MaxValue;
-            else if (limits.Time != 0) timeLimit = limits.Time;
+            // Default = max value (e.g. command was infinite or just depth or nodecount constraints
+            var timeLimit =  int.MaxValue;
+            if (limits.Time != 0) timeLimit = limits.Time;
+            else if (parameters.TurnStartInfo.isWhiteTurn)
+            {
+                if (uciParameters.WhiteTimeLeft > 0)
+                {
+                    // Use default
+                    timeLimit = context.MaxTimeMs;
+                }
+            }
+            else if (!parameters.TurnStartInfo.isWhiteTurn)
+            {
+                if (uciParameters.BlackTimeLeft > 0)
+                {
+                    // Use default
+                    timeLimit = context.MaxTimeMs;
+                }
+            }
 
             return (maxDepth, timeLimit);
         }
