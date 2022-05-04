@@ -8,11 +8,16 @@ using vergiBlue.Pieces;
 
 namespace vergiBlue.Algorithms
 {
+    /// <summary>
+    /// Improvement ideas:
+    /// * Span support and other optimization
+    /// * Advanced ordering with TT
+    /// </summary>
     public static class MoveOrdering
     {
         // ------------
         // Order by light score guessing
-        public static IList<SingleMove> SortMovesByGuessWeight(IList<SingleMove> moves, IBoard board, bool isMaximizing)
+        public static List<SingleMove> SortMovesByGuessWeight(IReadOnlyList<SingleMove> moves, IBoard board, bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
             var list = CreateGuessWeightedList(moves, board, isMaximizing);
@@ -23,7 +28,7 @@ namespace vergiBlue.Algorithms
         /// <summary>
         /// Return weight results for testing
         /// </summary>
-        public static IList<(double weight, SingleMove move)> DebugSortMovesByGuessWeight(IList<SingleMove> moves, IBoard board, bool isMaximizing)
+        public static List<(double weight, SingleMove move)> DebugSortMovesByGuessWeight(IReadOnlyList<SingleMove> moves, IBoard board, bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
             var list = CreateGuessWeightedList(moves, board, isMaximizing);
@@ -39,10 +44,10 @@ namespace vergiBlue.Algorithms
         /// <param name="board"></param>
         /// <param name="isMaximizing"></param>
         /// <returns></returns>
-        private static IList<(double eval, SingleMove move)> CreateGuessWeightedList(IEnumerable<SingleMove> moves,
+        private static List<(double eval, SingleMove move)> CreateGuessWeightedList(IReadOnlyList<SingleMove> moves,
             IBoard board, bool isMaximizing)
         {
-            IList<(double weight, SingleMove move)> list = new List<(double weight, SingleMove move)>();
+            var list = new List<(double weight, SingleMove move)>();
             foreach (var singleMove in moves)
             {
                 var scoreGuess = 0.0;
@@ -105,7 +110,7 @@ namespace vergiBlue.Algorithms
         // -----------
         // Order by evaluation
 
-        public static IList<SingleMove> SortMovesByEvaluation(IList<SingleMove> moves, IBoard board, bool isMaximizing)
+        public static List<SingleMove> SortMovesByEvaluation(IReadOnlyList<SingleMove> moves, IBoard board, bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
             var list = CreateEvaluationList(moves, board, isMaximizing);
@@ -113,7 +118,7 @@ namespace vergiBlue.Algorithms
             return sorted.Select(m => m.move).ToList();
         }
 
-        public static IList<(double weight, SingleMove move)> DebugSortMovesByEvaluation(IList<SingleMove> moves, IBoard board, bool isMaximizing)
+        public static List<(double weight, SingleMove move)> DebugSortMovesByEvaluation(IReadOnlyList<SingleMove> moves, IBoard board, bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
             var list = CreateEvaluationList(moves, board, isMaximizing);
@@ -121,10 +126,10 @@ namespace vergiBlue.Algorithms
             return sorted;
         }
 
-        private static IList<(double eval, SingleMove move)> CreateEvaluationList(IEnumerable<SingleMove> moves,
+        private static List<(double eval, SingleMove move)> CreateEvaluationList(IReadOnlyList<SingleMove> moves,
             IBoard board, bool isMaximizing)
         {
-            IList<(double eval, SingleMove move)> list = new List<(double eval, SingleMove move)>();
+            var list = new List<(double eval, SingleMove move)>();
             foreach (var singleMove in moves)
             {
                 var newBoard = BoardFactory.CreateFromMove(board, singleMove);
@@ -142,7 +147,7 @@ namespace vergiBlue.Algorithms
         /// <param name="evaluationList"></param>
         /// <param name="isMaximizing"></param>
         /// <returns></returns>
-        public static IList<(double weight, SingleMove move)> SortWeightedMovesWithSort(IEnumerable<(double weight, SingleMove move)> evaluationList,
+        public static List<(double weight, SingleMove move)> SortWeightedMovesWithSort(IReadOnlyList<(double weight, SingleMove move)> evaluationList,
             bool isMaximizing)
         {
             // Sort moves by evaluation score they produce
@@ -169,7 +174,15 @@ namespace vergiBlue.Algorithms
             // 
             return sorted;
         }
-        
+
+        public static List<(double weight, SingleMove move)> SortWeightedMovesWithTTSort(
+            IReadOnlyList<(double weight, SingleMove move)> evaluationList,
+            bool isMaximizing)
+        {
+            // TODO move ordering with help of transposition tables entries
+            return SortWeightedMovesWithSort(evaluationList, isMaximizing);
+        }
+
         /// <summary>
         /// Uses OrderBy.
         /// Weight can be any abstract measure of evaluation. Positivive is better for maximizing.
@@ -177,8 +190,8 @@ namespace vergiBlue.Algorithms
         /// <param name="evaluationList"></param>
         /// <param name="isMaximizing"></param>
         /// <returns></returns>
-        public static IList<(double weight, SingleMove move)> SortWeightedMovesWithOrderBy(
-            IEnumerable<(double weight, SingleMove move)> evaluationList, bool isMaximizing)
+        public static List<(double weight, SingleMove move)> SortWeightedMovesWithOrderBy(
+            IReadOnlyList<(double weight, SingleMove move)> evaluationList, bool isMaximizing)
         {
             var sorted = evaluationList.ToList();
             if (isMaximizing)

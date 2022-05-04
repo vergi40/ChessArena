@@ -7,12 +7,48 @@ using log4net;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems.TranspositionTables;
+using vergiBlue.Logic;
 
 namespace vergiBlue.Algorithms.IterativeDeepening
 {
     internal static class Common
     {
         private static readonly ILog _logger = LogManager.GetLogger(typeof(Common));
+
+        public static (int maxDepth, int timeLimit) DefineDepthAndTime(BoardContext context, SearchParameters parameters)
+        {
+            var uciParameters = parameters.UciParameters;
+            var limits = uciParameters.SearchLimits;
+
+            // Infinite -> use really large depth. Not set -> use some default
+            var infinite = uciParameters.Infinite;
+            int maxDepth = 11;
+            if (infinite) maxDepth = 100;
+            else if (limits.Depth != 0) maxDepth = limits.Depth;
+
+            // Default = max value (e.g. command was infinite or just depth or nodecount constraints
+            var timeLimit =  int.MaxValue;
+            if (limits.Time != 0) timeLimit = limits.Time;
+            else if (parameters.TurnStartInfo.isWhiteTurn)
+            {
+                if (uciParameters.WhiteTimeLeft > 0)
+                {
+                    // Use default
+                    timeLimit = context.MaxTimeMs;
+                }
+            }
+            else if (!parameters.TurnStartInfo.isWhiteTurn)
+            {
+                if (uciParameters.BlackTimeLeft > 0)
+                {
+                    // Use default
+                    timeLimit = context.MaxTimeMs;
+                }
+            }
+
+            return (maxDepth, timeLimit);
+        }
+
         public static void AddIterativeDeepeningResultDiagnostics(int depthUsed, int totalMoveCount, int searchMoveCount, double evaluation, SingleMove? move = null, IBoard? board = null)
         {
             if (searchMoveCount < totalMoveCount)

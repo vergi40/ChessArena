@@ -123,6 +123,8 @@ namespace vergiBlue.BoardModel
             {
                 var fullMoveNumber = int.Parse(components[5]);
                 board.Shared.GameTurnCount = fullMoveNumber * 2;
+
+                if (!isWhiteTurn) board.Shared.GameTurnCount += 1;
             }
 
             board.InitializeSubSystems();

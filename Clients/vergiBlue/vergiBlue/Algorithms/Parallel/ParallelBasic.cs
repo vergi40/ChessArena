@@ -10,7 +10,7 @@ namespace vergiBlue.Algorithms.Parallel
 {
     internal class ParallelBasic : IAlgorithm
     {
-        public SingleMove CalculateBestMove(BoardContext context)
+        public SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null)
         {
             var evaluated = GetMoveScoreListParallel(context.ValidMoves, context.NominalSearchDepth, context.CurrentBoard,
                 context.IsWhiteTurn);
@@ -29,6 +29,7 @@ namespace vergiBlue.Algorithms.Parallel
             var evaluated = new List<(double, SingleMove)>();
             var syncObject = new object();
             var timer = SearchTimer.Start(timeLimitInMs);
+            var stopControl = new SearchStopControl(timer);
 
             // TODO maybe refactor to some task factories to simplify main loop
 
@@ -38,7 +39,7 @@ namespace vergiBlue.Algorithms.Parallel
                 (move, loopState, localState) => // Predefined lambda expression (Func<SingleMove, ParallelLoopState, thread-local variable, body>)
                 {
                     var newBoard = BoardFactory.CreateFromMove(board, move);
-                    var value = MiniMax.ToDepth(newBoard, searchDepth, MiniMaxGeneral.DefaultAlpha, MiniMaxGeneral.DefaultBeta, !isMaximizing, timer);
+                    var value = MiniMax.ToDepth(newBoard, searchDepth, MiniMaxGeneral.DefaultAlpha, MiniMaxGeneral.DefaultBeta, !isMaximizing, stopControl);
                     localState.Add((value, move));
                     return localState;
                 },
