@@ -224,7 +224,7 @@ namespace vergiBlue.BoardModel.Subsystems
         /// <returns></returns>
         public IList<SingleMove> MovesWithOrdering(bool forWhite, bool heavyOrdering, bool kingInDanger = false)
         {
-            IList<SingleMove> list = ValidMovesQuick(forWhite).ToList();
+            var list = ValidMovesQuick(forWhite).ToList();
 
             if (heavyOrdering) return MoveOrdering.SortMovesByEvaluation(list, _board, forWhite);
             return MoveOrdering.SortMovesByGuessWeight(list, _board, forWhite);
@@ -236,19 +236,22 @@ namespace vergiBlue.BoardModel.Subsystems
         /// </summary>
         /// <param name="forWhite"></param>
         /// <param name="heavyOrdering">Sort by light guess weight vs evaluate each new position.</param>
+        /// <param name="moveSpan">Ref to stack memory, no need for ref keyword</param>
         /// <returns></returns>
         public void MovesWithOrderingSpan(bool forWhite, bool heavyOrdering, Span<MoveStruct> moveSpan, out int spanLength)
         {
-            IList<SingleMove> moveList = ValidMovesQuick(forWhite).ToList();
-            spanLength = moveList.Count;
+            var moveList = ValidMovesQuick(forWhite).ToList();
+
+            // TODO create span first, then order? this way will skip couple ToList() calls
 
             if (heavyOrdering) moveList = MoveOrdering.SortMovesByEvaluation(moveList, _board, forWhite);
             else moveList = MoveOrdering.SortMovesByGuessWeight(moveList, _board, forWhite);
 
+            spanLength = moveList.Count;
             FillMoveSpan(moveSpan, moveList);
         }
         
-        public static void FillSpan<T>(Span<T> span, IList<T> list)
+        public static void FillSpan<T>(Span<T> span, IReadOnlyList<T> list)
         {
             for (int i = 0; i < list.Count; i++)
             {
@@ -256,7 +259,7 @@ namespace vergiBlue.BoardModel.Subsystems
             }
         }
 
-        public static void FillMoveSpan(Span<MoveStruct> span, IList<SingleMove> list)
+        public static void FillMoveSpan(Span<MoveStruct> span, IReadOnlyList<SingleMove> list)
         {
             for (int i = 0; i < list.Count; i++)
             {
