@@ -169,7 +169,15 @@ namespace vergiBlue.Algorithms
             // 
             return sorted;
         }
-        
+
+        public static IList<(double weight, SingleMove move)> SortWeightedMovesWithTTSort(
+            IEnumerable<(double weight, SingleMove move)> evaluationList,
+            bool isMaximizing)
+        {
+            // TODO move ordering with help of transposition tables entries
+            return SortWeightedMovesWithSort(evaluationList, isMaximizing);
+        }
+
         /// <summary>
         /// Uses OrderBy.
         /// Weight can be any abstract measure of evaluation. Positivive is better for maximizing.
