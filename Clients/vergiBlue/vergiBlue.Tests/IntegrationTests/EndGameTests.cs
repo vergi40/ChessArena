@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using CommonNetStandard.Interface;
@@ -14,11 +15,6 @@ namespace IntegrationTests
     [TestFixture]
     public class EndGameTests
     {
-        public void ObviousCheckMate_ShouldEndGracefully()
-        {
-            //
-        }
-
         /// <summary>
         /// This game situation is where most of regression bugs appear
         /// </summary>
@@ -51,9 +47,13 @@ namespace IntegrationTests
             var settings = new LogicSettings() {TimeLimitInMs = timeLimit};
             white.Settings = settings;
             black.Settings = settings;
+            
+            PlayUntilEndAssert(white, black, timeLimit, turnLimit);
+        }
 
+        private void PlayUntilEndAssert(Logic white, Logic black, int timeLimit, int turnLimit)
+        {
             bool checkMate = false;
-
             for (int i = 0; i < turnLimit; i++)
             {
                 var whiteMove = CreateMoveAndThrowIfTimeExceeded(white, timeLimit);
@@ -64,7 +64,7 @@ namespace IntegrationTests
                 }
 
                 black.ReceiveMove(whiteMove);
-                
+
 
                 var blackMove = CreateMoveAndThrowIfTimeExceeded(black, timeLimit);
                 if (blackMove.CheckMate)
@@ -98,5 +98,107 @@ namespace IntegrationTests
             throw new TimeoutException("Didn't receive move in configured timeout");
         }
 
+
+        [Test]
+        public void DoubleRook_Distance1_ShouldCheckMateGracefully()
+        {
+            // Start situation
+            // 8       K  
+            // 7 r 
+            // 6r      
+            // 5    
+            // 4
+            // 3
+            // 2
+            // 1       k
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "h8"),
+                new King(false, "a8"),
+                new Rook(false, "b7"),
+                new Rook(false, "a6"),
+            };
+            var board = BoardFactory.CreateFromPieces(pieces);
+
+            var white = LogicFactory.CreateForTest(true, board);
+            var black = LogicFactory.CreateForTest(false, board);
+
+            var timeLimit = 2000;
+            var turnLimit = 5;
+            var settings = new LogicSettings() { TimeLimitInMs = timeLimit };
+            white.Settings = settings;
+            black.Settings = settings;
+
+            PlayUntilEndAssert(white, black, timeLimit, turnLimit);
+        }
+
+        [Test]
+        public void DoubleRook_Distance2_ShouldCheckMateGracefully()
+        {
+            // Start situation
+            // 8       K  
+            // 7  
+            // 6r      
+            // 5 r   
+            // 4
+            // 3
+            // 2
+            // 1       k
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "h8"),
+                new King(false, "a8"),
+                new Rook(false, "b5"),
+                new Rook(false, "a6"),
+            };
+            var board = BoardFactory.CreateFromPieces(pieces);
+
+            var white = LogicFactory.CreateForTest(true, board);
+            var black = LogicFactory.CreateForTest(false, board);
+
+            var timeLimit = 2000;
+            var turnLimit = 7;
+            var settings = new LogicSettings() { TimeLimitInMs = timeLimit };
+            white.Settings = settings;
+            black.Settings = settings;
+
+            PlayUntilEndAssert(white, black, timeLimit, turnLimit);
+        }
+
+        [Test]
+        public void DoubleRook_Distance3_ShouldCheckMateGracefully()
+        {
+            // Start situation
+            // 8       K  
+            // 7 
+            // 6     
+            // 5 r   
+            // 4r
+            // 3
+            // 2
+            // 1       k
+            //  ABCDEFGH
+            var pieces = new List<PieceBase>
+            {
+                new King(true, "h8"),
+                new King(false, "a8"),
+                new Rook(false, "b5"),
+                new Rook(false, "a4"),
+            };
+            var board = BoardFactory.CreateFromPieces(pieces);
+
+            var white = LogicFactory.CreateForTest(true, board);
+            var black = LogicFactory.CreateForTest(false, board);
+
+            var timeLimit = 2000;
+            var turnLimit = 9;
+            var settings = new LogicSettings() { TimeLimitInMs = timeLimit };
+            white.Settings = settings;
+            black.Settings = settings;
+
+            PlayUntilEndAssert(white, black, timeLimit, turnLimit);
+        }
     }
 }
