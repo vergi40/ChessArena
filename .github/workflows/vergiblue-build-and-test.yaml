@@ -52,21 +52,7 @@ jobs:
         os: [windows-latest]
 
     steps:
-    # See https://github.com/actions/checkout
-    - uses: actions/checkout@v3
-    - name: Setup .NET Core
-      # See https://github.com/actions/setup-dotnet
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
-    - name: Install dependencies
-      run: dotnet restore
-      
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-    
-    - name: Test
+    - name: Run unit tests
       run: dotnet test vergiBlue.Tests/UnitTests --no-restore --verbosity normal
   
   # Separate integration tests to own job
@@ -80,22 +66,8 @@ jobs:
       matrix:
         os: [windows-latest]
 
-    steps:
-    # See https://github.com/actions/checkout
-    - uses: actions/checkout@v3
-    - name: Setup .NET Core
-      # See https://github.com/actions/setup-dotnet
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
-    - name: Install dependencies
-      run: dotnet restore
-      
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-    
-    - name: Test
+    steps:    
+    - name: Run integration tests
       run: dotnet test vergiBlue.Tests/IntegrationTests --no-restore --verbosity normal
 
   # TODO create separate workflow when publishing tag. Run benchmarks https://github.com/dotnet/BenchmarkDotNet/issues/1378
