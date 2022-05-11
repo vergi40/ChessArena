@@ -3,7 +3,8 @@ name: vergiblue build and test
 on:
   workflow_dispatch:
   push:
-    branches: [ dev ]
+    # temp - run always
+    # branches: [ dev ]
     paths:
     - '**.cs'
     - '**.csproj'
@@ -17,9 +18,9 @@ defaults:
     working-directory: Clients/vergiBlue
 
 jobs:
-  build-and-test:
+  build:
 
-    name: vergiblue-build-and-test-${{matrix.os}}
+    name: vergiblue-build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -40,10 +41,61 @@ jobs:
       
     - name: Build
       run: dotnet build --configuration Release --no-restore
+
+  unit-test:
+
+    name: vergiblue-unit-test-${{matrix.os}}
+    needs: vergiblue-build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+
+    steps:
+    # See https://github.com/actions/checkout
+    - uses: actions/checkout@v3
+    - name: Setup .NET Core
+      # See https://github.com/actions/setup-dotnet
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
     
     - name: Test
       run: dotnet test vergiBlue.Tests/UnitTests --no-restore --verbosity normal
+  
   # Separate integration tests to own job
   # Add requirement job needs: build-and-test
+  integration-test:
+
+    name: vergiblue-integration-test-${{matrix.os}}
+    needs: vergiblue-build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+
+    steps:
+    # See https://github.com/actions/checkout
+    - uses: actions/checkout@v3
+    - name: Setup .NET Core
+      # See https://github.com/actions/setup-dotnet
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Test
+      run: dotnet test vergiBlue.Tests/IntegrationTests --no-restore --verbosity normal
 
   # TODO create separate workflow when publishing tag. Run benchmarks https://github.com/dotnet/BenchmarkDotNet/issues/1378
