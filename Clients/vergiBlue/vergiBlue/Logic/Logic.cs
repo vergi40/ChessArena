@@ -19,6 +19,10 @@ namespace vergiBlue.Logic
 
         // Game strategic variables
         public IMove? LatestOpponentMove { get; set; }
+
+        /// <summary>
+        /// Note: only accurate from start if board not generated from fen string
+        /// </summary>
         public IList<IMove> GameHistory { get; set; } = new List<IMove>();
 
         // Just initialize to any - will be overridden
@@ -34,6 +38,12 @@ namespace vergiBlue.Logic
         /// search.
         /// </summary>
         public LogicSettings Settings { get; set; } = new LogicSettings();
+
+        /// <summary>
+        /// For testing. Don't want to use opening book for arbitrary test situations.
+        /// False only when initializing default board
+        /// </summary>
+        public bool SkipOpeningChecks { get; set; } = true;
 
         private AlgorithmController _algorithmController { get; } = new AlgorithmController();
 
@@ -52,6 +62,7 @@ namespace vergiBlue.Logic
         public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
         {
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
+            SkipOpeningChecks = true;
             _logger.Info("Logic initialized");
         }
 
@@ -63,6 +74,7 @@ namespace vergiBlue.Logic
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             Board = BoardFactory.CreateClone(board);
             Board.Shared.Testing = true;
+            SkipOpeningChecks = true;
             _logger.Info("Logic initialized");
         }
 
@@ -72,10 +84,11 @@ namespace vergiBlue.Logic
             if (overrideBoard != null)
             {
                 Board = BoardFactory.CreateClone(overrideBoard);
+                SkipOpeningChecks = true;
             }
             else
             {
-                Board = BoardFactory.CreateDefault();
+                SetDefaultBoard();
             }
 
             _logger.Info("Logic initialized");
@@ -104,6 +117,14 @@ namespace vergiBlue.Logic
             Collector.Instance.CollectAndClear();
         }
 
+        /// <summary>
+        /// Set board to default chess opening board
+        /// </summary>
+        public void SetDefaultBoard()
+        {
+            Board = BoardFactory.CreateDefault();
+            SkipOpeningChecks = false;
+        }
 
         public void SetBoard(string startPosOrFenBoard, List<string> moves)
         {
@@ -111,22 +132,26 @@ namespace vergiBlue.Logic
             if (startPosOrFenBoard.Equals("startpos"))
             {
                 // TODO separate static system init
-                Board = BoardFactory.CreateDefault();
+                SetDefaultBoard();
                 isWhite = true;
             }
             else
             {
                 Board = BoardFactory.CreateFromFen(startPosOrFenBoard, out isWhite);
                 IsPlayerWhite = isWhite;
+                SkipOpeningChecks = true;
             }
-
-            Board.Strategic.SkipOpeningChecks = true;
 
             foreach (var move in moves)
             {
                 var tempMove = SingleMoveFactory.Create(move);
                 var fullMove = Board.CollectMoveProperties(tempMove);
                 Board.ExecuteMove(fullMove);
+
+                // Add to logic history - in case of opening book
+                var interfaceMove = fullMove.ToInterfaceMove();
+                GameHistory.Add(interfaceMove);
+
                 isWhite = !isWhite;
             }
 
@@ -135,17 +160,16 @@ namespace vergiBlue.Logic
         }
 
         /// <summary>
-        /// Create move from arbitral situation
+        /// Create move from arbitral situation.
+        /// If opening book should be checked, configure it with <see cref="SkipOpeningChecks"/>
         /// </summary>
         /// <param name="searchDepth"></param>
-        /// <param name="checkOpenings">For testing. Don't want to use opening book for arbitrary test situations. </param>
         /// <param name="previousMoveCount"></param>
         /// <returns></returns>
-        public IPlayerMove CreateMoveWithDepth(int searchDepth, bool checkOpenings = false, int previousMoveCount = 0)
+        public IPlayerMove CreateMoveWithDepth(int searchDepth, int previousMoveCount = 0)
         {
             Board.Shared.GameTurnCount = previousMoveCount;
             Board.Strategic.TurnCountInCurrentDepth = previousMoveCount;
-            Board.Strategic.SkipOpeningChecks = !checkOpenings;
             return CreateNewMove(searchDepth);
         }
 
@@ -176,7 +200,7 @@ namespace vergiBlue.Logic
             List<SingleMove> validMoves = GetValidMoves();
             
             // Best move
-            var aiMove = _algorithmController.GetBestMove(Board, validMoves);
+            var aiMove = _algorithmController.GetBestMove(Board, validMoves, SkipOpeningChecks);
             Validator.ValidateMoveAndColor(Board, aiMove, IsPlayerWhite);
 
             if (Board.Shared.Transpositions.Tables.Count > 0)
@@ -321,7 +345,7 @@ namespace vergiBlue.Logic
             List<SingleMove> validMoves = GetValidMoves();
 
             // Best move
-            var aiMove = _algorithmController.GetBestMove(Board, validMoves);
+            var aiMove = _algorithmController.GetBestMove(Board, validMoves, SkipOpeningChecks);
             Validator.ValidateMoveAndColor(Board, aiMove, IsPlayerWhite);
 
             if (Board.Shared.Transpositions.Tables.Count > 0)
@@ -337,9 +361,7 @@ namespace vergiBlue.Logic
             var (analyticsOutput, previousData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
             PreviousData = previousData;
 
-            var historyMove = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
-                analyticsOutput);
-            GameHistory.Add(historyMove.Move);
+            // NOTE: never add to move history, since uci game is not played continuously to same board
             return moveWithData;
         }
     }

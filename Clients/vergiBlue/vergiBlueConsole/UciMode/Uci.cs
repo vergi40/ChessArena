@@ -10,6 +10,17 @@ namespace vergiBlueConsole.UciMode
     /// </summary>
     internal class Uci
     {
+        private static bool IsDebug
+        {
+            get
+            {
+#if DEBUG
+                return true;
+#endif
+                return false;
+            }
+        }
+
         private static readonly ILog _logger = LogManager.GetLogger(typeof(Uci));
         private static UciInput _input = new UciInput(null);
 
@@ -23,6 +34,13 @@ namespace vergiBlueConsole.UciMode
             WriteLine("id author Teemu Laine");
 
             WriteLine("uciok");
+
+            if (IsDebug)
+            {
+                // Use direct Console instead of logging writeline method
+                Console.WriteLine("DEBUG Command legend: isready, ucinewgame, position [startpos/fen] moves ..., stop, exit ");
+                Console.WriteLine("DEBUG Command legend: go [infinite, depth n, movetime n, nodes n, mate n, winc n, binc n]");
+            }
 
             if (!RunOptions()) return;
 

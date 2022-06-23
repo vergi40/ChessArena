@@ -29,13 +29,6 @@ namespace vergiBlue.BoardModel
         public bool BlackRightCastlingValid { get; set; } = true;
 
         /// <summary>
-        /// For testing. Don't want to use opening book for arbitrary test situations.
-        /// False only when initializing default board
-        /// TODO might belong to Logic-side
-        /// </summary>
-        public bool SkipOpeningChecks { get; set; } = true;
-
-        /// <summary>
         /// If opponent pawn did a 2 square move, add tile behind it as en passant target. Otherwise null
         /// </summary>
         public (int column, int row)? EnPassantPossibility { get; set; } = null;
@@ -55,7 +48,6 @@ namespace vergiBlue.BoardModel
             BlackLeftCastlingValid = previous.BlackLeftCastlingValid;
             BlackRightCastlingValid = previous.BlackRightCastlingValid;
             EnPassantPossibility = previous.EnPassantPossibility;
-            SkipOpeningChecks = previous.SkipOpeningChecks;
         }
 
 

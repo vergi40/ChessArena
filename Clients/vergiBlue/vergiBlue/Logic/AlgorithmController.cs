@@ -12,7 +12,7 @@ namespace vergiBlue.Logic
 {
     interface IAlgorithm
     {
-        SingleMove CalculateBestMove(BoardContext context);
+        SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null);
     }
 
     /// <summary>
@@ -42,8 +42,10 @@ namespace vergiBlue.Logic
         private TurnStartInfo _turnInfo { get; set; } =
             new(false, new List<IMove>(), new LogicSettings(), new DiagnosticsData());
 
-        // TODO quick hack
-        private SearchParameters? _searchParameters { get; set; }
+        /// <summary>
+        /// If (UCI) search parameters defined, they override normal boardContext parameters
+        /// </summary>
+        private SearchParameters? _searchParameters { get; set; } = null;
 
         // time limit
         // max depth
@@ -89,10 +91,10 @@ namespace vergiBlue.Logic
         // Update game phase
 
 
-        public SingleMove GetBestMove(IBoard board, IReadOnlyList<SingleMove> validMoves)
+        public SingleMove GetBestMove(IBoard board, IReadOnlyList<SingleMove> validMoves, bool skipOpeningChecks)
         {
             // If still at opening phase, skip all unnecessarities
-            if (_openingPhase && !board.Strategic.SkipOpeningChecks)
+            if (!skipOpeningChecks && _openingPhase)
             {
                 var openingMove = _openings.NextMove(_moveHistory);
                 if (openingMove != null)
@@ -106,17 +108,10 @@ namespace vergiBlue.Logic
                 }
             }
 
-            if (_searchParameters == null)
-            {
-                return GetBestMoveOld(board, validMoves);
-            }
-            else
-            {
-                return GetBestMoveUci(board, validMoves, _searchParameters);
-            }
+            return GetBestMove(board, validMoves);
         }
 
-        private SingleMove GetBestMoveOld(IBoard board, IReadOnlyList<SingleMove> validMoves)
+        private SingleMove GetBestMove(IBoard board, IReadOnlyList<SingleMove> validMoves)
         {
             // Select wanted algorithm and calculate
             var depthResult = _contextAnalyzer.DecideSearchDepth(validMoves, board);
@@ -135,33 +130,11 @@ namespace vergiBlue.Logic
             };
 
             Collector.AddCustomMessage($"Algorithm: {_algorithm.GetType().Name}");
-            return _algorithm.CalculateBestMove(context);
+
+            // Note: if _searchParameters != null, it overrides some of the settings
+            return _algorithm.CalculateBestMove(context, _searchParameters);
         }
-
-        private SingleMove GetBestMoveUci(IBoard board, IReadOnlyList<SingleMove> validMoves, SearchParameters parameters)
-        {
-            // WIP if depth < 3?
-            var algorithm = new IDWithUciParameters();
-            
-            // WIP 
-            var maxDepth = 10;
-
-            var context = new BoardContext()
-            {
-                // Calculating for ai - so this should always match?
-                // TODO what if we want to calculate for any player?
-                IsWhiteTurn = _currentTurnIsWhite,
-                CurrentBoard = board,
-                ValidMoves = validMoves,
-                NominalSearchDepth = maxDepth,
-                MaxTimeMs = _turnInfo.settings.TimeLimitInMs
-            };
-
-            Collector.AddCustomMessage($"Algorithm: {_algorithm.GetType().Name}");
-
-            return algorithm.CalculateBestMove(context, parameters);
-        }
-
+        
         private void SetAlgorithm(int searchDepth, GamePhase gamePhase)
         {
             if (_turnInfo.settings.UseParallelComputation)

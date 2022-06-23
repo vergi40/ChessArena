@@ -7,12 +7,48 @@ using log4net;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems.TranspositionTables;
+using vergiBlue.Logic;
 
 namespace vergiBlue.Algorithms.IterativeDeepening
 {
     internal static class Common
     {
         private static readonly ILog _logger = LogManager.GetLogger(typeof(Common));
+
+        public static (int maxDepth, int timeLimit) DefineDepthAndTime(BoardContext context, SearchParameters parameters)
+        {
+            var uciParameters = parameters.UciParameters;
+            var limits = uciParameters.SearchLimits;
+
+            // Infinite -> use really large depth. Not set -> use some default
+            var infinite = uciParameters.Infinite;
+            int maxDepth = 11;
+            if (infinite) maxDepth = 100;
+            else if (limits.Depth != 0) maxDepth = limits.Depth;
+
+            // Default = max value (e.g. command was infinite or just depth or nodecount constraints
+            var timeLimit =  int.MaxValue;
+            if (limits.Time != 0) timeLimit = limits.Time;
+            else if (parameters.TurnStartInfo.isWhiteTurn)
+            {
+                if (uciParameters.WhiteTimeLeft > 0)
+                {
+                    // Use default
+                    timeLimit = context.MaxTimeMs;
+                }
+            }
+            else if (!parameters.TurnStartInfo.isWhiteTurn)
+            {
+                if (uciParameters.BlackTimeLeft > 0)
+                {
+                    // Use default
+                    timeLimit = context.MaxTimeMs;
+                }
+            }
+
+            return (maxDepth, timeLimit);
+        }
+
         public static void AddIterativeDeepeningResultDiagnostics(int depthUsed, int totalMoveCount, int searchMoveCount, double evaluation, SingleMove? move = null, IBoard? board = null)
         {
             if (searchMoveCount < totalMoveCount)
@@ -41,10 +77,10 @@ namespace vergiBlue.Algorithms.IterativeDeepening
         /// <param name="rootMove"></param>
         /// <param name="rootIsMaximizing"></param>
         /// <returns></returns>
-        public static List<ISingleMove> GetPrincipalVariation(IBoard board, ISingleMove rootMove, bool rootIsMaximizing)
+        public static List<ISingleMove> GetPrincipalVariation(int maxDepth, IBoard board, ISingleMove rootMove, bool rootIsMaximizing)
         {
             var transpositions = board.Shared.Transpositions;
-            var result = new List<ISingleMove>();
+            var result = new List<ISingleMove>(){rootMove};
             var nextMove = rootMove;
             var nextIsMaximizing = rootIsMaximizing;
 
@@ -54,7 +90,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
 
             try
             {
-                while(true)
+                for(int i = 0; i < maxDepth; i++)
                 {
                     nextBoard = BoardFactory.CreateFromMove(nextBoard, nextMove);
                     nextIsMaximizing = !nextIsMaximizing;
@@ -93,16 +129,16 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             return result;
         }
 
-        public static string GetPrincipalVariationAsString(IBoard board, ISingleMove rootMove, bool rootIsMaximizing)
+        public static string GetPrincipalVariationAsString(int maxDepth, IBoard board, ISingleMove rootMove, bool rootIsMaximizing)
         {
-            var pv = GetPrincipalVariation(board, rootMove, rootIsMaximizing);
+            var pv = GetPrincipalVariation(maxDepth, board, rootMove, rootIsMaximizing);
             return string.Join(", ", pv.Select(move => move.ToCompactString()));
         }
 
-        public static void AddPVDiagnostics(int depthUsed, IBoard board, ISingleMove bestMove, bool rootIsMaximizing)
+        public static void AddPVDiagnostics(int maxDepth, IBoard board, ISingleMove bestMove, bool rootIsMaximizing)
         {
-            var pv = GetPrincipalVariationAsString(board, bestMove, rootIsMaximizing);
-            var message = $"[PV] Depth: {depthUsed}, {pv}";
+            var pv = GetPrincipalVariationAsString(maxDepth, board, bestMove, rootIsMaximizing);
+            var message = $"[PV] Depth: {maxDepth}, {pv}";
             
             Collector.AddCustomMessage($"{message}");
         }

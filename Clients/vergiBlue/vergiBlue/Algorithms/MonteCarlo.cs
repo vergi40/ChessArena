@@ -9,7 +9,7 @@ namespace vergiBlue.Algorithms
 {
     internal class MonteCarlo : IAlgorithm
     {
-        public SingleMove CalculateBestMove(BoardContext context)
+        public SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null)
         {
             throw new NotImplementedException();
         }
