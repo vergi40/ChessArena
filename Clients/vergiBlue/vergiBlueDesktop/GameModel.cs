@@ -6,7 +6,8 @@ using System.Windows.Media;
 using CommonNetStandard.Client;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
@@ -21,7 +22,7 @@ namespace vergiBlueDesktop
     /// </summary>
     public class GameModel
     {
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(GameModel));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<GameModel>();
         
         private int TurnCount { get; set; } = 0;
         
@@ -84,6 +85,10 @@ namespace vergiBlueDesktop
         /// </summary>
         private void InitializeEnvironment(bool playerIsWhite, bool isWhiteTurn, IBoard initializedBoard = null)
         {
+            _logger.LogInformation("---");
+            _logger.LogInformation($"Starting new game. {nameof(playerIsWhite)}: {playerIsWhite}. " +
+                                   $"{nameof(isWhiteTurn)}: {isWhiteTurn}. " +
+                                   $"Default start board: {initializedBoard == null}");
             TurnCount = 0;
             var usingDefaultStartBoard = false;
             if (initializedBoard == null)
@@ -142,7 +147,7 @@ namespace vergiBlueDesktop
                     }
                     catch (Exception e)
                     {
-                        _logger.Error(e.ToString());
+                        _logger.LogError(e, "Exception in engine move");
                         _viewModel.UpdateAiDiagnostics($"Error in AI move: {e.Message}");
                         
                         // TODO return error move
