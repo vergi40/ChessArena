@@ -4,7 +4,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
@@ -42,7 +43,7 @@ namespace vergiBlueDesktop.Views
     /// </summary>
     public class MainViewModel : NotifyPropertyBase
     {
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(MainViewModel));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<MainViewModel>();
         private bool _gameStarted = false;
         private bool _isBusy;
 
@@ -257,7 +258,7 @@ namespace vergiBlueDesktop.Views
 
         public void AppendInfoText(string text)
         {
-            _logger.Info($"Non-game event: {text}");
+            _logger.LogInformation($"Non-game event: {text}");
             History.Insert(0, text);
         }
 
@@ -270,7 +271,7 @@ namespace vergiBlueDesktop.Views
 
         public void AppendHistory(string message)
         {
-            _logger.Info($"{nameof(History)}: {message}");
+            _logger.LogInformation($"{nameof(History)}: {message}");
             History.Insert(0, message);
         }
         
@@ -287,7 +288,7 @@ namespace vergiBlueDesktop.Views
             
             AiMoveDiagnostics.Clear();
 
-            _logger.Info($"{nameof(AiMoveDiagnostics)}: {dataString}");
+            _logger.LogInformation($"{nameof(AiMoveDiagnostics)}: {dataString}");
             var list = dataString.Split(". ");
             foreach (var item in list)
             {
