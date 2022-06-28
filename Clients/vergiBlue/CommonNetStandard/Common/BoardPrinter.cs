@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using CommonNetStandard;
 using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace CommonNetStandard.Common
 {
     public class BoardPrinter
     {
-        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(BoardPrinter));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<BoardPrinter>();
         private ConsoleColors Colors { get; }
         public const string PreviousTileValue = "[ ]";
 
