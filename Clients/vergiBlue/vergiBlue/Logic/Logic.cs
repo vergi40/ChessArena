@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 using CommonNetStandard.Client;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue.Algorithms;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
@@ -15,7 +16,7 @@ namespace vergiBlue.Logic
 {
     public class Logic : LogicBase
     {
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(Logic));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Logic>();
 
         // Game strategic variables
         public IMove? LatestOpponentMove { get; set; }
@@ -63,7 +64,7 @@ namespace vergiBlue.Logic
         {
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             SkipOpeningChecks = true;
-            _logger.Info("Logic initialized");
+            _logger.LogInformation("Logic initialized");
         }
 
         /// <summary>
@@ -75,7 +76,7 @@ namespace vergiBlue.Logic
             Board = BoardFactory.CreateClone(board);
             Board.Shared.Testing = true;
             SkipOpeningChecks = true;
-            _logger.Info("Logic initialized");
+            _logger.LogInformation("Logic initialized");
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
@@ -91,7 +92,7 @@ namespace vergiBlue.Logic
                 SetDefaultBoard();
             }
 
-            _logger.Info("Logic initialized");
+            _logger.LogInformation("Logic initialized");
 
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
@@ -175,10 +176,10 @@ namespace vergiBlue.Logic
 
         public override IPlayerMove CreateMove()
         {
-            _logger.Info("Starting create move operations...");
+            _logger.LogInformation("Starting create move operations...");
             var bestMove = CreateNewMove();
             var inner = bestMove.Move;
-            _logger.Info($"Created move {inner.StartPosition}{inner.EndPosition}{SingleMove.ConvertPromotion(inner.PromotionResult)}");
+            _logger.LogInformation($"Created move {inner.StartPosition}{inner.EndPosition}{SingleMove.ConvertPromotion(inner.PromotionResult)}");
             
             return bestMove;
         }
@@ -292,7 +293,7 @@ namespace vergiBlue.Logic
 
             var movesSorted = validMoves.Select(m => m.ToCompactString()).OrderBy(m => m);
             
-            _logger.Info($"{validMoves.Count} valid moves found: {string.Join(", ", movesSorted)}.");
+            _logger.LogInformation($"{validMoves.Count} valid moves found: {string.Join(", ", movesSorted)}.");
             Collector.AddCustomMessage($"{validMoves.Count} valid moves found.");
             return validMoves;
         }
@@ -300,7 +301,7 @@ namespace vergiBlue.Logic
         public sealed override void ReceiveMove(IMove? opponentMove)
         {
             LatestOpponentMove = opponentMove ?? throw new ArgumentException($"Received null move. Error or game has ended.");
-            _logger.Info(
+            _logger.LogInformation(
                 $"Received move {opponentMove.StartPosition}{opponentMove.EndPosition}{SingleMove.ConvertPromotion(opponentMove.PromotionResult)}");
 
             // Basic validation

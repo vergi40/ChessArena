@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using CommonNetStandard.Interface;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel.Subsystems;
 using vergiBlue.Pieces;
@@ -11,7 +12,7 @@ namespace vergiBlue.BoardModel
 {
     public class Board : IBoard
     {
-        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(Board));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Board>();
 
         /// <summary>
         /// [column,row}
