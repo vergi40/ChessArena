@@ -3,19 +3,17 @@ using System.Reflection;
 using CommonNetStandard;
 using CommandLine;
 using CommonNetStandard.Client;
-using log4net;
-using log4net.Config;
+using CommonNetStandard.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using vergiBlue.ConsoleTools;
 using vergiBlueConsole.UciMode;
-
-[assembly: XmlConfigurator(ConfigFile = "log4net.config")]
 
 namespace vergiBlue
 {
     class Program
     {
-        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(Program));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Program>();
 
         // Program is singleton static so static properties should be ok
         private static string? _currentVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3);
@@ -25,7 +23,7 @@ namespace vergiBlue
         private static string _port { get; set; }
         private static int _minimumDelayBetweenMoves { get; set; } = 0;
 
-        private static void Log(string message) => Logger.LogWithConsole(message, _localLogger);
+        private static void Log(string message) => _logger.LogInformation(message);
 
         private static string _fullAddress => $"{_address}:{_port}";
 
