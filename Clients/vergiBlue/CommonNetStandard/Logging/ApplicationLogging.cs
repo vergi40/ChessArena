@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Serilog;
+using Serilog.Events;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace CommonNetStandard.Logging
@@ -20,6 +21,8 @@ namespace CommonNetStandard.Logging
         private static void ConfigureLogger(ILoggerFactory loggerFactory)
         {
             // TODO serilog
+            // TODO if namespace is vergiBlueConsole, write to console infolevel and upwards
+            // Debug should be written to file
 
         }
 
@@ -30,7 +33,7 @@ namespace CommonNetStandard.Logging
                 if (_loggerFactory == null)
                 {
                     var serilogLogger = new LoggerConfiguration().MinimumLevel.Debug()
-                        .WriteTo.Console()
+                        .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information)
                         .WriteTo.File("Logs/test.log")
                         .CreateLogger();
 
