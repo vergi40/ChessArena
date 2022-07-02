@@ -4,7 +4,8 @@ using System.Threading;
 using CommonNetStandard;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue.Algorithms;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
@@ -15,12 +16,12 @@ namespace vergiBlue.ConsoleTools
 {
     class LocalGame
     {
-        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(LocalGame));
-        private static void Log(string message) => Logger.LogWithConsole(message, _localLogger);
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<LocalGame>();
+        private static void Log(string message) => _logger.LogInformation(message);
 
         public static void Start(int minDelayInMs, int? overrideOpponentMaxDepth, IBoard? overrideBoard = null)
         {
-            Log(Environment.NewLine);
+            _logger.LogInformation(Environment.NewLine);
             // TODO async
             var moveHistory = new List<IPlayerMove>();
             var info1 = new StartInformationImplementation() { WhitePlayer = true };

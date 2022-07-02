@@ -1,10 +1,11 @@
-﻿using log4net;
+﻿using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace vergiBlueConsole.UciMode;
 
 class UciInput
 {
-    private static readonly ILog _logger = LogManager.GetLogger(typeof(Uci));
+    private static readonly ILogger _logger = ApplicationLogging.CreateLogger<UciInput>();
     private bool UseStreamAsInput { get; set; }
     private StreamReader InputStream { get; }
 
@@ -28,7 +29,7 @@ class UciInput
             var lineFromStream = InputStream.ReadLine();
             if (lineFromStream != null)
             {
-                _logger.Info($"Input  >> {lineFromStream}");
+                _logger.LogDebug($"Input >> {lineFromStream}");
                 return lineFromStream;
             }
             // Else stream ended, change to console read
@@ -41,7 +42,7 @@ class UciInput
             throw new ArgumentException($"Received end of stream from Console.ReadLine. Exiting in error state.");
         }
 
-        _logger.Info($"Input  >> {line}");
+        _logger.LogDebug($"Input >> {line}");
         return line;
     }
 }

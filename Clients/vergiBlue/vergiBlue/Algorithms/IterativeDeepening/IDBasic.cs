@@ -5,7 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
@@ -17,14 +18,14 @@ namespace vergiBlue.Algorithms.IterativeDeepening
     /// </summary>
     public class IDBasic : IAlgorithm
     {
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(IDWithTranspositions));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<IDBasic>();
 
         /// <summary>
         /// Overridden to write in UCI console, if UCI search
         /// </summary>
         private Action<string> _writeOutputAction { get; set; } = delegate (string s)
         {
-            _logger.Info(s);
+            _logger.LogInformation(s);
         };
 
         public SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null)
