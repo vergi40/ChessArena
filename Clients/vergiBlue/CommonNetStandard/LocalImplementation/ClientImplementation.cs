@@ -2,15 +2,16 @@
 using System.Threading;
 using System.Threading.Tasks;
 using CommonNetStandard.Client;
+using CommonNetStandard.Logging;
 using GameManager;
 using Grpc.Core;
-using log4net;
+using Microsoft.Extensions.Logging;
 
 namespace CommonNetStandard.LocalImplementation
 {
     internal class ClientImplementation
     {
-        private static readonly ILog _localLogger = LogManager.GetLogger(typeof(ClientImplementation));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<ClientImplementation>();
         readonly GameService.GameServiceClient _client;
 
         public ClientImplementation(GameService.GameServiceClient client)
@@ -60,8 +61,7 @@ namespace CommonNetStandard.LocalImplementation
                                 return;
                             }
 
-                            Logger.LogWithConsole($"Received opponent move: {opponentMove.Chess.StartPosition} to {opponentMove.Chess.EndPosition}",
-                                _localLogger);
+                            _logger.LogInformation($"Received opponent move: {opponentMove.Chess.StartPosition} to {opponentMove.Chess.EndPosition}");
 
                             // Analyze opponent move
                             ai.ReceiveMove(Mapping.ToCommon(opponentMove));
@@ -77,7 +77,7 @@ namespace CommonNetStandard.LocalImplementation
             }
             catch (RpcException e)
             {
-                Logger.LogWithConsole($"DEBUG: {e.ToString()}", _localLogger);
+                _logger.LogError(e, $"DEBUG: {e.Message}");
                 throw new GameEndedException(e);
             }
         }

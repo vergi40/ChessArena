@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using CommonNetStandard.Common;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue.Logic;
 
 namespace vergiBlueConsole.UciMode
@@ -21,7 +22,7 @@ namespace vergiBlueConsole.UciMode
             }
         }
 
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(Uci));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Uci>();
         private static UciInput _input = new UciInput(null);
 
         private static Task<SearchResult>? _currentSearch { get; set; }
@@ -73,12 +74,12 @@ namespace vergiBlueConsole.UciMode
                 {
                     var parameters = InputSupport.ReadGoParameters(gameCommand);
 
-                    _logger.Debug("Search task start");
+                    _logger.LogDebug("Search task start");
                     _searchCancellation = new CancellationTokenSource();
                     _currentSearch = Task.Run(() => logic.CreateSearchTask(parameters, SearchInfoUpdate, _searchCancellation.Token));
                     _currentSearch.ContinueWith(asd =>
                     {
-                        _logger.Debug($"Search finished with status {asd.Status}");
+                        _logger.LogDebug($"Search finished with status {asd.Status}");
                         WriteLine($"bestmove {asd.Result.BestMove.ToCompactString()}");
                     });
                 }
@@ -86,15 +87,15 @@ namespace vergiBlueConsole.UciMode
                 {
                     if (_currentSearch == null)
                     {
-                        _logger.Debug("Stop called even though no search running.");
+                        _logger.LogDebug("Stop called even though no search running.");
                     }
                     else if (_currentSearch.IsCompleted)
                     {
-                        _logger.Debug("Search has already ran to completion");
+                        _logger.LogDebug("Search has already ran to completion");
                     }
                     else
                     {
-                        _logger.Debug("Search task stop requested");
+                        _logger.LogDebug("Search task stop requested");
                         _searchCancellation.Cancel();
                     }
                 }
@@ -163,8 +164,9 @@ namespace vergiBlueConsole.UciMode
 
         private static void WriteLine(string message)
         {
-            _logger.Info($"Output << {message}");
-            Console.WriteLine(message);
+            _logger.LogInformation($"{message}");
+            _logger.LogDebug($"Output << {message}");
+            //Console.WriteLine(message);
         }
     }
 }
