@@ -1,5 +1,9 @@
 # vergiBlue C# NET6 (Teemu)
-[![dev](https://github.com/vergi40/ChessArena/actions/workflows/vergiblue-build-and-test.yaml/badge.svg?branch=dev)](https://github.com/vergi40/ChessArena/actions)  
+[![dev](https://github.com/vergi40/ChessArena/actions/workflows/vergiblue-build-and-test.yaml/badge.svg?branch=dev)](https://github.com/vergi40/ChessArena/actions) 
+
+Design
+![design](https://user-images.githubusercontent.com/16613890/179925168-fd111bb2-de20-4bed-b496-39f78b9fe952.png)
+
 General chess engine algorithms implemented in C#. Goal is to be easy to read and easy to maintain and upgrade. Main features:
 * Minimax
 * Alpha-beta pruning
