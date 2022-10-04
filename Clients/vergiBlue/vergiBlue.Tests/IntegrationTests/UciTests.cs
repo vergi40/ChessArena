@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
+using vergiCommon;
 
 namespace IntegrationTests
 {
@@ -11,9 +12,9 @@ namespace IntegrationTests
         [Test]
         public void Uci_BasicCommunication_Test()
         {
-            var projectPath = GetProjectPath();
-            var solutionPath = Path.Combine(projectPath, @"..\..\");
+            var solutionPath = GetPath.ThisSolution();
             var exePath = Path.Combine(solutionPath, @"vergiBlueConsole\bin\Release\net6.0\vergiBlueConsole.exe");
+            //var exePath = Path.Combine(solutionPath, @"vergiBlueConsole\bin\Debug\net6.0\vergiBlueConsole.exe");
             if (!File.Exists(exePath)) throw new AssertionException($"Target exe does not exist in {exePath}");
             
             var startInfo = new ProcessStartInfo(exePath);
@@ -61,20 +62,6 @@ namespace IntegrationTests
         private void Write(Process app, string message)
         {
             app.StandardInput.WriteLine(message);
-        }
-
-        public static string GetAssemblyPath()
-        {
-            var exePath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
-            return exePath;
-        }
-
-        public static string GetProjectPath()
-        {
-            // Hack
-            var exePath = GetAssemblyPath();
-            var solution = Path.Combine(exePath, @"..\..\..");
-            return Path.GetFullPath(solution);
         }
     }
 }
