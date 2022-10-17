@@ -2,6 +2,7 @@
 using CommonNetStandard.Common;
 using CommonNetStandard.Logging;
 using Microsoft.Extensions.Logging;
+using vergiBlue;
 using vergiBlue.Logic;
 
 namespace vergiBlueConsole.UciMode
@@ -31,7 +32,7 @@ namespace vergiBlueConsole.UciMode
         public static void Run(StreamReader? inputStream = null)
         {
             _input = new UciInput(inputStream);
-            WriteLine($"id name vergiBlue v{GetVergiBlueVersion()}, console v{GetConsoleVersion()}");
+            WriteLine($"id name vergiBlue v{Program.GetVergiBlueVersion()}, console v{Program.GetConsoleVersion()}");
             WriteLine("id author Teemu Laine");
 
             WriteLine("uciok");
@@ -148,19 +149,7 @@ namespace vergiBlueConsole.UciMode
             WriteLine(message);
         }
 
-        private static string GetVergiBlueVersion()
-        {
-            var assembly = AssemblyName.GetAssemblyName("vergiBlue.dll");
-            var version = assembly.Version.ToString(3);
-            return version;
-        }
-
-        private static string GetConsoleVersion()
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var version = assembly.GetName().Version.ToString(3);
-            return version;
-        }
+        
 
         private static void WriteLine(string message)
         {
