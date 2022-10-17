@@ -80,7 +80,6 @@ namespace vergiBlue
             if (startCommand != null && startCommand.Equals("uci"))
             {
                 Uci.Run();
-                return;
             }
             else if (startCommand != null && startCommand.ToLower().Equals("arena"))
             {
@@ -94,23 +93,29 @@ namespace vergiBlue
                 Console.WriteLine("Unknown command");
                 Console.WriteLine("Stop by pressing any key...");
                 Console.ReadKey();
-                return;
             }
             // 
         }
 
         internal static string GetVergiBlueVersion()
         {
-            var assembly = AssemblyName.GetAssemblyName("vergiBlue.dll");
-            var version = assembly.Version.ToString(3);
-            return version;
+            try
+            {
+                var assembly = AssemblyName.GetAssemblyName("vergiBlue.dll");
+                var version = assembly?.Version?.ToString(3);
+                return version ?? "0.0";
+            }
+            catch (Exception)
+            {
+                return "0.0";
+            }
         }
 
         internal static string GetConsoleVersion()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var version = assembly.GetName().Version.ToString(3);
-            return version;
+            var version = assembly?.GetName()?.Version?.ToString(3);
+            return version ?? "0.0";
         }
     }
 }
