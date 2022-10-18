@@ -4,7 +4,8 @@ using System.Collections.Generic;
 namespace vergiBlue.Analytics
 {
     /// <summary>
-    /// Data from previous turn that can be utilized to guide next turn analysis
+    /// Data from previous turn that can be utilized to guide next turn analysis.
+    /// Diagnostic analysis - why something happened in past
     /// </summary>
     public class DiagnosticsData
     {
