@@ -20,7 +20,7 @@ namespace vergiBlue.Analytics
 
     public interface IDescriptiveTurnData : IMinimalTurnData
     {
-        IReadOnlyList<MoveEvaluationData> MovesWithEvaluations { get; set; }
+        MoveEvaluationData EvalData { get; set; }
     }
 
     /// <summary>
@@ -34,8 +34,8 @@ namespace vergiBlue.Analytics
 
         public string BoardFen { get; set; } = "";
         public bool IsWhiteTurn { get; set; }
-        
-        public IReadOnlyList<MoveEvaluationData> MovesWithEvaluations { get; set; } = new List<MoveEvaluationData>();
+
+        public MoveEvaluationData EvalData { get; set; } = new();
 
         public override string ToString()
         {
@@ -47,7 +47,8 @@ namespace vergiBlue.Analytics
 
     public class MoveEvaluationData
     {
-        public ISingleMove Move { get; set; } = SingleMoveFactory.CreateEmpty();
-        public double Evaluation { get; set; }
+        public List<(double eval, ISingleMove move)> WeightedMoves { get; set; } = new();
+
+        // Room to expand
     }
 }

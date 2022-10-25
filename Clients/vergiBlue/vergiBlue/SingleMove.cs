@@ -18,6 +18,11 @@ namespace vergiBlue
         (int column, int row) EnPassantOpponentPosition { get; }
 
         string ToCompactString();
+
+        /// <summary>
+        /// Create deep clone object (not ref type).
+        /// </summary>
+        ISingleMove CreateClone();
     }
 
 
@@ -67,6 +72,12 @@ namespace vergiBlue
             }
 
             return message.ToString();
+        }
+
+        public ISingleMove CreateClone()
+        {
+            // Create class-type singlemove
+            throw new NotImplementedException();
         }
 
         public override string ToString()
@@ -277,6 +288,15 @@ namespace vergiBlue
                 _ => PromotionPieceType.NoPromotion
             };
             return promotion;
+        }
+
+        public ISingleMove CreateClone()
+        {
+            // Sufficient as only base type properties
+            var clone = this.MemberwiseClone() as SingleMove;
+            if (clone == null) throw new InvalidOperationException();
+
+            return clone;
         }
     }
 }

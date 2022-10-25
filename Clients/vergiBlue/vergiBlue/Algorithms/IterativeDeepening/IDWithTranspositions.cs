@@ -146,6 +146,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, searchResults.Count, bestMove.weight, bestMove.move, board);
             Common.AddPVDiagnostics(depthUsed, board, bestMove.move, isMaximizing);
             Common.DebugPrintWeighedMoves(finalResults);
+            Common.CollectWeightedMoves(finalResults);
             return bestMove.move;
         }
     }
