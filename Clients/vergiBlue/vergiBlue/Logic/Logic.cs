@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using vergiBlue.Algorithms;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
+using vergiBlue.Database;
 
 namespace vergiBlue.Logic
 {
@@ -49,6 +50,13 @@ namespace vergiBlue.Logic
         private AlgorithmController _algorithmController { get; } = new AlgorithmController();
 
         /// <summary>
+        /// TODO WIP. Read implementation from settings
+        /// </summary>
+        private IReplayPersistor _replayPersistor { get; } = new ReplayPersistor(new EFDatabase());
+
+        private DataFactory _dataFactory { get; } = new DataFactory();
+
+        /// <summary>
         /// Uci instance. Don't know which side yet
         /// </summary>
         public Logic() : base(true)
@@ -65,6 +73,8 @@ namespace vergiBlue.Logic
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             SkipOpeningChecks = true;
             _logger.LogDebug("Logic initialized");
+            _replayPersistor = new DebugReplay();
+            _replayPersistor.InitializeNewGame(isPlayerWhite, Board);
         }
 
         /// <summary>
@@ -77,6 +87,7 @@ namespace vergiBlue.Logic
             Board.Shared.Testing = true;
             SkipOpeningChecks = true;
             _logger.LogDebug("Logic initialized");
+            _replayPersistor.InitializeNewGame(isPlayerWhite, Board);
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
@@ -93,6 +104,7 @@ namespace vergiBlue.Logic
             }
 
             _logger.LogDebug("Logic initialized");
+            _replayPersistor.InitializeNewGame(startInformation.WhitePlayer, Board);
 
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
@@ -212,12 +224,15 @@ namespace vergiBlue.Logic
             Board.ExecuteMove(moveWithData);
             Board.Shared.GameTurnCount++;
             
-            var (analyticsOutput, previousData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
-            PreviousData = previousData;
+            var (analyticsOutput, diagnosticsData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
+            PreviousData = diagnosticsData;
 
             var move = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
                 analyticsOutput);
             GameHistory.Add(move.Move);
+
+            var moveData = _dataFactory.CreateDescriptive(Board, IsPlayerWhite, diagnosticsData);
+            _replayPersistor.SaveMoveWithAnalytics(moveData);
             return move;
         }
 
@@ -314,6 +329,8 @@ namespace vergiBlue.Logic
             Board.Shared.GameTurnCount++;
 
             GameHistory.Add(opponentMove);
+            var moveData = _dataFactory.CreateMinimal(Board, !IsPlayerWhite);
+            _replayPersistor.SaveMove(moveData);
         }
 
         /// <summary>

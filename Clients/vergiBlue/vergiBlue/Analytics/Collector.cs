@@ -32,6 +32,8 @@ namespace vergiBlue.Analytics
 
         private Stopwatch MoveCalculationTimer { get; } = new Stopwatch();
 
+        private MoveEvaluationData? EvalData { get; set; }
+
         private uint _evaluationCount = 0;
 
         // Explicit static constructor to tell C# compiler
@@ -81,6 +83,17 @@ namespace vergiBlue.Analytics
         /// Collect descriptive messages
         /// </summary>
         public static void AddCustomMessage(string message) => Instance.AddCustomMessageInternal(message);
+
+        public static void AddEvaluationData(MoveEvaluationData data) => Instance.EvalData = data;
+
+        public MoveEvaluationData CollectEvalData()
+        {
+            var evalData = Instance.EvalData;
+            if (evalData == null) return new MoveEvaluationData();
+            
+            Instance.EvalData = null;
+            return evalData;
+        }
 
         /// <summary>
         /// Collect descriptive messages

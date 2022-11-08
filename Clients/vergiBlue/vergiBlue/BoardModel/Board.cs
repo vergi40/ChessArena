@@ -283,7 +283,7 @@ namespace vergiBlue.BoardModel
             var powerPieces = PieceQuery.AllPowerPiecesList().Count;
             return powerPieces * 0.0625;
         }
-
+        
         /// <summary>
         /// Only piece itself & castling. No capture logic.
         /// Remove old position from array.
@@ -625,6 +625,11 @@ namespace vergiBlue.BoardModel
             {
                 yield return move.NewPos;
             }
+        }
+
+        public string GenerateFen()
+        {
+            return "TODO";
         }
     }
 }

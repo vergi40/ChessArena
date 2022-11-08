@@ -154,5 +154,17 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             }
             Debug.Print(message.ToString());
         }
+
+        public static void CollectWeightedMoves(IReadOnlyList<(double weight, SingleMove move)> finalResults)
+        {
+            var evalData = new MoveEvaluationData();
+            foreach (var (w, m) in finalResults)
+            {
+                // Don't want straight reference
+                evalData.WeightedMoves.Add((w, SingleMoveFactory.CreateClone(m)));
+            }
+
+            Collector.AddEvaluationData(evalData);
+        }
     }
 }
