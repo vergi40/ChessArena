@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using System.IO;
+﻿using System;
+using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace IntegrationTests
@@ -11,57 +11,50 @@ namespace IntegrationTests
         public void Uci_BasicCommunication_Test()
         {
             var consoleAssembly = typeof(vergiBlueConsole.Program).Assembly;
-
             var exePath = consoleAssembly.Location.Replace(".dll", ".exe");
-            if (!File.Exists(exePath)) throw new AssertionException($"Target exe does not exist in {exePath}");
-            
-            var startInfo = new ProcessStartInfo(exePath);
-            startInfo.RedirectStandardInput = true;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.CreateNoWindow = true;
-            startInfo.WindowStyle = ProcessWindowStyle.Normal;
 
-            var console = Process.Start(startInfo) ?? throw new AssertionException("Failed to start process");
-            Write(console, "uci");
+            using var console = new ConsoleTester(exePath);
+            console.Run();
+            console.Write("uci");
 
             while (true)
             {
-                var next = Read(console);
+                var next = console.Read();
                 if (next == "uciok") break;
                 else if (next.StartsWith("id")) continue;
                 else if (next.StartsWith("option")) continue;
                 throw new AssertionException($"Unknown uci command: {next}");
             }
 
-            Write(console, "isready");
-            var readyResponse = Read(console);
-            while (readyResponse.StartsWith("DEBUG")) readyResponse = Read(console);
+            console.Write("isready");
+            var readyResponse = console.Read();
             Assert.AreEqual("readyok", readyResponse);
 
-            Write(console, "position startpos moves e2e4");
-            Write(console, "go movetime 2000");
+            console.Write("position startpos moves e2e4");
+            console.Write("go movetime 2000");
 
-            while (true)
+            RunWithTimeLimit(2000, () =>
             {
-                var next = Read(console);
-                if (next.StartsWith("bestmove")) break;
-                else if (next.StartsWith("info")) continue;
-                throw new AssertionException($"Unknown uci command: {next}");
-            }
+                while (true)
+                {
+                    var next = console.Read();
+                    if (next.StartsWith("bestmove")) break;
+                    else if (next.StartsWith("info")) continue;
+                    throw new AssertionException($"Unknown uci command: {next}");
+                }
 
-            Write(console, "exit");
-            console.WaitForExit(1000);
-            Assert.IsTrue(console.HasExited);
+                return true;
+            });
+            
+            console.Write("exit");
+            console.AssertExit();
         }
 
-        private string Read(Process app)
+        private void RunWithTimeLimit(int limitInMs, Func<bool> func)
         {
-            return app.StandardOutput.ReadLine() ?? throw new AssertionException("End of input stream reached");
-        }
+            var result = Task.Run(func).Wait(limitInMs);
 
-        private void Write(Process app, string message)
-        {
-            app.StandardInput.WriteLine(message);
+            if (!result) throw new InvalidOperationException("Failed to run action in time limit");
         }
     }
 }
