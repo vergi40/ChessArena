@@ -11,7 +11,7 @@ using log4net.Config;
 
 namespace TestServer
 {
-    class Program
+    public class Program
     {
         private static readonly Logger _logger = new Logger(typeof(Program));
         static void Main(string[] args)

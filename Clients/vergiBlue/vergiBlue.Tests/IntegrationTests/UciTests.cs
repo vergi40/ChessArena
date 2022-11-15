@@ -8,10 +8,25 @@ namespace IntegrationTests
     public class UciTests
     {
         [Test]
+        public void Uci_SmokeTest_ShouldStartAndShutdown()
+        {
+            var exePath = Utils.GetConsoleExePath();
+
+            using var console = new ConsoleTester(exePath);
+            console.Run();
+            console.Write("uci");
+
+            console.ReadUntilNextInput();
+
+            console.Write("exit");
+
+            console.AssertExit(1000);
+        }
+
+        [Test]
         public void Uci_BasicCommunication_Test()
         {
-            var consoleAssembly = typeof(vergiBlueConsole.Program).Assembly;
-            var exePath = consoleAssembly.Location.Replace(".dll", ".exe");
+            var exePath = Utils.GetConsoleExePath();
 
             using var console = new ConsoleTester(exePath);
             console.Run();
