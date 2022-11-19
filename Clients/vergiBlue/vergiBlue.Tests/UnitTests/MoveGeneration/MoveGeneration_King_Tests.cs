@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using vergiBlue.BoardModel;
 using vergiBlue.Pieces;
 
-namespace UnitTests
+namespace UnitTests.MoveGeneration
 {
     [TestClass]
     public class MoveGeneration_King_Tests
