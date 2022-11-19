@@ -15,5 +15,7 @@
             var exePath = serverAssembly.Location.Replace(".dll", ".exe");
             return exePath;
         }
+
+        public const int TestTimeoutMs = 1000 * 60;
     }
 }

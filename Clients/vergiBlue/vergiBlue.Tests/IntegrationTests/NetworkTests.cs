@@ -8,13 +8,10 @@ using NUnit.Framework;
 
 namespace IntegrationTests
 {
-
-    
-
     [TestFixture]
     public class NetworkTests
     {
-        [Test]
+        [Test, Timeout(Utils.TestTimeoutMs)]
         public void Server_SmokeTest_ShouldStartAndShutdown()
         {
             var serverExePath = Utils.GetServerExePath();
@@ -67,7 +64,7 @@ namespace IntegrationTests
         // }")
         // Game ended, reason: Stream removed
 
-        [Test]
+        [Test, Timeout(Utils.TestTimeoutMs)]
         public void Server_ConnectionTest_ClientConnectionShouldSucceed()
         {
             var serverExePath = Utils.GetServerExePath();

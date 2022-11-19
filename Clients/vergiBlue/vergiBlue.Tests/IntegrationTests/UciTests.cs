@@ -7,7 +7,7 @@ namespace IntegrationTests
     [TestFixture]
     public class UciTests
     {
-        [Test]
+        [Test, Timeout(Utils.TestTimeoutMs)]
         public void Uci_SmokeTest_ShouldStartAndShutdown()
         {
             var exePath = Utils.GetConsoleExePath();
@@ -23,7 +23,7 @@ namespace IntegrationTests
             console.AssertExit(1000);
         }
 
-        [Test]
+        [Test, Timeout(Utils.TestTimeoutMs)]
         public void Uci_BasicCommunication_Test()
         {
             var exePath = Utils.GetConsoleExePath();

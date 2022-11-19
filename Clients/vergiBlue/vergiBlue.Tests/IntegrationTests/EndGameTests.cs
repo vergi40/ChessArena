@@ -100,7 +100,7 @@ namespace IntegrationTests
         }
 
 
-        [Test]
+        [Test, Timeout(Utils.TestTimeoutMs)]
         public void DoubleRook_Distance1_ShouldCheckMateGracefully()
         {
             // Start situation
