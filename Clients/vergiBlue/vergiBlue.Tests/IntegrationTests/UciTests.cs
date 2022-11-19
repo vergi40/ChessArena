@@ -1,67 +1,75 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
+using System.Threading.Tasks;
 using NUnit.Framework;
-using vergiCommon;
 
 namespace IntegrationTests
 {
     [TestFixture]
     public class UciTests
     {
-        [Test]
+        [Test, Timeout(Utils.TestTimeoutMs)]
+        public void Uci_SmokeTest_ShouldStartAndShutdown()
+        {
+            var exePath = Utils.GetConsoleExePath();
+
+            using var console = new ConsoleTester(exePath);
+            console.Run();
+            console.Write("uci");
+
+            console.ReadUntilNextInput();
+
+            console.Write("exit");
+
+            console.AssertExit(1000);
+        }
+
+        [Test, Timeout(Utils.TestTimeoutMs)]
         public void Uci_BasicCommunication_Test()
         {
-            var solutionPath = GetPath.ThisSolution();
-            var exePath = Path.Combine(solutionPath, @"vergiBlueConsole\bin\Release\net6.0\vergiBlueConsole.exe");
-            //var exePath = Path.Combine(solutionPath, @"vergiBlueConsole\bin\Debug\net6.0\vergiBlueConsole.exe");
-            if (!File.Exists(exePath)) throw new AssertionException($"Target exe does not exist in {exePath}");
-            
-            var startInfo = new ProcessStartInfo(exePath);
-            startInfo.RedirectStandardInput = true;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.CreateNoWindow = true;
-            startInfo.WindowStyle = ProcessWindowStyle.Normal;
+            var exePath = Utils.GetConsoleExePath();
 
-            var console = Process.Start(startInfo);
-            Write(console, "uci");
+            using var console = new ConsoleTester(exePath);
+            console.Run();
+            console.Write("uci");
 
             while (true)
             {
-                var next = Read(console);
+                var next = console.Read();
                 if (next == "uciok") break;
                 else if (next.StartsWith("id")) continue;
                 else if (next.StartsWith("option")) continue;
                 throw new AssertionException($"Unknown uci command: {next}");
             }
 
-            Write(console, "isready");
-            var readyResponse = Read(console);
+            console.Write("isready");
+            var readyResponse = console.Read();
             Assert.AreEqual("readyok", readyResponse);
 
-            Write(console, "position startpos moves e2e4");
-            Write(console, "go movetime 2000");
+            console.Write("position startpos moves e2e4");
+            console.Write("go movetime 2000");
 
-            while (true)
+            RunWithTimeLimit(2000, () =>
             {
-                var next = Read(console);
-                if (next.StartsWith("bestmove")) break;
-                else if (next.StartsWith("info")) continue;
-                throw new AssertionException($"Unknown uci command: {next}");
-            }
+                while (true)
+                {
+                    var next = console.Read();
+                    if (next.StartsWith("bestmove")) break;
+                    else if (next.StartsWith("info")) continue;
+                    throw new AssertionException($"Unknown uci command: {next}");
+                }
 
-            Write(console, "exit");
-
+                return true;
+            });
+            
+            console.Write("exit");
+            console.AssertExit();
         }
 
-        private string Read(Process app)
+        private void RunWithTimeLimit(int limitInMs, Func<bool> func)
         {
-            return app.StandardOutput.ReadLine();
-        }
+            var result = Task.Run(func).Wait(limitInMs);
 
-        private void Write(Process app, string message)
-        {
-            app.StandardInput.WriteLine(message);
+            if (!result) throw new InvalidOperationException("Failed to run action in time limit");
         }
     }
 }

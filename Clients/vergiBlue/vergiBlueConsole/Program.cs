@@ -3,11 +3,10 @@ using System.Reflection;
 using CommandLine;
 using CommonNetStandard.Logging;
 using Microsoft.Extensions.Logging;
-using vergiBlueConsole;
 using vergiBlueConsole.ConsoleTools;
 using vergiBlueConsole.UciMode;
 
-namespace vergiBlue
+namespace vergiBlueConsole
 {
     enum ArgsResult
     {
@@ -21,7 +20,7 @@ namespace vergiBlue
         Error
     }
 
-    class Program
+    public class Program
     {
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Program>();
 

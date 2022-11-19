@@ -16,7 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\vergiBlue\vergiBlue.csproj" />
+    <ProjectReference Include="..\..\vergiBlueConsole\vergiBlueConsole.csproj" />
+    <ProjectReference Include="..\TestServer\TestServer.csproj" />
   </ItemGroup>
 
 </Project>
