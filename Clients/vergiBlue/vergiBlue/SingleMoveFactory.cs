@@ -50,6 +50,9 @@ namespace vergiBlue
             return new SingleMove(prev, next, capture);
         }
 
+        /// <summary>
+        /// Create struct from move object
+        /// </summary>
         public static MoveStruct Create(in SingleMove moveReference)
         {
             return new MoveStruct()
@@ -62,6 +65,11 @@ namespace vergiBlue
                 EnPassant = moveReference.EnPassant,
                 PromotionType = moveReference.PromotionType
             };
+        }
+
+        public static ISingleMove CreateClone(ISingleMove move)
+        {
+            return move.CreateClone();
         }
     }
 }

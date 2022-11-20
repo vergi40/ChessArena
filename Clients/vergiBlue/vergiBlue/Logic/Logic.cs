@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 using CommonNetStandard.Client;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue.Algorithms;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
+using vergiBlue.Database;
 
 namespace vergiBlue.Logic
 {
     public class Logic : LogicBase
     {
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(Logic));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Logic>();
 
         // Game strategic variables
         public IMove? LatestOpponentMove { get; set; }
@@ -48,6 +50,13 @@ namespace vergiBlue.Logic
         private AlgorithmController _algorithmController { get; } = new AlgorithmController();
 
         /// <summary>
+        /// TODO WIP. Read implementation from settings
+        /// </summary>
+        private IReplayPersistor _replayPersistor { get; } = new ReplayPersistor(new EFDatabase());
+
+        private DataFactory _dataFactory { get; } = new DataFactory();
+
+        /// <summary>
         /// Uci instance. Don't know which side yet
         /// </summary>
         public Logic() : base(true)
@@ -63,7 +72,9 @@ namespace vergiBlue.Logic
         {
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             SkipOpeningChecks = true;
-            _logger.Info("Logic initialized");
+            _logger.LogDebug("Logic initialized");
+            _replayPersistor = new DebugReplay();
+            _replayPersistor.InitializeNewGame(isPlayerWhite, Board);
         }
 
         /// <summary>
@@ -75,7 +86,8 @@ namespace vergiBlue.Logic
             Board = BoardFactory.CreateClone(board);
             Board.Shared.Testing = true;
             SkipOpeningChecks = true;
-            _logger.Info("Logic initialized");
+            _logger.LogDebug("Logic initialized");
+            _replayPersistor.InitializeNewGame(isPlayerWhite, Board);
         }
 
         public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
@@ -91,7 +103,8 @@ namespace vergiBlue.Logic
                 SetDefaultBoard();
             }
 
-            _logger.Info("Logic initialized");
+            _logger.LogDebug("Logic initialized");
+            _replayPersistor.InitializeNewGame(startInformation.WhitePlayer, Board);
 
             // Opponent non-null only if player is black
             if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
@@ -175,10 +188,10 @@ namespace vergiBlue.Logic
 
         public override IPlayerMove CreateMove()
         {
-            _logger.Info("Starting create move operations...");
+            _logger.LogDebug("Starting create move operations...");
             var bestMove = CreateNewMove();
             var inner = bestMove.Move;
-            _logger.Info($"Created move {inner.StartPosition}{inner.EndPosition}{SingleMove.ConvertPromotion(inner.PromotionResult)}");
+            _logger.LogDebug($"Created move {inner.StartPosition}{inner.EndPosition}{SingleMove.ConvertPromotion(inner.PromotionResult)}");
             
             return bestMove;
         }
@@ -211,12 +224,15 @@ namespace vergiBlue.Logic
             Board.ExecuteMove(moveWithData);
             Board.Shared.GameTurnCount++;
             
-            var (analyticsOutput, previousData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
-            PreviousData = previousData;
+            var (analyticsOutput, diagnosticsData) = Collector.Instance.CollectAndClear(Settings.UseFullDiagnostics);
+            PreviousData = diagnosticsData;
 
             var move = new PlayerMoveImplementation(moveWithData.ToInterfaceMove(),
                 analyticsOutput);
             GameHistory.Add(move.Move);
+
+            var moveData = _dataFactory.CreateDescriptive(Board, IsPlayerWhite, diagnosticsData);
+            _replayPersistor.SaveMoveWithAnalytics(moveData);
             return move;
         }
 
@@ -292,7 +308,7 @@ namespace vergiBlue.Logic
 
             var movesSorted = validMoves.Select(m => m.ToCompactString()).OrderBy(m => m);
             
-            _logger.Info($"{validMoves.Count} valid moves found: {string.Join(", ", movesSorted)}.");
+            _logger.LogDebug($"{validMoves.Count} valid moves found: {string.Join(", ", movesSorted)}.");
             Collector.AddCustomMessage($"{validMoves.Count} valid moves found.");
             return validMoves;
         }
@@ -300,7 +316,7 @@ namespace vergiBlue.Logic
         public sealed override void ReceiveMove(IMove? opponentMove)
         {
             LatestOpponentMove = opponentMove ?? throw new ArgumentException($"Received null move. Error or game has ended.");
-            _logger.Info(
+            _logger.LogDebug(
                 $"Received move {opponentMove.StartPosition}{opponentMove.EndPosition}{SingleMove.ConvertPromotion(opponentMove.PromotionResult)}");
 
             // Basic validation
@@ -313,6 +329,8 @@ namespace vergiBlue.Logic
             Board.Shared.GameTurnCount++;
 
             GameHistory.Add(opponentMove);
+            var moveData = _dataFactory.CreateMinimal(Board, !IsPlayerWhite);
+            _replayPersistor.SaveMove(moveData);
         }
 
         /// <summary>

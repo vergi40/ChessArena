@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.Logic;
@@ -16,14 +17,14 @@ namespace vergiBlue.Algorithms.IterativeDeepening
     /// </summary>
     internal class IDWithTranspositions : IAlgorithm
     {
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(IDWithTranspositions));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<IDWithTranspositions>();
 
         /// <summary>
         /// Overridden to write in UCI console, if UCI search
         /// </summary>
         private Action<string> _writeOutputAction { get; set; } = delegate(string s)
         {
-            _logger.Info(s);
+            _logger.LogInformation(s);
         };
 
         public SingleMove CalculateBestMove(BoardContext context, SearchParameters? searchParameters = null)
@@ -145,6 +146,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             Common.AddIterativeDeepeningResultDiagnostics(depthUsed, allMoves.Count, searchResults.Count, bestMove.weight, bestMove.move, board);
             Common.AddPVDiagnostics(depthUsed, board, bestMove.move, isMaximizing);
             Common.DebugPrintWeighedMoves(finalResults);
+            Common.CollectWeightedMoves(finalResults);
             return bestMove.move;
         }
     }

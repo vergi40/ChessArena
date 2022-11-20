@@ -167,5 +167,10 @@ namespace vergiBlue.BoardModel
         /// </summary>
         /// <returns></returns>
         double GetPowerPiecePercent();
+
+        /// <summary>
+        /// FEN string representation
+        /// </summary>
+        string GenerateFen();
     }
 }

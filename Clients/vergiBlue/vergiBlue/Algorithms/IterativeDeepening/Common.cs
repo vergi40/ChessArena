@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using log4net;
+using CommonNetStandard.Logging;
+using Microsoft.Extensions.Logging;
 using vergiBlue.Analytics;
 using vergiBlue.BoardModel;
 using vergiBlue.BoardModel.Subsystems.TranspositionTables;
@@ -11,9 +12,9 @@ using vergiBlue.Logic;
 
 namespace vergiBlue.Algorithms.IterativeDeepening
 {
-    internal static class Common
+    internal class Common
     {
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(Common));
+        private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Common>();
 
         public static (int maxDepth, int timeLimit) DefineDepthAndTime(BoardContext context, SearchParameters parameters)
         {
@@ -123,7 +124,7 @@ namespace vergiBlue.Algorithms.IterativeDeepening
             }
             catch (Exception e)
             {
-                _logger.Error($"Error finding PV moves: {e.Message}");
+                _logger.LogError(e, $"Error finding PV moves: {e.Message}");
             }
             
             return result;
@@ -152,6 +153,18 @@ namespace vergiBlue.Algorithms.IterativeDeepening
                 message.Append($"{move.ToCompactString()}: {weight}{Environment.NewLine}");
             }
             Debug.Print(message.ToString());
+        }
+
+        public static void CollectWeightedMoves(IReadOnlyList<(double weight, SingleMove move)> finalResults)
+        {
+            var evalData = new MoveEvaluationData();
+            foreach (var (w, m) in finalResults)
+            {
+                // Don't want straight reference
+                evalData.WeightedMoves.Add((w, SingleMoveFactory.CreateClone(m)));
+            }
+
+            Collector.AddEvaluationData(evalData);
         }
     }
 }

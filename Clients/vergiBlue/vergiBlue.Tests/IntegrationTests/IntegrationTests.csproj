@@ -12,10 +12,12 @@
     <PackageReference Include="NUnit" Version="3.13.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.0.0" />
     <PackageReference Include="coverlet.collector" Version="3.1.0" />
+    <PackageReference Include="vergiCommon" Version="0.1.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\vergiBlue\vergiBlue.csproj" />
+    <ProjectReference Include="..\..\vergiBlueConsole\vergiBlueConsole.csproj" />
+    <ProjectReference Include="..\TestServer\TestServer.csproj" />
   </ItemGroup>
 
 </Project>
