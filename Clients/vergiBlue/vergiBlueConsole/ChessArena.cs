@@ -1,4 +1,5 @@
-﻿using CommonNetStandard.Client;
+﻿using System.Net.NetworkInformation;
+using CommonNetStandard.Client;
 using CommonNetStandard.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,7 @@ using vergiBlue;
 using vergiBlue.ConsoleTools;
 using vergiBlueConsole.ConsoleTools;
 using System.Reflection;
+using System.Security.Cryptography;
 
 namespace vergiBlueConsole
 {
@@ -103,6 +105,13 @@ namespace vergiBlueConsole
                 {
                     LocalGame.CustomStart();
                 }
+                else if (_gameMode == 8)
+                {
+                    using var connection = GrpcClientConnectionFactory.Create(_fullAddress);
+                    var randomId = RandomNumberGenerator.GetInt32(1000);
+                    NetworkGame.Ping(connection, $"Client pinger id{randomId}");
+                    break;
+                }
                 else if (_gameMode == 9)
                 {
                     using var connection = GrpcClientConnectionFactory.Create(_fullAddress);
@@ -145,6 +154,7 @@ namespace vergiBlueConsole
                                                 + "[3] Start local game with two vergiBlues against each other" + Environment.NewLine
                                                 + "[4] Start local game with two vergiBlues against each other. Delay between moves" + Environment.NewLine
                                                 + "[5] Custom local game" + Environment.NewLine
+                                                + "[8] Ping test to GameManager"
                                                 + "[9] Connection testing game";
             return info;
         }

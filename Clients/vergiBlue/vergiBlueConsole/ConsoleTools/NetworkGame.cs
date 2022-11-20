@@ -20,6 +20,16 @@ namespace vergiBlue.ConsoleTools
     {
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger<NetworkGame>();
         private static void Log(string message) => _logger.LogInformation(message);
+
+        public static void Ping(IGrpcClientConnection grpcClientConnection, string playerName)
+        {
+            Log(Environment.NewLine);
+            Log($"Creating ping request. Client info: {playerName}");
+            var response = grpcClientConnection.Ping();
+
+            Log($"Received ping response: {response.Result.Message}");
+        }
+
         public static void Start(IGrpcClientConnection grpcClientConnection, string playerName, bool connectionTesting)
         {
             // We could use while(true) to play games indefinitely. But probably better to play single game per opened client
