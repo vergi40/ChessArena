@@ -14,6 +14,11 @@ service GameService {
     // A Bidirectional streaming RPC.
     // Send player moves. Receive opponent moves.
     rpc Act(stream Move) returns (stream Move) {}
+
+    // OPTIONAL helper rpc
+    //
+    // Game client can validate that GameManager is running. For connection testing
+    rpc Ping(PingMessage) returns (PingMessage) {}
 }
 
 service WebService {
