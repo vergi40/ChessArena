@@ -28,7 +28,7 @@ namespace TestServer
             // Keep alive indefinetily
             Task.Run(() => MainHosting());
         }
-
+        
         private async Task MainHosting()
         {
             while (true)
@@ -71,6 +71,19 @@ namespace TestServer
                 _shared.ResetGame();
                 DebugLog("Game reset and players initialized, ready for next game");
             }
+        }
+
+        public override Task<PingMessage> Ping(PingMessage request, ServerCallContext context)
+        {
+            _logger.Info($"Client {context.Peer} sent {request.Message}");
+            _logger.Info($"Responding with \"pong\"");
+
+            var response = new PingMessage()
+            {
+                Message = "Pong"
+            };
+
+            return Task.FromResult( response );
         }
 
         public override Task<GameStartInformation> Initialize(GameInformation request, ServerCallContext context)
