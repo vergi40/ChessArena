@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
 using CommonNetStandard.LocalImplementation;
 using CommonNetStandard.Logging;
 using GameManager;
-using Grpc.Core;
+using Grpc.Net.Client;
 using Microsoft.Extensions.Logging;
 
 namespace CommonNetStandard.Client
@@ -42,7 +41,7 @@ namespace CommonNetStandard.Client
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger<GrpcClientConnection>();
         private string _aiName = "";
         private readonly string _address;
-        private readonly Channel _channel;
+        private readonly GrpcChannel _channel;
         private readonly ClientImplementation _client;
 
         /// <summary>
@@ -52,7 +51,7 @@ namespace CommonNetStandard.Client
         public GrpcClientConnection(string address)
         {
             _address = address;
-            _channel = new Channel(address, ChannelCredentials.Insecure);
+            _channel = GrpcChannel.ForAddress(address);
             _client = new ClientImplementation(new GameService.GameServiceClient(_channel));
         }
 

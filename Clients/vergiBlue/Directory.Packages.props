@@ -6,10 +6,12 @@
     <!-- Common -->
     <PackageVersion Include="Google.Protobuf" Version="3.21.12" />
     <PackageVersion Include="Grpc.Core" Version="2.46.6" />
+    <PackageVersion Include="Grpc.Core.Api" Version="2.51.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.51.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
+    <PackageVersion Include="Grpc.Net.Client" Version="2.51.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
     <PackageVersion Include="NLog" Version="5.1.1" />
