@@ -18,7 +18,11 @@ namespace vergiBlueConsole
 
         private string _playerName { get; set; } = "vergiBlue";
         private int _gameMode { get; set; }
-        private string _address { get; set; } = "127.0.0.1";
+
+        /// <summary>
+        /// Use http prefix for insecure connection (ok for local testing)
+        /// </summary>
+        private string _address { get; set; } = "http://localhost";
         private string _port { get; set; } = "30052";
         private int _minimumDelayBetweenMoves { get; set; } = 0;
 
