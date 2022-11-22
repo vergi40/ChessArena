@@ -1,3 +1,6 @@
+rem Change active directory to script directory
+cd /D "%~dp0"
+
 echo "Build projects"
 dotnet build
 

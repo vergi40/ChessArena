@@ -19,6 +19,12 @@ namespace CommonNetStandard.LocalImplementation
             this._client = client;
         }
 
+        public Task<PingMessage> Ping(PingMessage pingRequest)
+        {
+            var response = _client.Ping(pingRequest);
+            return Task.FromResult(response);
+        }
+
         public async Task<GameStartInformation> Initialize(string clientName)
         {
             var information = new GameInformation()
@@ -32,7 +38,6 @@ namespace CommonNetStandard.LocalImplementation
 
             Console.WriteLine($"Received info: start player: {gameStartInformation.Start}.");
             return gameStartInformation;
-
         }
 
         public async Task CreateMovements(LogicBase ai)

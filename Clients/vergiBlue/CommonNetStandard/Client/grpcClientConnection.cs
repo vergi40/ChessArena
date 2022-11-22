@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using CommonNetStandard.Common;
 using CommonNetStandard.Interface;
@@ -24,6 +25,8 @@ namespace CommonNetStandard.Client
         Task<IGameStartInformation> Initialize(string playerName);
 
         Task Play(LogicBase ai);
+
+        Task<PingMessage> Ping();
     }
 
     public static class GrpcClientConnectionFactory
@@ -56,6 +59,16 @@ namespace CommonNetStandard.Client
             _address = address;
             _channel = new Channel(address, ChannelCredentials.Insecure);
             _client = new ClientImplementation(new GameService.GameServiceClient(_channel));
+        }
+
+        public async Task<PingMessage> Ping()
+        {
+            var pingRequest = new PingMessage()
+            {
+                Message = "Ping"
+            };
+
+            return await _client.Ping(pingRequest);
         }
 
         /// <summary>
