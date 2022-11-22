@@ -1,19 +1,45 @@
-﻿using CommonNetStandard.Interface;
+﻿using System;
+using System.Collections.Generic;
+using CommonNetStandard.Common;
+using System.Threading.Tasks;
+using System.Threading;
+using CommonNetStandard.Interface;
 
 namespace CommonNetStandard.Client
 {
     /// <summary>
-    /// Inherit custom AI logic from this class and inject it to <see cref="GrpcClientConnection"/>
+    /// Api definition to use vergiBlue client in ChessArena grpc communication
     /// </summary>
-    public abstract class LogicBase
+    public interface IAiClient
     {
         /// <summary>
-        /// Client is white player and starts the game
+        /// Create move in current game board. Update board
         /// </summary>
-        public bool IsPlayerWhite { get; set; }
-        protected LogicBase(bool isPlayerWhite) { IsPlayerWhite = isPlayerWhite; }
-        
-        public abstract IPlayerMove CreateMove();
-        public abstract void ReceiveMove(IMove opponentMove);
+        IPlayerMove CreateMove();
+
+        /// <summary>
+        /// Receive opponent move in current game board. Update board
+        /// </summary>
+        /// <param name="opponentMove"></param>
+        void ReceiveMove(IMove opponentMove);
+    }
+
+    /// <summary>
+    /// Api definition to use vergiBlue with UCI protocol
+    /// </summary>
+    public interface IUciClient
+    {
+        void NewGame();
+        void SetBoard(string startPosOrFenBoard, List<string> moves);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="parameters"></param>
+        /// <param name="searchInfoUpdate"></param>
+        /// <param name="ct"></param>
+        /// <returns>Best move as compact string</returns>
+        Task<string> CreateSearchTask(UciGoParameters parameters, Action<string> searchInfoUpdate,
+            CancellationToken ct);
     }
 }

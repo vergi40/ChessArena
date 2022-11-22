@@ -24,7 +24,8 @@ namespace CommonNetStandard
             var result = startInformation.Result;
 
             // Initialize your own ai
-            var ai = new ExampleAiLogic(result.WhitePlayer, result);
+            var ai = new ExampleAiLogic();
+            ai.Setup(true);
 
             // Inject ai to connection module and play game
             var playTask = connection.Play(ai);
@@ -36,22 +37,22 @@ namespace CommonNetStandard
         }
 
         /// <summary>
-        /// Implement inherited <see cref="LogicBase"/> methods with own AI logic
+        /// Implement inherited <see cref="IAiClient"/> methods with own AI logic
         /// </summary>
-        class ExampleAiLogic : LogicBase
+        class ExampleAiLogic : IAiClient
         {
-            public ExampleAiLogic(bool isPlayerWhite, IGameStartInformation info) : base(isPlayerWhite)
+            public void Setup(bool isClientWhite)
             {
-                // TODO
+                throw new NotImplementedException();
             }
 
-            public override IPlayerMove CreateMove()
+            public IPlayerMove CreateMove()
             {
                 // TODO
                 throw new NotImplementedException();
             }
 
-            public override void ReceiveMove(IMove opponentMove)
+            public void ReceiveMove(IMove opponentMove)
             {
                 // TODO
                 throw new NotImplementedException();

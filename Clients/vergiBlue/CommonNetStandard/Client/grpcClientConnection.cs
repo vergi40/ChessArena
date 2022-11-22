@@ -14,7 +14,7 @@ namespace CommonNetStandard.Client
     /// <summary>
     /// Reference this to create and maintain new grpc connection.
     /// 1. <see cref="Initialize"/> server that you are ready to start a game
-    /// 2. <see cref="Play"/> to start pingpong with <see cref="LogicBase.CreateMove"/> and <see cref="LogicBase.ReceiveMove"/>
+    /// 2. <see cref="Play"/> to start pingpong with <see cref="IAiClient.CreateMove"/> and <see cref="IAiClient.ReceiveMove"/>
     /// </summary>
     public interface IGrpcClientConnection : IDisposable
     {
@@ -24,7 +24,7 @@ namespace CommonNetStandard.Client
         /// <param name="playerName"></param>
         Task<IGameStartInformation> Initialize(string playerName);
 
-        Task Play(LogicBase ai);
+        Task Play(IAiClient ai);
 
         Task<PingMessage> Ping();
     }
@@ -36,12 +36,7 @@ namespace CommonNetStandard.Client
             return new GrpcClientConnection(address);
         }
     }
-
-    /// <summary>
-    /// Reference this class to create and maintain new grpc connection.
-    /// 1. <see cref="Initialize"/> server that you are ready to start a game
-    /// 2. <see cref="Play"/> to start pingpong with <see cref="LogicBase.CreateMove"/> and <see cref="LogicBase.ReceiveMove"/>
-    /// </summary>
+    
     public sealed class GrpcClientConnection : IGrpcClientConnection
     {
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger<GrpcClientConnection>();
@@ -95,7 +90,7 @@ namespace CommonNetStandard.Client
             return localInformation;
         }
 
-        public async Task Play(LogicBase ai)
+        public async Task Play(IAiClient ai)
         {
             // TODO handle exceptions and game end
             await _client.CreateMovements(ai);
