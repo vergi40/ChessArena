@@ -5,19 +5,21 @@ using System.Text;
 using System.Threading.Tasks;
 using GameManager;
 using Grpc.Core;
+using Microsoft.Extensions.Logging;
 
 namespace TestServer
 {
     class WebServer : WebService.WebServiceBase
     {
-        private static readonly Logger _logger = new Logger(typeof(WebServer));
+        private readonly ILogger _logger;
         public SharedData _shared { get; }
 
         private bool _pingReceived = false;
         private int _sentMoveCount = 0;
 
-        public WebServer(SharedData shared)
+        public WebServer(SharedData shared, ILogger<WebServer> logger)
         {
+            _logger = logger;
             _shared = shared;
             shared.MoveHistory.OnAdd += HandleNewMove;
         }
@@ -30,7 +32,7 @@ namespace TestServer
 
         public override Task<PingMessage> Ping(PingMessage request, ServerCallContext context)
         {
-            _logger.Info("Ping request received.");
+            _logger.LogInformation("Ping request received.");
             _pingReceived = true;
 
             var response = new PingMessage { Message = "pong" };
@@ -39,14 +41,14 @@ namespace TestServer
 
         public override async Task ListenMoveUpdates(PingMessage request, IServerStreamWriter<Move> responseStream, ServerCallContext context)
         {
-            _logger.Info($"{nameof(ListenMoveUpdates)} request received.");
+            _logger.LogInformation($"{nameof(ListenMoveUpdates)} request received.");
             if (!_pingReceived)
             {
-                _logger.Info($"Did not receive initializing ping request before {nameof(ListenMoveUpdates)}. Cancelling stream.");
+                _logger.LogInformation($"Did not receive initializing ping request before {nameof(ListenMoveUpdates)}. Cancelling stream.");
                 return;
             }
 
-            _logger.Info("Starting move streaming to web backend...");
+            _logger.LogInformation("Starting move streaming to web backend...");
             while (true)
             {
                 try
@@ -55,7 +57,7 @@ namespace TestServer
                     {
                         var move = _shared.MoveHistory[_sentMoveCount];
                         await responseStream.WriteAsync(move);
-                        _logger.Info($"Sent to backend: {PrintMove(move)}");
+                        _logger.LogInformation($"Sent to backend: {PrintMove(move)}");
                         _sentMoveCount++;
                     }
 
@@ -63,7 +65,7 @@ namespace TestServer
                 }
                 catch (Exception e)
                 {
-                    _logger.Error(e, "Error occured, stopping streaming to web client.");
+                    _logger.LogError(e, "Error occured, stopping streaming to web client.");
                     break;
                 }
             }

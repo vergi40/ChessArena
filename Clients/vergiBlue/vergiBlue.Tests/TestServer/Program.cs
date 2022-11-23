@@ -1,43 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using GameManager;
-using Grpc.Core;
-using log4net.Config;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace TestServer
 {
-    public class Program
+    public static class Program
     {
-        private static readonly Logger _logger = new Logger(typeof(Program));
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            // Programmatic way to configure log4net xml
-            XmlConfigurator.Configure(new FileInfo("log4net.config"));
-            const int Port = 30052;
-            var data = new SharedData();
+            //var builder = WebApplication.CreateBuilder(args);
+            var builder = CreateHostBuilder(args);
+            var host = builder.Build();
+            host.Run();
 
-            Server server = new Server
-            {
-                Services =
-                {
-                    GameService.BindService(new TestServer(data)),
-                    WebService.BindService(new WebServer(data))
-                },
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
-            };
-            server.Start();
-
-            _logger.Info("vergiBlue test server listening on port " + Port);
-            _logger.Info("Press any key to stop the server...");
-            Console.ReadKey();
-
-            server.ShutdownAsync().Wait();
+            // Additional configuration is required to successfully run gRPC on macOS.
+            // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
         }
+
+        // https://stackoverflow.com/questions/58649775/can-i-combine-a-grpc-and-webapi-app-into-a-net-core-3-0-in-c
+        // https://learn.microsoft.com/en-us/aspnet/core/grpc/troubleshoot?view=aspnetcore-3.0#unable-to-start-aspnet-core-grpc-app-on-macos-2
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                })
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-7.0#listenoptionsusehttps
+                    webBuilder.ConfigureKestrel(options =>
+                    {
+                        // Setup a HTTP/2 endpoint without TLS. Grpc
+                        options.ListenLocalhost(5001, o => o.Protocols =
+                            HttpProtocols.Http2);
+
+                        // WebAPI
+                        options.ListenLocalhost(8001, o => o.Protocols =
+                            HttpProtocols.Http2);
+                    });
+                    webBuilder.UseStartup<Startup>();
+                });
+
     }
 
     /// <summary>
