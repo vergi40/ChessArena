@@ -8,36 +8,36 @@ using System.Threading.Tasks;
 using GameManager;
 using Grpc.Core;
 using log4net.Config;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace TestServer
 {
-    public class Program
+    public static class Program
     {
         private static readonly Logger _logger = new Logger(typeof(Program));
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            // Programmatic way to configure log4net xml
-            XmlConfigurator.Configure(new FileInfo("log4net.config"));
-            const int Port = 30052;
-            var data = new SharedData();
+            var builder = WebApplication.CreateBuilder(args);
 
-            Server server = new Server
-            {
-                Services =
-                {
-                    GameService.BindService(new TestServer(data)),
-                    WebService.BindService(new WebServer(data))
-                },
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
-            };
-            server.Start();
+            // Additional configuration is required to successfully run gRPC on macOS.
+            // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
 
-            _logger.Info("vergiBlue test server listening on port " + Port);
-            _logger.Info("Press any key to stop the server...");
-            Console.ReadKey();
+            // Add services to the container.
+            builder.Services.AddGrpc();
 
-            server.ShutdownAsync().Wait();
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            app.MapGrpcService<TestServer>();
+            app.MapGrpcService<WebServer>();
+            app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+
+            app.Run();
         }
+
     }
 
     /// <summary>
