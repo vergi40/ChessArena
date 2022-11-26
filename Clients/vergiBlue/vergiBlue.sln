@@ -23,12 +23,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vergiBlueConsole", "vergiBl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "vergiBlue.Tests\IntegrationTests\IntegrationTests.csproj", "{39136D70-09D5-4C7B-BDC0-67325756EFCE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vergiBlue.Build", "vergiBlue.Build\vergiBlue.Build.csproj", "{C9ED0471-6EFD-4806-B9D5-7F73C6EB4014}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C9ED0471-6EFD-4806-B9D5-7F73C6EB4014}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9ED0471-6EFD-4806-B9D5-7F73C6EB4014}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E15B36EB-44E3-478F-8A9E-6B0AEC413CE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E15B36EB-44E3-478F-8A9E-6B0AEC413CE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E15B36EB-44E3-478F-8A9E-6B0AEC413CE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
