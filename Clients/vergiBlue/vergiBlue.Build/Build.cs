@@ -24,21 +24,30 @@ class Build : NukeBuild
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
+    [Solution]
+    readonly Solution Solution;
+
+
+    string _outputDirectory => Solution.Directory / "output";
+
     Target Clean => _ => _
         .Before(Restore)
         .Executes(() =>
         {
+            EnsureCleanDirectory(_outputDirectory);
         });
 
     Target Restore => _ => _
         .Executes(() =>
         {
+            
         });
 
     Target Compile => _ => _
         .DependsOn(Restore)
         .Executes(() =>
         {
+            
         });
 
 }
