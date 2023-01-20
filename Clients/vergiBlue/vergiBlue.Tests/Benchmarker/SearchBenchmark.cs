@@ -11,7 +11,7 @@ using vergiBlue.Logic;
 
 namespace Benchmarker
 {
-    [SimpleJob(RunStrategy.Monitoring, targetCount:15)]
+    [SimpleJob(RunStrategy.Monitoring, iterationCount:15)]
     [MeanColumn, MedianColumn, MinColumn, MaxColumn, MemoryDiagnoser]
     public class SearchBenchmark
     {
