@@ -15,7 +15,7 @@ using vergiBlue.Database;
 
 namespace vergiBlue.Logic
 {
-    public class Logic : LogicBase
+    public class Logic : IAiClient, IUciClient
     {
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Logic>();
 
@@ -57,9 +57,14 @@ namespace vergiBlue.Logic
         private DataFactory _dataFactory { get; } = new DataFactory();
 
         /// <summary>
+        /// Client is white player and starts the game
+        /// </summary>
+        public bool IsPlayerWhite { get; set; }
+
+        /// <summary>
         /// Uci instance. Don't know which side yet
         /// </summary>
-        public Logic() : base(true)
+        public Logic()
         {
             // TODO
         }
@@ -68,8 +73,10 @@ namespace vergiBlue.Logic
         /// For tests. Need to set board explicitly. Test environment handles initializations.
         /// </summary>
         [Obsolete("For tests, use constructor with Board parameter.")]
-        public Logic(bool isPlayerWhite, int? overrideMaxDepth = null) : base(isPlayerWhite)
+        public Logic(bool isPlayerWhite, int? overrideMaxDepth = null)
         {
+            IsPlayerWhite = isPlayerWhite;
+
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             SkipOpeningChecks = true;
             _logger.LogDebug("Logic initialized");
@@ -80,8 +87,10 @@ namespace vergiBlue.Logic
         /// <summary>
         /// For tests. Start board known. Test environment handles initializations.
         /// </summary>
-        public Logic(bool isPlayerWhite, IBoard board, int? overrideMaxDepth = null) : base(isPlayerWhite)
+        public Logic(bool isPlayerWhite, IBoard board, int? overrideMaxDepth = null)
         {
+            IsPlayerWhite = isPlayerWhite;
+
             _algorithmController.Initialize(isPlayerWhite, overrideMaxDepth);
             Board = BoardFactory.CreateClone(board);
             Board.Shared.Testing = true;
@@ -90,8 +99,10 @@ namespace vergiBlue.Logic
             _replayPersistor.InitializeNewGame(isPlayerWhite, Board);
         }
 
-        public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null) : base(startInformation.WhitePlayer)
+        public Logic(IGameStartInformation startInformation, int? overrideMaxDepth = null, IBoard? overrideBoard = null)
         {
+            IsPlayerWhite = startInformation.WhitePlayer;
+
             _algorithmController.Initialize(startInformation.WhitePlayer, overrideMaxDepth);
             if (overrideBoard != null)
             {
@@ -107,7 +118,7 @@ namespace vergiBlue.Logic
             _replayPersistor.InitializeNewGame(startInformation.WhitePlayer, Board);
 
             // Opponent non-null only if player is black
-            if (!IsPlayerWhite) ReceiveMove(startInformation.OpponentMove);
+            if (!startInformation.WhitePlayer) ReceiveMove(startInformation.OpponentMove);
         }
 
         /// <summary>
@@ -186,7 +197,7 @@ namespace vergiBlue.Logic
             return CreateNewMove(searchDepth);
         }
 
-        public override IPlayerMove CreateMove()
+        public IPlayerMove CreateMove()
         {
             _logger.LogDebug("Starting create move operations...");
             var bestMove = CreateNewMove();
@@ -313,7 +324,7 @@ namespace vergiBlue.Logic
             return validMoves;
         }
 
-        public sealed override void ReceiveMove(IMove? opponentMove)
+        public void ReceiveMove(IMove? opponentMove)
         {
             LatestOpponentMove = opponentMove ?? throw new ArgumentException($"Received null move. Error or game has ended.");
             _logger.LogDebug(
@@ -336,14 +347,15 @@ namespace vergiBlue.Logic
         /// <summary>
         /// Create search task with cancellation support
         /// </summary>
-        public Task<SearchResult> CreateSearchTask(UciGoParameters parameters, Action<string> searchInfoUpdate, CancellationToken ct)
+        public Task<string> CreateSearchTask(UciGoParameters parameters, Action<string> searchInfoUpdate, CancellationToken ct)
         {
             var searchParameters = new SearchParameters(parameters, searchInfoUpdate, ct);
             
             // Do merge class of parameters and action infoupdate
             var move = CreateNewMoveUci(searchParameters);
 
-            return Task.FromResult(new SearchResult(move));
+            // WriteLine($"bestmove {asd.Result.BestMove.ToCompactString()}");
+            return Task.FromResult(move.ToCompactString());
         }
 
 
@@ -381,17 +393,6 @@ namespace vergiBlue.Logic
 
             // NOTE: never add to move history, since uci game is not played continuously to same board
             return moveWithData;
-        }
-    }
-
-    // Note: as class instead of just move string. Room to extend with e.g. ponder return values
-    public class SearchResult
-    {
-        public ISingleMove BestMove { get; }
-
-        public SearchResult(ISingleMove bestMove)
-        {
-            BestMove = bestMove;
         }
     }
 }

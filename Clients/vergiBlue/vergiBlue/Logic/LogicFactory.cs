@@ -1,4 +1,5 @@
 ﻿using System;
+using CommonNetStandard.Client;
 using CommonNetStandard.Interface;
 
 namespace vergiBlue.Logic
@@ -34,7 +35,7 @@ namespace vergiBlue.Logic
             return new Logic(isPlayerWhite, overrideMaxDepth);
         }
 
-        public static Logic CreateForUci()
+        public static IUciClient CreateForUci()
         {
             var logic = new Logic();
             logic.InitializeStaticSystems();
