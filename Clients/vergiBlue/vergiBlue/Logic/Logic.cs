@@ -17,6 +17,7 @@ namespace vergiBlue.Logic
 {
     public class Logic : IAiClient, IUciClient
     {
+        private readonly ILoggerFactory _loggerFactory = ApplicationLogging.LoggerFactory;
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Logic>();
 
         // Game strategic variables
@@ -199,33 +200,30 @@ namespace vergiBlue.Logic
 
         public IPlayerMove CreateMove()
         {
-            _logger.LogDebug("Starting create move operations...");
             var bestMove = CreateNewMove();
-            var inner = bestMove.Move;
-            _logger.LogDebug($"Created move {inner.StartPosition}{inner.EndPosition}{SingleMove.ConvertPromotion(inner.PromotionResult)}");
-            
             return bestMove;
         }
-
-
+        
         private IPlayerMove CreateNewMove(int? overrideSearchDepth = null)
         {
+            _logger.LogDebug("Starting create move operations...");
             Collector.Instance.StartMoveCalculationTimer();
-
-            // Common start measures
-            RefreshAlgorithm(overrideSearchDepth);
-
             if (Settings.UseTranspositionTables)
             {
                 RefreshTranspositions();
             }
 
-            // Get all available moves and do necessary ordering & filtering
-            List<SingleMove> validMoves = GetValidMoves();
+            // Common start measures
+            RefreshAlgorithm(overrideSearchDepth);
+
+            var moveBuilder = new MoveBuilder(_loggerFactory);
+            moveBuilder.SetBoardAndSide(Board, IsPlayerWhite);
+            moveBuilder.SetAlgorithmControl(_algorithmController);
+            moveBuilder.SetSkipOpeningChecks(SkipOpeningChecks);
+            moveBuilder.SetValidMoves(GameHistory);
             
             // Best move
-            var aiMove = _algorithmController.GetBestMove(Board, validMoves, SkipOpeningChecks);
-            Validator.ValidateMoveAndColor(Board, aiMove, IsPlayerWhite);
+            var aiMove = moveBuilder.BuildBestMove();
 
             if (Board.Shared.Transpositions.Tables.Count > 0)
                 Collector.AddCustomMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
@@ -244,6 +242,9 @@ namespace vergiBlue.Logic
 
             var moveData = _dataFactory.CreateDescriptive(Board, IsPlayerWhite, diagnosticsData);
             _replayPersistor.SaveMoveWithAnalytics(moveData);
+
+            var inner = move.Move;
+            _logger.LogDebug($"Created move {inner.StartPosition}{inner.EndPosition}{SingleMove.ConvertPromotion(inner.PromotionResult)}");
             return move;
         }
 
@@ -294,36 +295,7 @@ namespace vergiBlue.Logic
                 }
             }
         }
-
-        private List<SingleMove> GetValidMoves()
-        {
-            var isMaximizing = IsPlayerWhite;
-            var validMoves = Board.MoveGenerator.MovesWithOrdering(isMaximizing, true, true).ToList();
-
-            if (MoveHistory.IsLeaningToDraw(GameHistory))
-            {
-                // Repetition
-                // Take 4th from the end of list
-                var repetionMove = GameHistory[^4];
-                validMoves.RemoveAll(m =>
-                    m.PrevPos.ToAlgebraic() == repetionMove.StartPosition &&
-                    m.NewPos.ToAlgebraic() == repetionMove.EndPosition);
-            }
-
-            if (validMoves.Count == 0)
-            {
-                // Game ended to stalemate
-                throw new ArgumentException(
-                    $"No possible moves for player [isWhite={IsPlayerWhite}]. Game should have ended to draw (stalemate).");
-            }
-
-            var movesSorted = validMoves.Select(m => m.ToCompactString()).OrderBy(m => m);
-            
-            _logger.LogDebug($"{validMoves.Count} valid moves found: {string.Join(", ", movesSorted)}.");
-            Collector.AddCustomMessage($"{validMoves.Count} valid moves found.");
-            return validMoves;
-        }
-
+        
         public void ReceiveMove(IMove? opponentMove)
         {
             LatestOpponentMove = opponentMove ?? throw new ArgumentException($"Received null move. Error or game has ended.");
@@ -371,12 +343,14 @@ namespace vergiBlue.Logic
                 RefreshTranspositions();
             }
 
-            // Get all available moves and do necessary ordering & filtering
-            List<SingleMove> validMoves = GetValidMoves();
+            var moveBuilder = new MoveBuilder(_loggerFactory);
+            moveBuilder.SetBoardAndSide(Board, IsPlayerWhite);
+            moveBuilder.SetAlgorithmControl(_algorithmController);
+            moveBuilder.SetSkipOpeningChecks(SkipOpeningChecks);
+            moveBuilder.SetValidMoves(GameHistory);
 
             // Best move
-            var aiMove = _algorithmController.GetBestMove(Board, validMoves, SkipOpeningChecks);
-            Validator.ValidateMoveAndColor(Board, aiMove, IsPlayerWhite);
+            var aiMove = moveBuilder.BuildBestMove();
 
             if (Board.Shared.Transpositions.Tables.Count > 0)
                 Collector.AddCustomMessage($"Transposition tables saved: {Board.Shared.Transpositions.Tables.Count}");
