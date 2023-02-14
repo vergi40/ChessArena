@@ -66,7 +66,7 @@ namespace vergiBlue.ConsoleTools
             Log(Environment.NewLine);
 
             Log("Starting logic...");
-            LogicBase ai;
+            IAiClient ai;
             if (connectionTesting) ai = new ConnectionTesterLogic(startInformation.WhitePlayer);
             else ai = LogicFactory.Create(startInformation);
 
@@ -108,7 +108,7 @@ namespace vergiBlue.ConsoleTools
     /// <summary>
     /// Sends dummy moves
     /// </summary>
-    class ConnectionTesterLogic : LogicBase
+    class ConnectionTesterLogic : IAiClient
     {
         private int _currentIndex;
         private readonly int _direction;
@@ -123,7 +123,7 @@ namespace vergiBlue.ConsoleTools
             }
         }
 
-        public ConnectionTesterLogic(bool isPlayerWhite) : base(isPlayerWhite)
+        public ConnectionTesterLogic(bool isPlayerWhite)
         {
             if (isPlayerWhite)
             {
@@ -137,7 +137,7 @@ namespace vergiBlue.ConsoleTools
             }
         }
 
-        public override IPlayerMove CreateMove()
+        public IPlayerMove CreateMove()
         {
             var diagnostics = Collector.Instance.CollectAndClear();
             // Dummy moves for connection testing
@@ -153,7 +153,7 @@ namespace vergiBlue.ConsoleTools
             return move;
         }
 
-        public override void ReceiveMove(IMove opponentMove)
+        public void ReceiveMove(IMove opponentMove)
         {
             // Do nothing
         }

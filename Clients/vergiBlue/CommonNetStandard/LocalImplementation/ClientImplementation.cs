@@ -40,7 +40,16 @@ namespace CommonNetStandard.LocalImplementation
             return gameStartInformation;
         }
 
-        public async Task CreateMovements(LogicBase ai)
+        /// <summary>
+        /// Use the Act() bidirectional stream to loop steps:
+        /// 0. Generate next move with Ai.CreateMove
+        /// 1. Write move to request stream
+        /// 2. Read next move from response.MoveNext
+        /// 3. Update Ai with Ai.ReceiveMove
+        /// 4. Generate next move with Ai.CreateMove
+        /// Repeat 1-4
+        /// </summary>
+        public async Task CreateMovements(IAiClient ai)
         {
             try
             {

@@ -26,7 +26,7 @@ namespace vergiBlueConsole.UciMode
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger<Uci>();
         private static UciInput _input = new UciInput(null);
 
-        private static Task<SearchResult>? _currentSearch { get; set; }
+        private static Task<string>? _currentSearchTask { get; set; }
         private static CancellationTokenSource _searchCancellation { get; set; } = new CancellationTokenSource();
 
         public static void Run(StreamReader? inputStream = null)
@@ -77,20 +77,20 @@ namespace vergiBlueConsole.UciMode
 
                     _logger.LogDebug("Search task start");
                     _searchCancellation = new CancellationTokenSource();
-                    _currentSearch = Task.Run(() => logic.CreateSearchTask(parameters, SearchInfoUpdate, _searchCancellation.Token));
-                    _currentSearch.ContinueWith(asd =>
+                    _currentSearchTask = Task.Run(() => logic.CreateSearchTask(parameters, SearchInfoUpdate, _searchCancellation.Token));
+                    _currentSearchTask.ContinueWith(searchTask =>
                     {
-                        _logger.LogDebug($"Search finished with status {asd.Status}");
-                        WriteLine($"bestmove {asd.Result.BestMove.ToCompactString()}");
+                        _logger.LogDebug($"Search finished with status {searchTask.Status}");
+                        WriteLine($"bestmove {searchTask.Result}");
                     });
                 }
                 else if (gameCommand.Contains("stop"))
                 {
-                    if (_currentSearch == null)
+                    if (_currentSearchTask == null)
                     {
                         _logger.LogDebug("Stop called even though no search running.");
                     }
-                    else if (_currentSearch.IsCompleted)
+                    else if (_currentSearchTask.IsCompleted)
                     {
                         _logger.LogDebug("Search has already ran to completion");
                     }
