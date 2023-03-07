@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vergiBlueConsole", "vergiBl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "vergiBlue.Tests\IntegrationTests\IntegrationTests.csproj", "{39136D70-09D5-4C7B-BDC0-67325756EFCE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerTests", "vergiBlue.Tests\ServerTests\ServerTests.csproj", "{CC39EE61-5BB7-4E93-AAEF-F1A0B9214C1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -65,6 +67,10 @@ Global
 		{39136D70-09D5-4C7B-BDC0-67325756EFCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39136D70-09D5-4C7B-BDC0-67325756EFCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39136D70-09D5-4C7B-BDC0-67325756EFCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC39EE61-5BB7-4E93-AAEF-F1A0B9214C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC39EE61-5BB7-4E93-AAEF-F1A0B9214C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC39EE61-5BB7-4E93-AAEF-F1A0B9214C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC39EE61-5BB7-4E93-AAEF-F1A0B9214C1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -75,6 +81,7 @@ Global
 		{C0EF02CC-692B-460F-9205-344DD55ED845} = {AE4E5445-E560-44DD-9C6C-C00E3E8825DC}
 		{BD2448B4-5E5F-43E4-B9B3-32127DA988F5} = {AE4E5445-E560-44DD-9C6C-C00E3E8825DC}
 		{39136D70-09D5-4C7B-BDC0-67325756EFCE} = {AE4E5445-E560-44DD-9C6C-C00E3E8825DC}
+		{CC39EE61-5BB7-4E93-AAEF-F1A0B9214C1D} = {AE4E5445-E560-44DD-9C6C-C00E3E8825DC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5FA2AD09-4D55-4B74-9C86-2997BAD9301C}

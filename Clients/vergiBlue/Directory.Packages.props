@@ -32,6 +32,7 @@
     <!-- Desktop -->
     <PackageVersion Include="SharpVectors" Version="1.8.1" />
     <!-- Tests -->
+    <PackageVersion Include="Moq" Version="4.18.4" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
     <PackageVersion Include="MSTest.TestAdapter" Version="3.0.2" />
     <PackageVersion Include="MSTest.TestFramework" Version="3.0.2" />
@@ -41,6 +42,7 @@
     </PackageVersion>
     <PackageVersion Include="NUnit" Version="3.13.3" />
     <PackageVersion Include="NUnit3TestAdapter" Version="4.3.1" />
+    <PackageVersion Include="NUnit.Analyzers" Version="3.6.0" />
     <PackageVersion Include="Shouldly" Version="4.1.0" />
     <PackageVersion Include="vergiCommon" Version="0.1.1" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.13.4" />
